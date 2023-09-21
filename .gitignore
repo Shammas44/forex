@@ -1,0 +1,15 @@
+*.o
+Session.vim
+.cache
+compile_commands.json
+compile_c_on_save.lua
+sandbox/
+bin/
+ui/*.txt
+*.csv
+python/
+.DS_Store
+.config.json
+config.json
+dev/debug.sh
+data/EURUSD_LARGE_1_minutes.csv
