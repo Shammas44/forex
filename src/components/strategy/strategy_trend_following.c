@@ -11,7 +11,6 @@ Order *strategy_trend_following(Tsmetadata *metadata, Candle candle) {
   static Slidingwindow *w_small;
   static Slidingwindow *w_large;
   static int count = 0;
-  static bool first_run = true;
 
   int small_size = SMALL_SIZE;
   int large_size = LARGE_SIZE;
@@ -20,12 +19,6 @@ Order *strategy_trend_following(Tsmetadata *metadata, Candle candle) {
     slidingwindow_free(w_small);
     slidingwindow_free(w_large);
     return NULL;
-  }
-
-  if (first_run) {
-    first_run = false;
-    csv_erase_content(EQUITY_FILE);
-    csv_add_new_line(EQUITY_FILE, "equity,timestamp,ma_small,ma_large,price");
   }
 
   Candle *candle_a = candle_copy(candle);
@@ -100,6 +93,12 @@ end:
 }
 
 void strategy_trend_following_report(Tsmetadata *m, Candle candle, double ma_small, double ma_large) {
+  static bool first_run = true;
+  if (first_run) {
+    first_run = false;
+    csv_erase_content(EQUITY_FILE);
+    csv_add_new_line(EQUITY_FILE, "equity,timestamp,ma_small,ma_large,price");
+  }else {
   double equity = tsmetadata_get_equity(m);
   char line[50];
   double close = candle.close;
@@ -107,4 +106,5 @@ void strategy_trend_following_report(Tsmetadata *m, Candle candle, double ma_sma
   sprintf(line, "%f,%ld,%f,%f,%f", equity, timestamp, ma_small, ma_large,
           close);
   csv_add_new_line(EQUITY_FILE, line);
+  }
 }
