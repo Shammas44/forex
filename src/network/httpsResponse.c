@@ -4,8 +4,6 @@
 // Prototypes functions
 // =========================================================================="
 
-int __httpsResponse_read_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity);
-
 // =========================================================================="
 // Public functions
 // =========================================================================="
@@ -86,47 +84,8 @@ int httpsResponse_extract_authorization(HttpsResponse *res,char **authorization)
   return 0;
 }
 
-int httpsResponse_receive(SSL *ssl, HttpsResponse *res) {
-    size_t response_size = 0;
-    size_t response_capacity = 4096;
-    char *response = buffer_init(response_capacity);
-    if (!response)  return get_error("malloc() failed."); 
-    int status = __httpsResponse_read_bytes(ssl, &response, &response_size, &response_capacity);
-    if (status) return status; 
-    httpsResponse_parse(response, res);
-    free(response); 
-    return 0;
-}
-
 // =========================================================================="
 // Private functions
 // =========================================================================="
-
-int __httpsResponse_read_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity) {
-    ssize_t bytes_received;
-    while ((bytes_received = SSL_read(ssl, *response_ptr + *response_size, *response_capacity - *response_size)) > 0) {
-        // system("clear");
-        // printf("%s\n", *response_ptr);
-        *response_size += bytes_received;
-        if (*response_size == *response_capacity) {
-            *response_capacity *= 2; // Double the capacity
-            char *new_response = realloc(*response_ptr, *response_capacity);
-            if (!new_response) {
-                free(*response_ptr);
-                return get_error("realloc() failed.");
-            }
-            *response_ptr = new_response;
-        }
-    }
-    
-    if (bytes_received < 0) {
-        free(*response_ptr);
-        return get_error("SSL_read() failed.");
-    }
-    
-    (*response_ptr)[*response_size] = '\0';
-    return 0;
-}
-
 
 

@@ -1,7 +1,6 @@
 #include "connectors.h"
 
 int connectors_get_auth(char **authorization) {
-
   char body1[] = "{\"email\":\"Admin.Admin@orif.ch\",\"password\":\"adad\"}";
   char *headers1[] = {
       "Connection: close",
@@ -20,12 +19,12 @@ int connectors_get_auth(char **authorization) {
   };
 
   HttpResponse res1;
-  int status = http_fetch(&req1, &res1);
-  if (status)
-    return get_error("Failed to fetch");
-  status = http_get_authorization_from_res(&res1, authorization);
-  if (status)
-    return get_error("failed to get authorization");
+  // int status = https_fetch(&req1, &res1);
+  // if (status)
+  //   return get_error("Failed to fetch");
+  // status = http_get_authorization_from_res(&res1, authorization);
+  // if (status)
+  //   return get_error("failed to get authorization");
   return 0;
 }
 
@@ -34,7 +33,7 @@ int connectors_read_websocket_frames(Mtqueue_list *q) {
 
   while (1) {
     char *out_message = NULL;
-    status = read_single_frame(q->ssl, &out_message);
+    status = wsFrame_read_single_frame(q->ssl, &out_message);
 
     if (status != 0) {
       free(out_message);

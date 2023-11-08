@@ -27,6 +27,4 @@ void httpsResponse_parse(char* response, HttpsResponse *res);
 
 int httpsResponse_extract_authorization(HttpsResponse *res,char **authorization);
 
-int httpsResponse_receive(SSL *ssl, HttpsResponse *res);
-
 #endif

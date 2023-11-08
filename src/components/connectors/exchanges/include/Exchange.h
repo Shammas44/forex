@@ -1,6 +1,6 @@
 #ifndef EXCHANGE_H
 #define EXCHANGE_H
-#include "connectors.h"
+#include "observer.h"
 
 typedef enum Exchange_protocols {
   Exchange_protocols_HTTPS,
@@ -10,10 +10,10 @@ typedef enum Exchange_protocols {
 
 struct Exchange;
 
-typedef struct Exchange* (*Exchange_constructor)(struct Exchange exchange);
+typedef struct Exchange* (*Exchange_constructor)(struct Exchange *exchange);
 typedef int (*Exchange_connect)(struct Exchange* exchange);
 typedef int (*Exchange_subscribe)(struct Exchange* exchange);
-typedef int (*Exchange_authenticate)(struct Exchange* exchange, void *credentials, char* token_res);
+typedef int (*Exchange_authenticate)(struct Exchange* exchange, void *credentials);
 typedef char* (*Exchange_get_auth)(struct Exchange* exchange);
 typedef int (*Exchange_unsubscribe)(struct Exchange* exchange);
 typedef void (*Exchange_destructor)(struct Exchange *exchange);
@@ -25,11 +25,11 @@ typedef void (*Exchange_destructor)(struct Exchange *exchange);
  * @param token - auth token
  * @return Exchange*
  */
-struct Exchange* exchange_constructor(struct Exchange exchange);
+struct Exchange* exchange_constructor(struct Exchange* exchange);
 
 int exchange_connect(struct Exchange* exchange);
 
-int exchange_authenticate(struct Exchange* exchange, void *credentials, char* token_res);
+int exchange_authenticate(struct Exchange* exchange, void *credentials);
 
 int exchange_subscribe(struct Exchange* exchange);
 
@@ -38,4 +38,8 @@ char* exchange_get_auth(struct Exchange* exchange);
 int exchange_unsubscribe(struct Exchange* exchange);
 
 int exchange_destructor(struct Exchange *exchange);
+
+void exchange_attach_observer(struct Exchange* exchange, Observer* observer);
+
+void exchange_notify_observers(struct Exchange* exchange,void * state);
 #endif 

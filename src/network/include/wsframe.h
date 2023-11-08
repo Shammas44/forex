@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int read_response_handshake(SSL *ssl);
+int wsFrame_read_response_handshake(SSL *ssl);
 
 /**
  * Read a single frame from the socket
@@ -16,5 +16,5 @@ int read_response_handshake(SSL *ssl);
  * @param out_message - pointer to the message to be read
  * @return int as status code
  */
-int read_single_frame(SSL *ssl, char **out_message);
+int wsFrame_read_single_frame(SSL *ssl, char **out_message);
 #endif

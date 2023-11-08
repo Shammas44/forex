@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <openssl/err.h>
 #include "buffer.h"
+#include "url.h"
 #include "wsframe.h"
 #include "tls.h"
 #include "error.h"
@@ -16,9 +17,7 @@
 struct HttpsResponse;
 
 typedef struct {
-    char* host;
-    char* port;
-    char* path;
+    Url* url;
     char* method; 
     char* body;
     size_t body_length;
@@ -27,9 +26,7 @@ typedef struct {
 } HttpsRequest;
 
 typedef struct {
-    char* host;
-    char* port;
-    char* path;
+    char* url;
     char* method; 
     char* body;
     char** headers;
@@ -48,6 +45,6 @@ int httpsRequest_destructor(HttpsRequest *request);
  */
 int httpsRequest_stringify(const HttpsRequest* request, char **res);
 
-int httpsRequest_send(HttpsRequest *request, SSL **ssl, int *sockfd,  struct HttpsResponse *res );
+void httpsRequest_print(HttpsRequest *request);
 
 #endif

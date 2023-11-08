@@ -1,4 +1,4 @@
-#include "wsframe.h"
+#include "wsFrame.h"
 #define x128 0x80
 #define x127 0x7f
 #define x126 0x7e
@@ -8,14 +8,14 @@
 // Prototypes functions
 // =========================================================================="
 
-int read_single_frame(SSL *ssl, char **out_message);
+int wsFrame_read_single_frame(SSL *ssl, char **out_message);
 int wsframe_get_length(SSL *ssl,char second_byte, int *bytes_received, int *res);
 
 // =========================================================================="
 // Public functions
 // =========================================================================="
 
-int read_response_handshake(SSL *ssl) {
+int wsFrame_read_response_handshake(SSL *ssl) {
   int response_capacity = 4096;
   int response_size = 0;
   int bytes_received;
@@ -29,6 +29,7 @@ int read_response_handshake(SSL *ssl) {
   while ((bytes_received = SSL_read(ssl, write_ptr, response_capacity - response_size)) > 0) {
     response_size += bytes_received;
     write_ptr += bytes_received;
+    printf("%s\n", out_message);
 
     if (response_size == response_capacity) {
       response_capacity *= 2; // Double the capacity
@@ -56,8 +57,9 @@ int read_response_handshake(SSL *ssl) {
   return 0;
 }
 
-int read_single_frame(SSL *ssl, char **out_message) {
+int wsFrame_read_single_frame(SSL *ssl, char **out_message) {
   unsigned char header[2];
+  //TODO: SSL_read is not working properly
   int bytes_received = SSL_read(ssl, header, 2);  // Read minimal frame header
   if (bytes_received != 2) {
     return get_error("SSL_read() failed.");
