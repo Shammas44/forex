@@ -45,7 +45,7 @@ exec: main
 
 .PHONY: watch_main
 watch_main: 
-	watch -n 1 --color make exec
+	watch -n 5 --color "make exec | tail -n +2"
 
 # Remove every object file in the project
 .PHONY: clean

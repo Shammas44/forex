@@ -1,12 +1,11 @@
 #ifndef WSFRAME_H
 #define WSFRAME_H
 #include <openssl/ssl.h>
+#include <stdio.h>
+#include <string.h>
 #include "error.h"
 #include "buffer.h"
 #include "json.h"
-#include <openssl/ssl.h>
-#include <stdio.h>
-#include <string.h>
 
 int wsFrame_read_response_handshake(SSL *ssl);
 

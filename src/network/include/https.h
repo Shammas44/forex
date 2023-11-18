@@ -1,33 +1,35 @@
 #ifndef HTTPS_H
 #define HTTPS_H
 #include "httpsRequest.h"
+#include "httpsRequestBuilder.h"
+#include "httpsResponseBuilder.h"
 #include "httpsResponse.h"
 
-#define HTTP_METHODS_GET "GET"
-#define HTTP_METHODS_POST "POST"
-#define HTTP_METHODS_DELETE "DELETE"
-#define HTTP_METHODS_UPDATE "UPDATE"
-#define HTTP_METHODS_PATCH "PATCH"
+struct Https;
 
-/**
- * Make an http request
- * @param request - pointer to an http request
- * @param res - pointer to an http response
- * @param funcId - id of the function to be executed
- * @return int as status code
- */
-int https_fetch(HttpsRequest *request,  HttpsResponse *res, SSL *ssl);
+typedef Response* (https_fetch)(struct Https *https, Request *request);
 
-int https_get(HttpsRequest *request,  HttpsResponse *res, SSL *ssl);
+typedef Response* (https_get)(struct Https *https, Request *request);
 
-int https_post(HttpsRequest *request,  HttpsResponse *res, SSL *ssl);
+typedef Response* (https_post)(struct Https *https, Request *request);
 
-int https_delete(HttpsRequest *request,  HttpsResponse *res, SSL *ssl);
+typedef Response* (https_put)(struct Https *https, Request *request);
 
-int https_update(HttpsRequest *request,  HttpsResponse *res, SSL *ssl);
+typedef Response* (https_patch)(struct Https *https, Request *request);
 
-int https_patch(HttpsRequest *request,  HttpsResponse *res, SSL *ssl);
+typedef Response* (https_delete)(struct Https *https, Request *request);
 
-int https_send_request(HttpsRequest *request,SSL **ssl, int *sockfd, HttpsResponse*res);
+typedef void (https_destructor)(struct Https *https);
 
+typedef struct Https {
+  HttpsResponseBuilder *response_builder;
+  https_get * get;
+  https_post * post;
+  https_put * put;
+  https_patch * patch;
+  https_delete * delete;
+  https_destructor * destructor;
+} Https;
+
+Https * https_constructor();
 #endif

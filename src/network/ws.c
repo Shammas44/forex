@@ -19,18 +19,18 @@ void __ws_cleanup(bool ignore, SSL*ssl, SOCKET sockfd);
 // Public functions
 // =========================================================================="
 
-int ws_establish_handshake(SSL **ssl, HttpsRequest *request, HttpsResponse *res) {
-  int sockfd;
-  int status = 0;
+int ws_establish_handshake(SSL **ssl, Request *request, Response *res) {
+  // int sockfd;
+  // int status = 0;
 
-  while(!status){
-    if(https_send_request(request,ssl, &sockfd,res)) status = get_error("send_request() failed.");
-    if(wsFrame_read_response_handshake(*ssl)) status = get_error("ws handshake failed."); 
-    break;
-  }
-  int myBool = (status != 0);
-  __ws_cleanup(!myBool,*ssl, sockfd);
-  return status;
+  // while(!status){
+  //   if(https_send_request(request,ssl, &sockfd,res)) status = get_error("send_request() failed.");
+  //   if(wsFrame_read_response_handshake(*ssl)) status = get_error("ws handshake failed."); 
+  //   break;
+  // }
+  // int myBool = (status != 0);
+  // __ws_cleanup(!myBool,*ssl, sockfd);
+  // return status;
 }
 
 void ws_send_message(SSL *ssl, const char *message) {

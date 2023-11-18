@@ -12,19 +12,21 @@
 #include <string.h>
 #include <unistd.h>
 #include <openssl/rand.h>
+#include "response.h"
 
-typedef struct {
-    char* status;
-    char* headers;
-    char* body;
+struct httpsResponse_prefill;
+
+typedef struct Response *(HttpsResponse_set_status)(struct Response *res, char* status);
+typedef struct Response *(HttpsResponse_set_body)(struct Response *res, char* body);
+typedef struct Response *(HttpsResponse_add_header)(struct Response *res, char* header);
+
+typedef struct HttpsResponse {
+    struct Message *message;
+    HttpsResponse_set_status *set_status_func;
+    HttpsResponse_set_body *set_body_func;
+    HttpsResponse_add_header *add_header_func;
 } HttpsResponse;
 
-HttpsResponse * httpsResponse_constructor(char* res);
-
-int httpsResponse_destructor(HttpsResponse *res);
-
-void httpsResponse_parse(char* response, HttpsResponse *res);
-
-int httpsResponse_extract_authorization(HttpsResponse *res,char **authorization);
+Response * httpsResponse_constructor(SSL*ssl);
 
 #endif

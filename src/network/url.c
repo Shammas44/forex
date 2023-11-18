@@ -14,11 +14,15 @@ Url *url_constructor(char *url) {
   char *host = malloc(sizeof(char) * 128);
   char *protocol = malloc(sizeof(char) * 8);
   char *path = malloc(sizeof(char) * 128);
-  url_struct->full = url;
+  char *full = malloc(sizeof(char) *(strlen(url) + 1));
+  char *port = malloc(sizeof(char) * 8);
+  sprintf(full, "%s", url);
+  sprintf(port, "%s", "443");
+  url_struct->full = full;
   url_struct->protocol = protocol;
   url_struct->host = host;
   url_struct->path = path;
-  url_struct->port = "443";
+  url_struct->port = port;
 
   url = __url_parse_string(url, protocol, ':');
   url+=3; //because of the :// in url
