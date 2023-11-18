@@ -1,6 +1,7 @@
 *.o
 Session.vim
 .cache
+log.txt
 compile_commands.json
 compile_c_on_save.lua
 sandbox/

@@ -9,7 +9,6 @@ typedef struct HttpsRequestBuilder *(HttpsRequestBuilder_build)(struct HttpsRequ
 typedef struct HttpsRequestBuilder *(HttpsRequestBuilder_set_body)(struct HttpsRequestBuilder *builder, char* body);
 typedef struct HttpsRequestBuilder *(HttpsRequestBuilder_add_header)(struct HttpsRequestBuilder *builder, char* header);
 typedef struct HttpsRequestBuilder *(HttpsRequestBuilder_set_method)(struct HttpsRequestBuilder *builder, HttpsRequest_method method);
-typedef Request *(HttpsRequestBuilder_get)(struct HttpsRequestBuilder *builder);
 typedef void (HttpsRequestBuilder_destructor)(struct HttpsRequestBuilder *builder);
 
 typedef struct {
@@ -18,8 +17,7 @@ typedef struct {
   HttpsRequestBuilder_set_body *set_body;
   HttpsRequestBuilder_add_header *add_header;
   HttpsRequestBuilder_set_method *set_method;
-  HttpsRequestBuilder_get *get;
-  void * __private;
+  Request * request;
 } HttpsRequestBuilder;
 
 HttpsRequestBuilder *httpsRequestBuilder_constructor();

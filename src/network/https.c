@@ -47,7 +47,6 @@ void __https_destructor(struct Https *https){
   response_builder->destructor_func((struct HttpsResponseBuilder*)response_builder);
   free(https);
   if(ctx!=NULL) SSL_CTX_free(ctx);
-  // https_req->cleanup_func((struct Request*)req);
 }
 
 Response* __https_fetch(Https *https, Request *request){
@@ -60,6 +59,7 @@ Response* __https_fetch(Https *https, Request *request){
   res_builder->build_func(__res_builder, req->get_connection_func((struct Request*)req));
   Response * res = res_builder->get_func(__res_builder);
   res->receive_func((struct Response*)res);
+  https_req->cleanup_func((struct Request*)request);
   req->destructor_func((struct Request*)req);
   return res;
 }

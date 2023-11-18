@@ -105,7 +105,6 @@ int __httpsResponse_destructor(struct Response *response){
   free(message->status);
   free(message->headers);
   free(message->body);
-  free(message->ssl);
   free(message);
   free(res);
   free(private);
@@ -198,6 +197,7 @@ int __httpsResponse_receive(struct Response * res) {
   int status = __httpsResponse_read_response_bytes(ssl, &raw_response, &response_size, &response_capacity);
   if (status) return status; 
   __httpsResponse_parse(raw_response, message);
+  free(raw_response);
   return 0;
 }
 

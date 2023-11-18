@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
   // req_builder->add_header_func(__req_builder,"daf");
   // req_builder->add_header_func(__req_builder,"daf");
   req_builder->add_header(__req_builder,"Connection: close");
-  Request * req = req_builder->get(__req_builder);
+  Request * req = req_builder->request;
   req->print_func((struct Request*)req);
 
   //TODO: debug following call
@@ -69,8 +69,9 @@ int main(int argc, char *argv[]) {
   // req->destructor_func((struct Request*)req);
   // req_builder->destructor(__req_builder);
   https->destructor(https);
+  req_builder->destructor((struct HttpsRequestBuilder*)req_builder);
+  res->print_func((struct Response*)res);
   res->destructor_func((struct Response*)res);
-  // res->print_func((struct Response*)res);
 
 
   // HttpsResponseBuilder *res_builder = httpsResponseBuilder_constructor();

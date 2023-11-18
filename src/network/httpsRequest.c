@@ -12,7 +12,7 @@
 
 typedef struct Message {
     Url* url;
-    char* method; 
+    char method[8]; 
     char* body;
     size_t body_length;
     char** headers;
@@ -61,10 +61,10 @@ struct Request *httpsRequest_constructor(HttpsRequest_prefill prefill) {
   Url *url = url_constructor(prefill.url);
   message->url = url;
   //message->method
-  char *method_as_string = __httpsRequest_method_to_string(prefill.method);
+  // message->method = __httpsRequest_method_to_string(prefill.method);
+  sprintf(message->method, "%s", __httpsRequest_method_to_string(prefill.method));
   // char *method = malloc(sizeof(char)* strlen(method_as_string));
   // sprintf(method, "%s", method_as_string);
-  message->method = method_as_string;
   //message->body
   char *body;
   size_t body_length = prefill.body!=NULL ? strlen(prefill.body) : 0;
@@ -101,7 +101,7 @@ int __httpsRequest_destructor(struct Request *request) {
   Request * req = (Request *)request;
   HttpsRequest *httpsRequest = (HttpsRequest *)req->__private;
   Message * message = (Message *)httpsRequest->message;
-  free(message->method);
+  if(message->ssl!=NULL) SSL_free(message->ssl);
   url_destructor(message->url);
   for (int i = 0; i < 10; i++) {
     free(message->headers[i]);
@@ -248,44 +248,31 @@ int __httpsRequest_send(struct Request *request){
   return error;
 }
 
-char *__httpsRequest_method_to_string(HttpsRequest_method method){
-  char *m = malloc(sizeof(char)* 8);
-  switch (method) {
- case GET: 
-      sprintf(m, "%s", "GET");
-  return m;
-  case POST: 
-      sprintf(m, "%s", "POST");
-  return m;
-  case PUT: 
-      sprintf(m, "%s", "PUT");
-  return m;
-  case DELETE: 
-      sprintf(m, "%s", "DELETE");
-  return m;
-  case PATCH: 
-      sprintf(m, "%s", "PATCH");
-  return m;
-  case HEAD: 
-      sprintf(m, "%s", "HEAD");
-  return m;
-  case OPTIONS:
-      sprintf(m, "%s", "OPTIONS");
-  return m;
-  case CONNECT:
-      sprintf(m, "%s", "CONNECT");
-  return m;
-  case TRACE:
-      sprintf(m, "%s", "TRACE");
-  return m;
-  }
+char* __httpsRequest_method_to_string(HttpsRequest_method method) {
+    char* methods[] = {
+        [GET] = "GET",
+        [POST] = "POST",
+        [PUT] = "PUT",
+        [DELETE] = "DELETE",
+        [PATCH] = "PATCH",
+        [HEAD] = "HEAD",
+        [OPTIONS] = "OPTIONS",
+        [CONNECT] = "CONNECT",
+        [TRACE] = "TRACE"
+    };
+
+    if (method >= GET && method <= TRACE) {
+        return methods[method];
+    } else {
+        return NULL; // Invalid method
+    }
 }
 
  struct Request *__httpsRequest_set_method(struct Request *req, HttpsRequest_method method){
   Request *request = (Request *)req;
   HttpsRequest *httpsRequest = (HttpsRequest *)request->__private;
   Message *message = (Message*)httpsRequest->message;
-  message->method = __httpsRequest_method_to_string(method);
+  sprintf(message->method, "%s", __httpsRequest_method_to_string(method));
   return req;
 }
  struct Request *__httpsRequest_set_body(struct Request *req, char* body){
@@ -315,13 +302,10 @@ struct Request *__httpsRequest_add_header(struct Request *req, char* header){
 
 void __httpsRequest_cleanup(struct Request*request){
   Request *req = (Request *)request;
-  req->print_func((struct Request*)req);
   HttpsRequest *https_req = (HttpsRequest *)req->__private;
   Message *message = (Message*)https_req->message;
-  puts("cleanup");
-  printf("sockfd: %s\n", message->method);
-  // if(message->ssl!=NULL) SSL_shutdown(message->ssl);
+  if(message->ssl!=NULL) SSL_shutdown(message->ssl);
   // if(message->ssl!=NULL) SSL_free(message->ssl);
-  // if(ISVALIDSOCKET(message->sockfd)) CLOSESOCKET(message->sockfd);
+  if(ISVALIDSOCKET(message->sockfd)) CLOSESOCKET(message->sockfd);
 }
 
