@@ -15,7 +15,9 @@
 #include "url.h"
 #include "wsframe.h"
 #include "message.h"
+#define T HttpsRequest
 
+typedef struct T T;
 typedef enum {
   GET,
   POST,
@@ -36,21 +38,22 @@ typedef struct {
   size_t header_count;
 } HttpsRequest_prefill;
 
-typedef struct Request *(HttpsRequest_set_method)(struct Request *req, HttpsRequest_method method);
-typedef struct Request *(HttpsRequest_set_body)(struct Request *req, char* body);
-typedef struct Request *(HttpsRequest_add_header)(struct Request *req, char* header);
-typedef void (HttpsRequest_destructor)(struct Request*);
-typedef void (HttpsRequest_cleanup)(struct Request*);
+typedef Request *(HttpsRequest_set_method)(Request *req, HttpsRequest_method method);
+typedef Request *(HttpsRequest_set_body)(Request *req, char* body);
+typedef Request *(HttpsRequest_add_header)(Request *req, char* header);
+typedef void (HttpsRequest_destructor)(Request*req);
+typedef void (HttpsRequest_cleanup)(Request*req);
 
-typedef struct {
-  struct Message *message;
-  HttpsRequest_destructor *destroy_func;
-  HttpsRequest_set_method *set_method_func;
-  HttpsRequest_set_body *set_body_func;
-  HttpsRequest_add_header *add_header_func;
-  HttpsRequest_cleanup *cleanup_func;
-} HttpsRequest;
+struct T {
+  Message *message;
+  HttpsRequest_destructor *destructor;
+  HttpsRequest_set_method *set_method;
+  HttpsRequest_set_body *set_body;
+  HttpsRequest_add_header *add_header;
+  HttpsRequest_cleanup *cleanup;
+};
 
-struct Request *httpsRequest_constructor(HttpsRequest_prefill prefill);
+Request *httpsRequest_constructor(HttpsRequest_prefill prefill);
 
+#undef T
 #endif

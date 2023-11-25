@@ -5,44 +5,42 @@
 // Data structures
 // =========================================================================="
 
-typedef struct Message {
+struct Message {
     char* status;
     char* headers;
     size_t header_count;
     char* body;
     size_t body_length;
     SSL* ssl;
-} Message;
+};
 
 // =========================================================================="
 // Prototypes functions
 // =========================================================================="
 
-int __httpsResponse_receive(struct Response *res);
-int __httpsResponse_destructor(struct Response * response);
-int __httpsResponse_stringify(struct Response * response, char **out);
-void __httpsResponse_print(struct Response *response);
-int __httpsResponse_parse(char* raw_response, struct Message *response);
-void * __httpsResponse_allocate();
+int __httpsResponse_receive(Response *res);
+int __httpsResponse_destructor(Response * response);
+int __httpsResponse_stringify(Response * response, char **out);
+void __httpsResponse_print(Response *response);
+int __httpsResponse_parse(char* raw_response, Message *response);
 int __httpsResponse_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity);
-struct Response *__httpsResponse_set_status(struct Response *res, char* status);
-struct Response *__httpsResponse_set_body(struct Response *res, char* body);
-struct Response *__httpsResponse_add_header(struct Response *res, char* header);
+Response *__httpsResponse_set_status(Response *res, char* status);
+Response *__httpsResponse_set_body(Response *res, char* body);
+Response *__httpsResponse_add_header(Response *res, char* header);
 
 // =========================================================================="
 // Public functions
 // =========================================================================="
 
 Response * httpsResponse_constructor(SSL*ssl){
-  Response *response = __httpsResponse_allocate();
+  Response *response = malloc(sizeof(Response));
   HttpsResponse *httpsResponse = malloc(sizeof(HttpsResponse));
   response->receive_func = __httpsResponse_receive;
-  response->allocate_func = __httpsResponse_allocate;
   response->destructor_func = __httpsResponse_destructor;
   response->stringify_func = __httpsResponse_stringify; 
   response->print_func = __httpsResponse_print;
   response->__private = httpsResponse;
-  HttpsResponse *https_response = (HttpsResponse *)response->__private;
+  HttpsResponse *https_response = response->__private;
   Message *message = malloc(sizeof(Message));
   https_response->message = message;
   message->ssl = ssl;
@@ -57,11 +55,6 @@ Response * httpsResponse_constructor(SSL*ssl){
 // =========================================================================="
 // Private functions
 // =========================================================================="
-
-void * __httpsResponse_allocate(){
-  void *response = malloc(sizeof(Response));
-  return response;
-}
 
 int __httpsResponse_parse(char* raw_response, Message *response){
   // Find the first occurrence of two new lines, this separates headers and body
@@ -98,23 +91,21 @@ int __httpsResponse_parse(char* raw_response, Message *response){
   return 0;
 }
 
-int __httpsResponse_destructor(struct Response *response){
-  Response *res = (Response *)response;
-  HttpsResponse *private = (HttpsResponse *)res->__private;
-  Message *message = (Message *)private->message;
+int __httpsResponse_destructor(Response *response){
+  HttpsResponse *private = response->__private;
+  Message *message = private->message;
   free(message->status);
   free(message->headers);
   free(message->body);
   free(message);
-  free(res);
+  free(response);
   free(private);
   return 0;
 }
 
-int __httpsResponse_stringify(struct Response *response, char **out) {
-    Response *res = (Response *)response;
-    HttpsResponse *httpsResponse = (HttpsResponse *)res->__private;
-    Message *msg = (Message *)httpsResponse->message;
+int __httpsResponse_stringify(Response *response, char **out) {
+    HttpsResponse *httpsResponse = response->__private;
+    Message *msg = httpsResponse->message;
     // Assuming the size needed for the string is the sum of the lengths of headers and body + 4 (for two newlines)
     size_t headers_length = msg->headers != NULL ? strlen(msg->headers) :0;
     size_t body_length = msg->body != NULL ? strlen(msg->body) :0;
@@ -130,11 +121,10 @@ int __httpsResponse_stringify(struct Response *response, char **out) {
     return 0;
 }
 
- void __httpsResponse_print(struct Response *response){
+ void __httpsResponse_print(Response *response){
   char *string;
-  Response *res = (Response *)response;
-  HttpsResponse *httpsResponse = (HttpsResponse *)res->__private;
-  Message * msg = (Message*)httpsResponse->message;
+  HttpsResponse *httpsResponse = response->__private;
+  Message * msg = httpsResponse->message;
   int status = __httpsResponse_stringify(response, &string);
   if(status){
     printf("Response is empty\n");
@@ -144,9 +134,9 @@ int __httpsResponse_stringify(struct Response *response, char **out) {
   }
 }
 
-int __httpsResponse_extract_authorization(Response *res,char **authorization){
-  HttpsResponse *private = (HttpsResponse *)res->__private;
-  Message *message = (Message *)private->message;
+int __httpsResponse_extract_authorization(Response *response,char **authorization){
+  HttpsResponse *private = response->__private;
+  Message *message = private->message;
   jsmn_parser parser;
   jsmn_init(&parser);
   char *json = message->body;
@@ -181,14 +171,13 @@ int __httpsResponse_extract_authorization(Response *res,char **authorization){
   return 0;
 }
 
- struct Response *__httpsResponse_set_status(struct Response *res, char* status);
- struct Response *__httpsResponse_set_body(struct Response *res, char* body);
- struct Response *__httpsResponse_add_header(struct Response *res, char* header);
+Response *__httpsResponse_set_status(Response *res, char* status);
+Response *__httpsResponse_set_body(Response *res, char* body);
+Response *__httpsResponse_add_header(Response *res, char* header);
 
-int __httpsResponse_receive(struct Response * res) {
-  Response * response = (Response*)res;
-  HttpsResponse *private = (HttpsResponse *)response->__private;
-  Message *message = (Message *)private->message;
+int __httpsResponse_receive(Response * response) {
+  HttpsResponse *private = response->__private;
+  Message *message = private->message;
   SSL *ssl = message->ssl;
   size_t response_size = 0;
   size_t response_capacity = 4096;

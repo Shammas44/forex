@@ -1,16 +1,20 @@
 #include "httpsRequest.h"
-#include "url.h"
-#include <stdio.h>
 
 #define ISVALIDSOCKET(s) ((s) >= 0)
 #define ONERROR(s) ((s) < 0)
 #define CLOSESOCKET(s) close(s)
+#define GET_MESSAGE_FROM_REQUEST(req) \
+({ \
+  HttpsRequest *_https_request = req->__private; \
+  Message *_message = _https_request->message; \
+  _message; \
+})
 
 // =========================================================================="
 // Data structures
 // =========================================================================="
 
-typedef struct Message {
+struct Message {
     Url* url;
     char method[8]; 
     char* body;
@@ -19,25 +23,25 @@ typedef struct Message {
     size_t header_count;
     SSL* ssl;
     int sockfd;
-} Message;
+};
 
 // =========================================================================="
 // Prototypes functions
 // =========================================================================="
 
- int __httpsRequest_send(struct Request *res);
- int __httpsRequest_destructor(struct Request * request);
- int __httpsRequest_stringify(struct Request * request, char **out);
- void __httpsRequest_print(struct Request *request);
+ int __httpsRequest_send(Request *res);
+ int __httpsRequest_destructor(Request * request);
+ int __httpsRequest_stringify(Request * request, char **out);
+ void __httpsRequest_print(Request *request);
 int __httpsRequest_parse(char* raw_request, Message *request);
 char *__httpsRequest_method_to_string(HttpsRequest_method method);
- struct Request *__httpsRequest_set_method(struct Request *req, HttpsRequest_method method);
- struct Request *__httpsRequest_set_body(struct Request *req, char* body);
- struct Request *__httpsRequest_add_header(struct Request *req, char* header);
- void *__httpsRequest_get_ssl(struct Request* request);
-void __httpsRequest_cleanup(struct Request*request);
+Request *__httpsRequest_set_method(Request *req, HttpsRequest_method method);
+Request *__httpsRequest_set_body(Request *req, char* body);
+Request *__httpsRequest_add_header(Request *req, char* header);
+ void *__httpsRequest_get_ssl(Request* request);
+void __httpsRequest_cleanup(Request*request);
 
-struct Request *httpsRequest_constructor(HttpsRequest_prefill prefill) {
+Request *httpsRequest_constructor(HttpsRequest_prefill prefill) {
   Request *request = malloc(sizeof(Request));
   Message *message = malloc(sizeof(Message));
   HttpsRequest *httpsRequest = malloc(sizeof(HttpsRequest));
@@ -49,10 +53,10 @@ struct Request *httpsRequest_constructor(HttpsRequest_prefill prefill) {
   request->destructor_func = __httpsRequest_destructor;
   request->get_connection_func = __httpsRequest_get_ssl;
   //httpsRequest
-  httpsRequest->set_body_func = __httpsRequest_set_body;
-  httpsRequest->set_method_func = __httpsRequest_set_method;
-  httpsRequest->add_header_func = __httpsRequest_add_header;
-  httpsRequest->cleanup_func = __httpsRequest_cleanup;
+  httpsRequest->set_body = __httpsRequest_set_body;
+  httpsRequest->set_method = __httpsRequest_set_method;
+  httpsRequest->add_header = __httpsRequest_add_header;
+  httpsRequest->cleanup = __httpsRequest_cleanup;
   httpsRequest->message = message;
 
   //message
@@ -94,13 +98,12 @@ struct Request *httpsRequest_constructor(HttpsRequest_prefill prefill) {
   }
   message->headers = headers;
   message->header_count = prefill.header_count;
-  return (struct Request*)request;
+  return request;
 }
 
-int __httpsRequest_destructor(struct Request *request) {
-  Request * req = (Request *)request;
-  HttpsRequest *httpsRequest = (HttpsRequest *)req->__private;
-  Message * message = (Message *)httpsRequest->message;
+int __httpsRequest_destructor(Request *request) {
+  HttpsRequest *httpsRequest = request->__private;
+  Message * message = httpsRequest->message;
   if(message->ssl!=NULL) SSL_free(message->ssl);
   url_destructor(message->url);
   for (int i = 0; i < 10; i++) {
@@ -114,10 +117,8 @@ int __httpsRequest_destructor(struct Request *request) {
   return 0;
 }
 
-void __httpsRequest_print(struct Request *request){
-  Request *req = (Request *)request;
-  HttpsRequest *httpsRequest = (HttpsRequest *)req->__private;
-  Message * message = (Message *)httpsRequest->message;
+void __httpsRequest_print(Request *request){
+  Message *message = GET_MESSAGE_FROM_REQUEST(request);
   puts("");
   printf("Method: %s\n", message->method);
   printf("Body: %s\n", message->body);
@@ -130,13 +131,11 @@ void __httpsRequest_print(struct Request *request){
   url_print(message->url);
 }
 
-int __httpsRequest_stringify(struct Request *request, char **out) {
-  // Estimate the length of the request string
-  Request *req = (Request *)request;
-  HttpsRequest *httpsRequest = (HttpsRequest *)req->__private;
-  Message * message = (Message *)httpsRequest->message;
+int __httpsRequest_stringify(Request *request, char **out) {
+  Message *message = GET_MESSAGE_FROM_REQUEST(request);
   char * host = message->url->host;
   char * path = message->url->path;
+  // Estimate the length of the request string
   size_t length = strlen(message->method) + strlen(path) + strlen(host) + 100; // Adding 100 for additional characters
 
   for (size_t i = 0; i < message->header_count; i++) {
@@ -176,11 +175,9 @@ int __httpsRequest_stringify(struct Request *request, char **out) {
   return offset;
 }
 
-int __httpsRequest_send(struct Request *request){
+int __httpsRequest_send(Request *request){
   struct addrinfo *add_info = NULL;
-  Request *req = (Request*)request;
-  HttpsRequest *httpsRequest = (HttpsRequest *)req->__private;
-  Message *message = (Message*)httpsRequest->message;
+  Message *message = GET_MESSAGE_FROM_REQUEST(request);
   int status;
   char *host = message->url->host;
   char *path = message->url->path;
@@ -268,44 +265,35 @@ char* __httpsRequest_method_to_string(HttpsRequest_method method) {
     }
 }
 
- struct Request *__httpsRequest_set_method(struct Request *req, HttpsRequest_method method){
-  Request *request = (Request *)req;
-  HttpsRequest *httpsRequest = (HttpsRequest *)request->__private;
-  Message *message = (Message*)httpsRequest->message;
+ Request *__httpsRequest_set_method(Request *request, HttpsRequest_method method){
+  Message *message = GET_MESSAGE_FROM_REQUEST(request);
   sprintf(message->method, "%s", __httpsRequest_method_to_string(method));
-  return req;
+  return request;
 }
- struct Request *__httpsRequest_set_body(struct Request *req, char* body){
-  HttpsRequest *httpsRequest = (HttpsRequest *)req;
-  Message *message = (Message*)httpsRequest->message;
+  Request *__httpsRequest_set_body(Request *request, char* body){
+  Message *message = GET_MESSAGE_FROM_REQUEST(request);
   message->body = body;
-  return req;
+  return request;
 }
 
-struct Request *__httpsRequest_add_header(struct Request *req, char* header){
-  HttpsRequest *httpsRequest = (HttpsRequest *)req;
-  Message *message = (Message*)httpsRequest->message;
+Request *__httpsRequest_add_header(Request *request, char* header){
+  Message *message = GET_MESSAGE_FROM_REQUEST(request);
   int header_count = message->header_count;
   if(header_count < 10){
     message->header_count ++;
     sprintf(message->headers[header_count],"%s",header); 
   }
-  return req;
+  return request;
 }
 
- void *__httpsRequest_get_ssl(struct Request* request){
-  Request *req = (Request *)request;
-  HttpsRequest *https_req = (HttpsRequest *)req->__private;
-  Message *message = (Message*)https_req->message;
+ void *__httpsRequest_get_ssl(Request* request){
+  Message *message = GET_MESSAGE_FROM_REQUEST(request);
   return message->ssl;
 }
 
-void __httpsRequest_cleanup(struct Request*request){
-  Request *req = (Request *)request;
-  HttpsRequest *https_req = (HttpsRequest *)req->__private;
-  Message *message = (Message*)https_req->message;
+void __httpsRequest_cleanup(Request*request){
+  Message *message = GET_MESSAGE_FROM_REQUEST(request);
   if(message->ssl!=NULL) SSL_shutdown(message->ssl);
-  // if(message->ssl!=NULL) SSL_free(message->ssl);
   if(ISVALIDSOCKET(message->sockfd)) CLOSESOCKET(message->sockfd);
 }
 

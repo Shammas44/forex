@@ -2,25 +2,26 @@
 #define HTTPSRESPONSEBUILDER_H
 #include "httpsResponse.h"
 
-struct HttpsResponseBuilder;
+#define T HttpsResponseBuilder 
+typedef struct T T;
 
-typedef struct HttpsResponseBuilder *(HttpsResponseBuilder_build)(struct HttpsResponseBuilder *builder, SSL*ssl);
-typedef struct HttpsResponseBuilder *(HttpsResponseBuilder_set_body)(struct HttpsResponseBuilder *builder, char* body);
-typedef struct HttpsResponseBuilder *(HttpsResponseBuilder_add_header)(struct HttpsResponseBuilder *builder, char* header);
-typedef struct HttpsResponseBuilder *(HttpsResponseBuilder_set_status)(struct HttpsResponseBuilder *builder, char* status);
-typedef Response *(HttpsResponseBuilder_get)(struct HttpsResponseBuilder *builder);
-typedef void (httpsResponseBuilder_destructor)(struct HttpsResponseBuilder *builder);
+typedef T *(HttpsResponseBuilder_build)(T *builder, SSL*ssl);
+typedef T *(HttpsResponseBuilder_set_body)(T *builder, char* body);
+typedef T *(HttpsResponseBuilder_add_header)(T *builder, char* header);
+typedef T *(HttpsResponseBuilder_set_status)(T *builder, char* status);
+typedef Response *(HttpsResponseBuilder_get)(T *builder);
+typedef void (HttpsResponseBuilder_destructor)(T *builder);
 
-typedef struct {
-  HttpsResponseBuilder_build *build_func;
-  HttpsResponseBuilder_set_body *set_body_func;
-  HttpsResponseBuilder_add_header *add_header_func;
-  HttpsResponseBuilder_set_status *set_status_func;
-  HttpsResponseBuilder_get *get_func;
-  httpsResponseBuilder_destructor *destructor_func;
-  void * __private;
-} HttpsResponseBuilder;
+struct T {
+  HttpsResponseBuilder_build *build;
+  HttpsResponseBuilder_set_body *set_body;
+  HttpsResponseBuilder_add_header *add_header;
+  HttpsResponseBuilder_set_status *set_status;
+  HttpsResponseBuilder_destructor *destructor;
+  HttpsResponseBuilder_get *get;
+  void *__private;
+};
 
-HttpsResponseBuilder *httpsResponseBuilder_constructor();
-
+T *httpsResponseBuilder_constructor();
+#undef T
 #endif 

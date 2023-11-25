@@ -13,20 +13,24 @@
 #include <unistd.h>
 #include <openssl/rand.h>
 #include "response.h"
+#include "message.h"
 
-struct httpsResponse_prefill;
+#define T HttpsResponse
 
-typedef struct Response *(HttpsResponse_set_status)(struct Response *res, char* status);
-typedef struct Response *(HttpsResponse_set_body)(struct Response *res, char* body);
-typedef struct Response *(HttpsResponse_add_header)(struct Response *res, char* header);
+typedef struct T T;
+typedef struct HttpsResponse_prefill HttpsResponse_prefill;
 
-typedef struct HttpsResponse {
-    struct Message *message;
-    HttpsResponse_set_status *set_status_func;
-    HttpsResponse_set_body *set_body_func;
-    HttpsResponse_add_header *add_header_func;
-} HttpsResponse;
+typedef Response *(HttpsResponse_set_status)(Response *res, char* status);
+typedef Response *(HttpsResponse_set_body)(Response *res, char* body);
+typedef Response *(HttpsResponse_add_header)(Response *res, char* header);
+
+struct T {
+    Message *message;
+    HttpsResponse_set_status *set_status;
+    HttpsResponse_set_body *set_body;
+    HttpsResponse_add_header *add_header;
+};
 
 Response * httpsResponse_constructor(SSL*ssl);
-
+#undef T
 #endif

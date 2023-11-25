@@ -7,6 +7,7 @@ char* __url_parse_string(char *string,char *out, const char delimiter);
 
 //@TODO handle ipv6 addresses
 Url *url_constructor(char *url) {
+  if(url == NULL) return NULL;
   Url *url_struct = malloc(sizeof(Url));
   int i = 0;
   int j = 0;

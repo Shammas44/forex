@@ -31,6 +31,7 @@ int ws_establish_handshake(SSL **ssl, Request *request, Response *res) {
   // int myBool = (status != 0);
   // __ws_cleanup(!myBool,*ssl, sockfd);
   // return status;
+  return 0;
 }
 
 void ws_send_message(SSL *ssl, const char *message) {

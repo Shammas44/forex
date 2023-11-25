@@ -1,21 +1,21 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
+#define T Message
+typedef struct T T;
 
-struct Message;
+typedef struct Message_prefill Message_prefill;
 
-struct message_prefill;
+typedef T * (Message_constructor)(Message_prefill prefill);
+typedef int (Message_destructor)(T * msg);
+typedef int (Message_stringify)(T * msg, char **res);
+typedef void (Message_print)(T *msg);
 
-typedef struct Message * (message_constructor_func)(struct message_prefill prefill);
-typedef int (message_destructor_func)(struct Message * msg);
-typedef int (message_stringify_func)(struct Message * msg, char **res);
-typedef void (message_print_func)(struct Message *msg);
+T * message_constructor(Message_prefill prefill);
 
-struct Message * message_constructor(struct message_prefill prefill);
+int message_destructor(T * msg);
 
-int message_destructor(struct Message * msg);
+int message_stringify(T * msg, char **res);
 
-int message_stringify(struct Message * msg, char **res);
-
-void message_print(struct Message *msg);
-
+void message_print(T *msg);
+#undef T
 #endif 

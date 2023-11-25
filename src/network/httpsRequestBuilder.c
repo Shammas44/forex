@@ -1,29 +1,27 @@
 #include "httpsRequestBuilder.h"
-#include "httpsRequest.h"
 
- struct HttpsRequestBuilder *__httpsRequestBuilder_build(struct HttpsRequestBuilder *builder, char* url);
- struct HttpsRequestBuilder *__httpsRequestBuilder_set_body(struct HttpsRequestBuilder *builder, char* body);
- struct HttpsRequestBuilder *__httpsRequestBuilder_add_header(struct HttpsRequestBuilder *builder, char* header);
- struct HttpsRequestBuilder *__httpsRequestBuilder_set_method(struct HttpsRequestBuilder *builder, HttpsRequest_method method);
-void __httpsRequestBuilder_destructor(struct HttpsRequestBuilder *builder);
+#define T HttpsRequestBuilder
 
-typedef struct  {
-  Request* request;
-}HttpsRequestBuilder_private;
+ T *__httpsRequestBuilder_build(T *builder, char* url);
+ T *__httpsRequestBuilder_set_body(T *builder, char* body);
+ T *__httpsRequestBuilder_add_header(T *builder, char* header);
+ T *__httpsRequestBuilder_set_method(T *builder, HttpsRequest_method method);
+ Request *__httpsRequestBuilder_get(T *builder);
+void __httpsRequestBuilder_destructor(T *builder);
 
-HttpsRequestBuilder *httpsRequestBuilder_constructor(){
-  HttpsRequestBuilder *builder = malloc(sizeof(HttpsRequestBuilder));
+T *httpsRequestBuilder_constructor(){
+  T *builder = malloc(sizeof(T));
   builder->destructor = __httpsRequestBuilder_destructor;
   builder->build = __httpsRequestBuilder_build;
   builder->set_body = __httpsRequestBuilder_set_body;
   builder->add_header = __httpsRequestBuilder_add_header;
   builder->set_method = __httpsRequestBuilder_set_method;
-  builder->request = NULL;
+  builder->get = __httpsRequestBuilder_get;
+  builder->__private = NULL;
   return builder;
 }
 
- struct HttpsRequestBuilder *__httpsRequestBuilder_build(struct HttpsRequestBuilder *builder, char* url){
-  HttpsRequestBuilder *__builder = (HttpsRequestBuilder *)builder;
+ T *__httpsRequestBuilder_build(T *builder, char* url){
   HttpsRequest_prefill prefill = {};
 
   char *headers[] = {
@@ -37,33 +35,43 @@ HttpsRequestBuilder *httpsRequestBuilder_constructor(){
   prefill.header_count = 0;
   prefill.headers = headers;
 
-  struct Request *request = httpsRequest_constructor(prefill);
-  __builder->request = (Request*)request;
+  Request *request = httpsRequest_constructor(prefill);
+  builder->__private = request;
   return builder;
 }
 
-void __httpsRequestBuilder_destructor(struct HttpsRequestBuilder *builder){
-  HttpsRequestBuilder *__builder = (HttpsRequestBuilder *)builder;
-  free(__builder);
+void __httpsRequestBuilder_destructor(T *builder){
+  Request *request = builder->__private;
+  if(request != NULL){
+    request->destructor_func(request);
+  }
+  free(builder);
 }
 
-struct HttpsRequestBuilder *__httpsRequestBuilder_set_body(struct HttpsRequestBuilder *builder, char* body){
-  HttpsRequestBuilder *__builder = (HttpsRequestBuilder *)builder;
-  HttpsRequest *httpsRequest = (HttpsRequest *)__builder->request->__private;
-  httpsRequest->set_body_func((struct Request*)httpsRequest, body);
+T *__httpsRequestBuilder_set_body(T *builder, char* body){
+  Request *request = builder->__private;
+  HttpsRequest *httpsRequest = request->__private;
+  httpsRequest->set_body(request, body);
   return builder;
 }
 
- struct HttpsRequestBuilder *__httpsRequestBuilder_add_header(struct HttpsRequestBuilder *builder, char* header){
-  HttpsRequestBuilder *__builder = (HttpsRequestBuilder *)builder;
-  HttpsRequest *httpsRequest = (HttpsRequest *)__builder->request->__private;
-  httpsRequest->add_header_func((struct Request*)httpsRequest, header);
+ T *__httpsRequestBuilder_add_header(T *builder, char* header){
+  Request *request = builder->__private;
+  HttpsRequest *httpsRequest = request->__private;
+  httpsRequest->add_header(request, header);
   return builder;
 }
 
- struct HttpsRequestBuilder *__httpsRequestBuilder_set_method(struct HttpsRequestBuilder *builder, HttpsRequest_method method){
-  HttpsRequestBuilder *__builder = (HttpsRequestBuilder *)builder;
-  HttpsRequest *httpsRequest = (HttpsRequest *)__builder->request->__private;
-  httpsRequest->set_method_func((struct Request*)httpsRequest, method);
+ T *__httpsRequestBuilder_set_method(T *builder, HttpsRequest_method method){
+  Request *request = builder->__private;
+  HttpsRequest *httpsRequest = request->__private;
+  httpsRequest->set_method(request, method);
   return builder;
 }
+
+ Request *__httpsRequestBuilder_get(T *builder){
+  Request *request = builder->__private;
+  builder->__private = NULL;
+  return request;
+}
+#undef T

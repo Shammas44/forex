@@ -1,25 +1,28 @@
 #ifndef HTTPSREQUESTBUILDER_H
 #define HTTPSREQUESTBUILDER_H
 #include "httpsRequest.h"
-#include "url.h"
 
-struct HttpsRequestBuilder;
+#define T HttpsRequestBuilder
 
-typedef struct HttpsRequestBuilder *(HttpsRequestBuilder_build)(struct HttpsRequestBuilder *builder, char* url);
-typedef struct HttpsRequestBuilder *(HttpsRequestBuilder_set_body)(struct HttpsRequestBuilder *builder, char* body);
-typedef struct HttpsRequestBuilder *(HttpsRequestBuilder_add_header)(struct HttpsRequestBuilder *builder, char* header);
-typedef struct HttpsRequestBuilder *(HttpsRequestBuilder_set_method)(struct HttpsRequestBuilder *builder, HttpsRequest_method method);
-typedef void (HttpsRequestBuilder_destructor)(struct HttpsRequestBuilder *builder);
+typedef struct T T;
 
-typedef struct {
+typedef T *(HttpsRequestBuilder_build)(T *builder, char* url);
+typedef T *(HttpsRequestBuilder_set_body)(T *builder, char* body);
+typedef T *(HttpsRequestBuilder_add_header)(T *builder, char* header);
+typedef T *(HttpsRequestBuilder_set_method)(T *builder, HttpsRequest_method method);
+typedef Request *(HttpsRequestBuilder_get)(T *builder);
+typedef void (HttpsRequestBuilder_destructor)(T *builder);
+
+struct T {
   HttpsRequestBuilder_destructor *destructor;
   HttpsRequestBuilder_build *build;
   HttpsRequestBuilder_set_body *set_body;
   HttpsRequestBuilder_add_header *add_header;
   HttpsRequestBuilder_set_method *set_method;
-  Request * request;
-} HttpsRequestBuilder;
+  HttpsRequestBuilder_get *get;
+  void * __private;
+};
 
-HttpsRequestBuilder *httpsRequestBuilder_constructor();
-
+T *httpsRequestBuilder_constructor();
+#undef T
 #endif 

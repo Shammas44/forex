@@ -1,4 +1,4 @@
-#include "wsFrame.h"
+#include "wsframe.h"
 #define x128 0x80
 #define x127 0x7f
 #define x126 0x7e
