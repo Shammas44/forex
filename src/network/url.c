@@ -27,8 +27,15 @@ Url *url_constructor(char *url) {
 
   url = __url_parse_string(url, protocol, ':');
   url+=3; //because of the :// in url
-  url = __url_parse_string(url, host, '/');
-  url = __url_parse_string(url, path, '\0');
+
+  if(strchr(url, ':') != NULL){
+    url = __url_parse_string(url, host, ':');
+    url++;
+    url = __url_parse_string(url, port, '\0');
+  }else{
+    url = __url_parse_string(url, host, '/');
+    url = __url_parse_string(url, path, '\0');
+  }
   if (strlen(path) == 0) sprintf(path, "/");
 
   return url_struct;
