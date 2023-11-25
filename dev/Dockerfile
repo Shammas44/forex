@@ -5,7 +5,7 @@ RUN apt-get update && \
 # essential tools
 RUN apt-get install -y git vim gcc clang binutils-i586-linux-gnu valgrind gdb make
 # libs
-RUN apt-get install -y libssl-dev libwebsockets-dev
+RUN apt-get install -y libssl-dev libwebsockets-dev libcriterion-dev
 
 RUN apt-get clean autoclean && \
   apt-get autoremove --yes
