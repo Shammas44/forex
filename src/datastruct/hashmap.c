@@ -26,6 +26,7 @@ T *hashmap_constructor(size_t initial_capacity) {
     map->entries =
         (Hashmap_entry *)malloc(sizeof(Hashmap_entry) * initial_capacity);
     if (map->entries != NULL) {
+      memset(map->entries, 0, sizeof(Hashmap_entry) * initial_capacity);
       map->capacity = initial_capacity;
       map->size = 0;
       return map;
@@ -90,7 +91,6 @@ static void *__hashmap_get(T *map, const char *key) {
 }
 
 static void __hashmap_destructor(T *map) {
-    printf("map: %p\n", map);
     if (map != NULL) {
         for (int i = 0; i < map->capacity; i++) {
             free(map->entries[i].key);
@@ -99,8 +99,8 @@ static void __hashmap_destructor(T *map) {
         free(map);
         map = NULL;
     }
-    printf("map: %p\n", map);
 }
+
 #undef LOAD_FACTOR_THRESHOLD
 #undef T
 #undef MAX_CAPACITY
