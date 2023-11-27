@@ -1,6 +1,7 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 #include "message.h"
+#include <openssl/err.h>
 #define T Request
 
 typedef struct T T;
@@ -14,11 +15,11 @@ typedef void (request_print)(T *request);
 typedef void* (request_get_connection)(T *request);
 
  struct Request {
-  request_destructor *destructor_func;
-  request_send *send_func;
-  request_stringify *stringify_func;
-  request_print *print_func;
-  request_get_connection *get_connection_func;
+  request_destructor *destructor;
+  request_send *send;
+  request_stringify *stringify;
+  request_print *print;
+  request_get_connection *get_connection;
   void * __private;
 };
 

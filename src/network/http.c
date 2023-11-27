@@ -1,4 +1,7 @@
 #include "http.h"
+#include "jsmn.h"
+#include "json.h"
+#include "wsframe.old.h"
 
 #define SOCKET int
 #define CLOSESOCKET(s) close(s)
@@ -37,7 +40,7 @@ int ws_fetch(SSL **ssl, HttpRequest *request, HttpResponse *res){
 
   while(!status){
     if(send_request(request,ssl, &sockfd,res)) status = get_error("send_request() failed.");
-    if(wsFrame_read_response_handshake(*ssl)) status = get_error("ws handshake failed."); 
+    if(wsframe_read_response_handshake(*ssl)) status = get_error("ws handshake failed."); 
     break;
   }
   int myBool = (status != 0);

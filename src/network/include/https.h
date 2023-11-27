@@ -5,31 +5,31 @@
 #include "httpsResponseBuilder.h"
 #include "httpsResponse.h"
 
-struct Https;
+#define T Https
 
-typedef Response* (https_fetch)(struct Https *https, Request *request);
+typedef struct T T;
 
-typedef Response* (https_get)(struct Https *https, Request *request);
+typedef Response* (https_fetch)(T *https, Request *request);
+typedef Response* (https_get)(T *https, Request *request);
+typedef Response* (https_post)(T *https, Request *request);
+typedef Response* (https_put)(T *https, Request *request);
+typedef Response* (https_patch)(T *https, Request *request);
+typedef Response* (https_delete)(T *https, Request *request);
+typedef SSL* (https_ws_handshake)(T *https, Request *request);
+typedef void (https_destructor)(T *https);
 
-typedef Response* (https_post)(struct Https *https, Request *request);
-
-typedef Response* (https_put)(struct Https *https, Request *request);
-
-typedef Response* (https_patch)(struct Https *https, Request *request);
-
-typedef Response* (https_delete)(struct Https *https, Request *request);
-
-typedef void (https_destructor)(struct Https *https);
-
-typedef struct Https {
-  HttpsResponseBuilder *response_builder;
+typedef struct T {
+  https_destructor * destructor;
   https_get * get;
   https_post * post;
   https_put * put;
   https_patch * patch;
   https_delete * delete;
-  https_destructor * destructor;
-} Https;
+  https_ws_handshake * ws_handshake;
+  HttpsResponseBuilder * response_builder;
+} T;
 
-Https * https_constructor();
+T * https_constructor();
+
+#undef T
 #endif

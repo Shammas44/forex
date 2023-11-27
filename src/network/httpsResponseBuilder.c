@@ -32,7 +32,7 @@ T *httpsResponseBuilder_constructor(){
 void __httpsResponseBuilder_destructor(T *builder){
   Response *response = builder->__private;
   if(response != NULL){
-    response->destructor_func(response);
+    response->destructor(response);
   }
   free(builder);
 }

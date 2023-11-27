@@ -38,7 +38,7 @@ char *__httpsRequest_method_to_string(HttpsRequest_method method);
 Request *__httpsRequest_set_method(Request *req, HttpsRequest_method method);
 Request *__httpsRequest_set_body(Request *req, char* body);
 Request *__httpsRequest_add_header(Request *req, char* header);
- void *__httpsRequest_get_ssl(Request* request);
+void *__httpsRequest_get_ssl(Request* request);
 void __httpsRequest_cleanup(Request*request);
 
 Request *httpsRequest_constructor(HttpsRequest_prefill prefill) {
@@ -47,11 +47,11 @@ Request *httpsRequest_constructor(HttpsRequest_prefill prefill) {
   HttpsRequest *httpsRequest = malloc(sizeof(HttpsRequest));
   //request
   request->__private = httpsRequest;
-  request->print_func = __httpsRequest_print;
-  request->stringify_func = __httpsRequest_stringify;
-  request->send_func = __httpsRequest_send;
-  request->destructor_func = __httpsRequest_destructor;
-  request->get_connection_func = __httpsRequest_get_ssl;
+  request->print = __httpsRequest_print;
+  request->stringify = __httpsRequest_stringify;
+  request->send = __httpsRequest_send;
+  request->destructor = __httpsRequest_destructor;
+  request->get_connection = __httpsRequest_get_ssl;
   //httpsRequest
   httpsRequest->set_body = __httpsRequest_set_body;
   httpsRequest->set_method = __httpsRequest_set_method;
@@ -85,7 +85,7 @@ Request *httpsRequest_constructor(HttpsRequest_prefill prefill) {
   char **headers = malloc(sizeof(char*) * 10);
   if (headers != NULL) {
     for (int i = 0; i < 10; i++) {
-      headers[i] = malloc(sizeof(char) * 128);
+      headers[i] = malloc(sizeof(char) * 200);
       if (headers[i] != NULL) {
         if (i < prefill.header_count && prefill.headers[i] != NULL) {
           strncpy(headers[i], prefill.headers[i], 127); // Copy up to 127 characters
@@ -104,7 +104,7 @@ Request *httpsRequest_constructor(HttpsRequest_prefill prefill) {
 int __httpsRequest_destructor(Request *request) {
   HttpsRequest *httpsRequest = request->__private;
   Message * message = httpsRequest->message;
-  if(message->ssl!=NULL) SSL_free(message->ssl);
+  // if(message->ssl!=NULL) SSL_free(message->ssl);
   url_destructor(message->url);
   for (int i = 0; i < 10; i++) {
     free(message->headers[i]);
@@ -196,6 +196,9 @@ int __httpsRequest_send(Request *request){
       error = get_error("SSL_CTX_new() failed.");
     }
 
+    //disble ssl certificate verification -- only for dev
+    // SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
+
     status = network_get_adresses(host, port, &add_info);
     if (ONERROR(status)) {
       error = get_error("getaddrinfo() failed.");
@@ -233,6 +236,7 @@ int __httpsRequest_send(Request *request){
 
     int request_len = __httpsRequest_stringify(request, &str_request);
     status = SSL_write(*ssl, str_request, request_len);
+
     free(str_request);
     if (status == -1) {
       error = get_error("ssl_write() failed.");

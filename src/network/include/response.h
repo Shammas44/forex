@@ -11,13 +11,15 @@ typedef T * (Response_constructor)(Response_prefill prefill);
 typedef int (Response_destructor)(T * response);
 typedef int (Response_stringify)(T * response, char **out);
 typedef void (Response_print)(T *response);
+typedef char* (Response_get_status)(T *response);
 
  struct T {
-  Response_constructor *constructor_func;
-  Response_destructor *destructor_func;
-  Response_receive *receive_func;
-  Response_stringify *stringify_func;
-  Response_print *print_func;
+  Response_constructor *constructor;
+  Response_destructor *destructor;
+  Response_receive *receive;
+  Response_stringify *stringify;
+  Response_print *print;
+  Response_get_status *get_status;
   void * __private;
 };
 

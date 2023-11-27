@@ -43,7 +43,7 @@ T *httpsRequestBuilder_constructor(){
 void __httpsRequestBuilder_destructor(T *builder){
   Request *request = builder->__private;
   if(request != NULL){
-    request->destructor_func(request);
+    request->destructor(request);
   }
   free(builder);
 }

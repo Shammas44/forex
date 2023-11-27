@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <openssl/err.h>
 #include "buffer.h"
-#include "wsframe.h"
+#include "wsFrame.h"
 #include "tls.h"
 #include "error.h"
 #include "network.h"

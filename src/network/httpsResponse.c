@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <fcntl.h>
 #include "httpsResponse.h"
 #include "hashmap.h"
+#define MAX_TIMEOUT_SECONDS 5 // Change this according to your desired timeout
 
 // =========================================================================="
 // Data structures
@@ -22,6 +24,7 @@ int __httpsResponse_receive(Response *res);
 int __httpsResponse_destructor(Response *response);
 int __httpsResponse_stringify(Response *response, char **out);
 void __httpsResponse_print(Response *response);
+char* __httpsResponse_get_status(Response *response);
 int __httpsResponse_parse(char *raw_response, Message *response);
 int __httpsResponse_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity);
 Response *__httpsResponse_set_status(Response *res, char *status);
@@ -36,10 +39,11 @@ Hashmap* __httpsResponse_extract_headers(const char *rawResponse);
 Response *httpsResponse_constructor(SSL *ssl) {
   Response *response = malloc(sizeof(Response));
   HttpsResponse *httpsResponse = malloc(sizeof(HttpsResponse));
-  response->receive_func = __httpsResponse_receive;
-  response->destructor_func = __httpsResponse_destructor;
-  response->stringify_func = __httpsResponse_stringify;
-  response->print_func = __httpsResponse_print;
+  response->receive = __httpsResponse_receive;
+  response->destructor = __httpsResponse_destructor;
+  response->stringify = __httpsResponse_stringify;
+  response->print = __httpsResponse_print;
+  response->get_status = __httpsResponse_get_status;
   response->__private = httpsResponse;
   HttpsResponse *https_response = response->__private;
   Message *message = malloc(sizeof(Message));
@@ -141,6 +145,7 @@ int __httpsResponse_parse(char *raw_response, Message *response) {
   response->body = strdup(separator + 4);
 
   char *status_start = strstr(raw_response, " ");
+  status_start++; //to skip space in front of status code
   char *status_end = strstr(status_start + 1, " ");
   int status_length = status_end - status_start;
   response->status = malloc(status_length + 1);
@@ -229,46 +234,46 @@ void __httpsResponse_print(Response *response) {
   }
 }
 
-int __httpsResponse_extract_authorization(Response *response, char **authorization) {
-  HttpsResponse *private = response->__private;
-  Message *message = private->message;
-  jsmn_parser parser;
-  jsmn_init(&parser);
-  char *json = message->body;
-  int required_tokens = jsmn_parse(&parser, json, strlen(json), NULL, 0);
-  jsmntok_t *tokens = malloc(sizeof(jsmntok_t) * required_tokens);
-  jsmn_init(&parser);
-  int token_num =
-      jsmn_parse(&parser, json, strlen(json), tokens, required_tokens);
-  if (token_num < 0)
-    return get_error("Failed to parse JSON");
-  if (token_num < 1 || tokens[0].type != JSMN_OBJECT) {
-    return get_error("jsmn expected another type of data");
-  }
+// int __httpsResponse_extract_authorization(Response *response, char **authorization) {
+//   HttpsResponse *private = response->__private;
+//   Message *message = private->message;
+//   jsmn_parser parser;
+//   jsmn_init(&parser);
+//   char *json = message->body;
+//   int required_tokens = jsmn_parse(&parser, json, strlen(json), NULL, 0);
+//   jsmntok_t *tokens = malloc(sizeof(jsmntok_t) * required_tokens);
+//   jsmn_init(&parser);
+//   int token_num =
+//       jsmn_parse(&parser, json, strlen(json), tokens, required_tokens);
+//   if (token_num < 0)
+//     return get_error("Failed to parse JSON");
+//   if (token_num < 1 || tokens[0].type != JSMN_OBJECT) {
+//     return get_error("jsmn expected another type of data");
+//   }
 
-  bool found = false;
-  for (int i = 1; i < token_num && !found; i++) {
-    if (tokens[i].type == JSMN_STRING &&
-        json_cmp_token_to_string(json, &tokens[i], "token") == 0) {
-      i++;
+//   bool found = false;
+//   for (int i = 1; i < token_num && !found; i++) {
+//     if (tokens[i].type == JSMN_STRING &&
+//         json_cmp_token_to_string(json, &tokens[i], "token") == 0) {
+//       i++;
 
-      int token_length = tokens[i].end - tokens[i].start;
-      *authorization = malloc(
-          sizeof(char) * (token_length + strlen("Authorization: Bearer ") + 1));
-      if (*authorization == NULL) {
-        printf("Memory allocation failed!\n");
-        break;
-      }
+//       int token_length = tokens[i].end - tokens[i].start;
+//       *authorization = malloc(
+//           sizeof(char) * (token_length + strlen("Authorization: Bearer ") + 1));
+//       if (*authorization == NULL) {
+//         printf("Memory allocation failed!\n");
+//         break;
+//       }
 
-      int t = sprintf(*authorization, "Authorization: Bearer %.*s",
-                      token_length, json + tokens[i].start);
-      // *authorization[t + 1] = '\0';
-      (*authorization)[t] = '\0';
-      found = true;
-    }
-  }
-  return 0;
-}
+//       int t = sprintf(*authorization, "Authorization: Bearer %.*s",
+//                       token_length, json + tokens[i].start);
+//       // *authorization[t + 1] = '\0';
+//       (*authorization)[t] = '\0';
+//       found = true;
+//     }
+//   }
+//   return 0;
+// }
 
 Response *__httpsResponse_set_status(Response *res, char *status);
 Response *__httpsResponse_set_body(Response *res, char *body);
@@ -287,33 +292,84 @@ int __httpsResponse_receive(Response *response) {
       ssl, &raw_response, &response_size, &response_capacity);
   if (status)
     return status;
-  __httpsResponse_parse(raw_response, message);
+  status = __httpsResponse_parse(raw_response, message);
   free(raw_response);
-  return 0;
+  return status;
+}
+
+
+int setSocketNonBlocking(int socket_fd) {
+    int flags = fcntl(socket_fd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl F_GETFL");
+        return -1;
+    }
+
+    if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("fcntl F_SETFL O_NONBLOCK");
+        return -1;
+    }
+
+    return 0;
 }
 
 int __httpsResponse_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity) {
-  ssize_t bytes_received;
+    ssize_t bytes_received;
+    int socket_fd = SSL_get_fd(ssl);
 
-  while ((bytes_received = SSL_read(ssl, *response_ptr + *response_size,
-                                    *response_capacity - *response_size)) > 0) {
-    *response_size += bytes_received;
-    if (*response_size == *response_capacity) {
-      *response_capacity *= 2; // Double the capacity
-      char *new_response = realloc(*response_ptr, *response_capacity);
-      if (!new_response) {
-        free(*response_ptr);
-        return get_error("realloc() failed.");
-      }
-      *response_ptr = new_response;
+    //TODO: invesiagte why does the following code interrupt data flow in ws listening
+    // Set socket to non-blocking mode
+    // if (setSocketNonBlocking(socket_fd) == -1) {
+    //     return -1;
+    // }
+
+    int total_wait_seconds = 0;
+
+    while (total_wait_seconds < MAX_TIMEOUT_SECONDS) {
+        bytes_received = SSL_read(ssl, *response_ptr + *response_size, *response_capacity - *response_size);
+        if (bytes_received > 0) {
+            *response_size += bytes_received;
+            if (*response_size == *response_capacity) {
+                *response_capacity *= 2; // Double the capacity
+                char *new_response = realloc(*response_ptr, *response_capacity);
+                if (!new_response) {
+                    free(*response_ptr);
+                    return -1; // Adjust this error handling according to your needs
+                }
+                *response_ptr = new_response;
+            }
+            return 0; // Successful read
+        } else if (bytes_received == 0) {
+            // No more data
+            break;
+        } else {
+            int err = SSL_get_error(ssl, bytes_received);
+            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                // Retry if more data is expected
+                sleep(1); // Adjust sleep time as needed
+                total_wait_seconds++;
+                continue;
+            } else if (err == SSL_ERROR_SYSCALL && errno == EAGAIN) {
+                // Timeout occurred
+                printf("SSL read timeout occurred after %d seconds.\n", MAX_TIMEOUT_SECONDS);
+                return -1; // Timeout error
+            } else {
+                // Other error occurred
+                fprintf(stderr, "SSL read error: %s\n", ERR_reason_error_string(ERR_get_error()));
+                return -1; // Adjust error handling as needed
+            }
+        }
     }
-  }
 
-  if (bytes_received < 0) {
-    free(*response_ptr);
-    return get_error("SSL_read() failed.");
-  }
-
-  (*response_ptr)[*response_size] = '\0';
-  return 0;
+    // Timeout occurred
+    printf("SSL read timeout occurred after %d seconds.\n", MAX_TIMEOUT_SECONDS);
+    return -1; // Timeout error
 }
+
+char *__httpsResponse_get_status(Response *response) {
+  HttpsResponse *private = response->__private;
+  Message *message = private->message;
+  return message->status;
+}
+
+#undef MAX_TIMEOUT_SECONDS 

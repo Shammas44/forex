@@ -12,12 +12,20 @@
 #include "httpsRequestBuilder.h"
 #include "httpsResponseBuilder.h"
 #include "https.h"
+#include "RuntimeErrorStub.h"
+#include "wsHandler.h"
 
 // void observer_callback(Observer* observer, void* newState){
 //   puts("observer_callback");
 // }
 
 int main(int argc, char *argv[]) {
+  // int value = 1;
+  // const char *msg = "pas cool"; 
+  // RUNTIME_ERROR(msg, value);
+  const char*error = runtimeErrorStub_get_last_error();
+  printf("%s\n", error);
+
   struct timeval start_time, end_time;
   gettimeofday(&start_time, NULL);
   // Tsmetadata *metadata = malloc(sizeof(Tsmetadata));
@@ -52,26 +60,28 @@ int main(int argc, char *argv[]) {
   // pthread_t prod_tick, prod_candle, trade_logic, order_process, server;
 
   Https *https = https_constructor();
-
+  WsHandler *ws = wsHandler_constructor(https);
   HttpsRequestBuilder *req_builder = httpsRequestBuilder_constructor();
-  struct HttpsRequestBuilder* __req_builder = (struct HttpsRequestBuilder*)req_builder;
+  char authorization[] = "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZGFkIiwiZXhwIjoxNzAxNjAwOTA2LCJzY29wZSI6InVzZXIiLCJpYXQiOjE3MDA5OTYxMDZ9.XJNIetdnqH5f68xERchlI18TAuCASP12NNh6H1A62zQ";
 
-  req_builder->build(__req_builder,"https://google.com");
-  // req_builder->set_body_func(__req_builder,"hello world");
-  // req_builder->add_header_func(__req_builder,"daf");
-  // req_builder->add_header_func(__req_builder,"daf");
-  req_builder->add_header(__req_builder,"Connection: close");
-  Request * req = req_builder->request;
-  req->print_func((struct Request*)req);
 
-  //TODO: debug following call
-  Response * res = https->get(https,req);
-  // req->destructor_func((struct Request*)req);
-  // req_builder->destructor(__req_builder);
+  // req_builder->build(req_builder,"https://127.0.0.1:443");
+  req_builder->build(req_builder,"https://127.0.0.1:443/api");
+  // req_builder->set_body(req_builder,body);
+  req_builder->add_header(req_builder,authorization);
+  // req_builder->add_header(req_builder,"Connection: close");
+  req_builder->add_header(req_builder,"Connection: Upgrade");
+  req_builder->add_header(req_builder,"Upgrade: websocket");
+  req_builder->add_header(req_builder,"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==");
+  req_builder->add_header(req_builder,"Sec-WebSocket-Version: 13");
+  Request * req = req_builder->get(req_builder);
+  // req->print_func(req);
+
+  SSL* ssl = https->ws_handshake(https,req);
+  ssl != NULL ? puts("connection established") : puts("connection failed");
+  req_builder->destructor(req_builder);
+  ws->listen(ws,ssl);
   https->destructor(https);
-  req_builder->destructor((struct HttpsRequestBuilder*)req_builder);
-  res->print_func((struct Response*)res);
-  res->destructor_func((struct Response*)res);
 
 
   // HttpsResponseBuilder *res_builder = httpsResponseBuilder_constructor();
