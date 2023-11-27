@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   req_builder->add_header(req_builder,"Upgrade: websocket");
   req_builder->add_header(req_builder,"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==");
   req_builder->add_header(req_builder,"Sec-WebSocket-Version: 13");
-  Request * req = req_builder->get(req_builder);
+  HttpsRequest * req = req_builder->get(req_builder);
   // req->print_func(req);
 
   SSL* ssl = https->ws_handshake(https,req);

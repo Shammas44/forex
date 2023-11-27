@@ -16,7 +16,7 @@ static char* errors[50] = {
 };
 
 void __wsHandler_destructor(T * ws);
-int __wsHandler_handshake(T * ws, Request * request);
+int __wsHandler_handshake(T * ws, HttpsRequest * request);
 void __wsHandler_send(T * ws, SSL *ssl, const char *message);
 int __wsHandler_listen(T * ws, SSL *ssl);
 int __wsHandler_get_frame_length(SSL *ssl,char second_byte, int *bytes_received, int *res);
@@ -41,7 +41,7 @@ T *wsHandler_constructor(Https * https){
 
 void __wsHandler_destructor(T * ws){ }
 
-int __wsHandler_handshake(T * ws, Request * request){
+int __wsHandler_handshake(T * ws, HttpsRequest * request){
   Private * private = (Private*)ws->__private;
   Https * https = private->https;
   Response * res = https->get(https, request);

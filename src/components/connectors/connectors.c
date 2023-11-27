@@ -1,4 +1,5 @@
 #include "connectors.h"
+#include "wsframe.old.h"
 
 int connectors_get_auth(char **authorization) {
   char body1[] = "{\"email\":\"Admin.Admin@orif.ch\",\"password\":\"adad\"}";
@@ -33,7 +34,7 @@ int connectors_read_websocket_frames(Mtqueue_list *q) {
 
   while (1) {
     char *out_message = NULL;
-    status = wsFrame_read_single_frame(q->ssl, &out_message);
+    status = wsframe_read_single_frame(q->ssl, &out_message);
 
     if (status != 0) {
       free(out_message);

@@ -2,11 +2,11 @@
 
 #define T HttpsRequestBuilder
 
- T *__httpsRequestBuilder_build(T *builder, char* url);
- T *__httpsRequestBuilder_set_body(T *builder, char* body);
- T *__httpsRequestBuilder_add_header(T *builder, char* header);
- T *__httpsRequestBuilder_set_method(T *builder, HttpsRequest_method method);
- Request *__httpsRequestBuilder_get(T *builder);
+T *__httpsRequestBuilder_build(T *builder, char* url);
+T *__httpsRequestBuilder_set_body(T *builder, char* body);
+T *__httpsRequestBuilder_add_header(T *builder, char* header);
+T *__httpsRequestBuilder_set_method(T *builder, HttpsRequest_method method);
+HttpsRequest *__httpsRequestBuilder_get(T *builder);
 void __httpsRequestBuilder_destructor(T *builder);
 
 T *httpsRequestBuilder_constructor(){
@@ -35,13 +35,13 @@ T *httpsRequestBuilder_constructor(){
   prefill.header_count = 0;
   prefill.headers = headers;
 
-  Request *request = httpsRequest_constructor(prefill);
+  HttpsRequest *request = httpsRequest_constructor(prefill);
   builder->__private = request;
   return builder;
 }
 
 void __httpsRequestBuilder_destructor(T *builder){
-  Request *request = builder->__private;
+  HttpsRequest *request = builder->__private;
   if(request != NULL){
     request->destructor(request);
   }
@@ -49,28 +49,25 @@ void __httpsRequestBuilder_destructor(T *builder){
 }
 
 T *__httpsRequestBuilder_set_body(T *builder, char* body){
-  Request *request = builder->__private;
-  HttpsRequest *httpsRequest = request->__private;
-  httpsRequest->set_body(request, body);
+  HttpsRequest *request = builder->__private;
+  request->set_body(request, body);
   return builder;
 }
 
  T *__httpsRequestBuilder_add_header(T *builder, char* header){
-  Request *request = builder->__private;
-  HttpsRequest *httpsRequest = request->__private;
-  httpsRequest->add_header(request, header);
+  HttpsRequest *request = builder->__private;
+  request->add_header(request, header);
   return builder;
 }
 
  T *__httpsRequestBuilder_set_method(T *builder, HttpsRequest_method method){
-  Request *request = builder->__private;
-  HttpsRequest *httpsRequest = request->__private;
-  httpsRequest->set_method(request, method);
+  HttpsRequest *request = builder->__private;
+  request->set_method(request, method);
   return builder;
 }
 
- Request *__httpsRequestBuilder_get(T *builder){
-  Request *request = builder->__private;
+ HttpsRequest *__httpsRequestBuilder_get(T *builder){
+  HttpsRequest *request = builder->__private;
   builder->__private = NULL;
   return request;
 }

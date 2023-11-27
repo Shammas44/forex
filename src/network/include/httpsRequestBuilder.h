@@ -10,7 +10,7 @@ typedef T *(HttpsRequestBuilder_build)(T *builder, char* url);
 typedef T *(HttpsRequestBuilder_set_body)(T *builder, char* body);
 typedef T *(HttpsRequestBuilder_add_header)(T *builder, char* header);
 typedef T *(HttpsRequestBuilder_set_method)(T *builder, HttpsRequest_method method);
-typedef Request *(HttpsRequestBuilder_get)(T *builder);
+typedef HttpsRequest *(HttpsRequestBuilder_get)(T *builder);
 typedef void (HttpsRequestBuilder_destructor)(T *builder);
 
 struct T {
