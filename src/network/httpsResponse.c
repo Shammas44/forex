@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include "httpsResponse.h"
 #include "hashmap.h"
+#define T HttpsResponse
 #define MAX_TIMEOUT_SECONDS 5 // Change this according to your desired timeout
 
 // =========================================================================="
@@ -20,34 +21,34 @@ struct Message {
 // Prototypes functions
 // =========================================================================="
 
-int __httpsResponse_receive(Response *res);
-int __httpsResponse_destructor(Response *response);
-int __httpsResponse_stringify(Response *response, char **out);
-void __httpsResponse_print(Response *response);
-char* __httpsResponse_get_status(Response *response);
+int __httpsResponse_receive(T *res);
+int __httpsResponse_destructor(T *response);
+int __httpsResponse_stringify(T *response, char **out);
+void __httpsResponse_print(T *response);
+char* __httpsResponse_get_status(T *response);
 int __httpsResponse_parse(char *raw_response, Message *response);
 int __httpsResponse_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity);
-Response *__httpsResponse_set_status(Response *res, char *status);
-Response *__httpsResponse_set_body(Response *res, char *body);
-Response *__httpsResponse_add_header(Response *res, char *header);
+T *__httpsResponse_set_status(T *res, char *status);
+T *__httpsResponse_set_body(T *res, char *body);
+T *__httpsResponse_add_header(T *res, char *header);
 Hashmap* __httpsResponse_extract_headers(const char *rawResponse);
 
 // =========================================================================="
 // Public functions
 // =========================================================================="
 
-Response *httpsResponse_constructor(SSL *ssl) {
-  Response *response = malloc(sizeof(Response));
-  HttpsResponse *httpsResponse = malloc(sizeof(HttpsResponse));
+T *httpsResponse_constructor(SSL *ssl) {
+  T *response = malloc(sizeof(T));
+  Message *message = malloc(sizeof(Message));
   response->receive = __httpsResponse_receive;
   response->destructor = __httpsResponse_destructor;
   response->stringify = __httpsResponse_stringify;
   response->print = __httpsResponse_print;
   response->get_status = __httpsResponse_get_status;
-  response->__private = httpsResponse;
-  HttpsResponse *https_response = response->__private;
-  Message *message = malloc(sizeof(Message));
-  https_response->message = message;
+  response->set_status = __httpsResponse_set_status;
+  response->set_body = __httpsResponse_set_body;
+  response->add_header = __httpsResponse_add_header;
+  response->__private = message;
   message->ssl = ssl;
   message->body = NULL;
   message->headers = NULL;
@@ -158,27 +159,25 @@ int __httpsResponse_parse(char *raw_response, Message *response) {
   return 0;
 }
 
-int __httpsResponse_destructor(Response *response) {
-  HttpsResponse *private = response->__private;
-  Message *message = private->message;
+int __httpsResponse_destructor(T *response) {
+  Message *message = response->__private;
   Hashmap *headers = message->headers;
   free(message->status);
   message->headers->destructor(headers);
   free(message->body);
   free(message);
   free(response);
-  free(private);
+  free(message);
   return 0;
 }
 
-int __httpsResponse_stringify(Response *response, char **out) {
-    HttpsResponse *httpsResponse = response->__private;
-    Message *msg = httpsResponse->message;
+int __httpsResponse_stringify(T *response, char **out) {
+    Message *message = response->__private;
 
-    char **headers = __hashmap_entries(msg->headers);
+    char **headers = __hashmap_entries(message->headers);
     size_t headers_length = 0;
 
-    for (int i = 0; i < msg->headers->size; i++) {
+    for (int i = 0; i < message->headers->size; i++) {
         headers_length += strlen(headers[i]) + 1; // +1 for newline character
     }
 
@@ -191,7 +190,7 @@ int __httpsResponse_stringify(Response *response, char **out) {
 
     char *p = raw_headers;
 
-    for (int i = 0; i < msg->headers->size; i++) {
+    for (int i = 0; i < message->headers->size; i++) {
         size_t header_length = strlen(headers[i]);
         snprintf(p, header_length + 2, "%s\n", headers[i]); // +2 for newline and null terminator
         p += header_length + 1; // Move the pointer forward
@@ -199,7 +198,7 @@ int __httpsResponse_stringify(Response *response, char **out) {
     *p = '\0'; // Null-terminate the string
 
     // Calculate total length including headers, body, and extra newline characters
-    size_t body_length = (msg->body != NULL) ? strlen(msg->body) : 0;
+    size_t body_length = (message->body != NULL) ? strlen(message->body) : 0;
     size_t total_length = headers_length + body_length + 2; // +2 for two newlines
 
     // Allocate memory for the final output string
@@ -210,10 +209,10 @@ int __httpsResponse_stringify(Response *response, char **out) {
     }
 
     // Construct the final output string
-    snprintf(*out, total_length + 1, "%s\n\n%s", raw_headers, (msg->body != NULL) ? msg->body : "");
+    snprintf(*out, total_length + 1, "%s\n\n%s", raw_headers, (message->body != NULL) ? message->body : "");
 
     // Free allocated memory and cleanup
-    for (int i = 0; i < msg->headers->size; i++) {
+    for (int i = 0; i < message->headers->size; i++) {
         free(headers[i]);
     }
     free(raw_headers);
@@ -221,10 +220,9 @@ int __httpsResponse_stringify(Response *response, char **out) {
     return 0;
 }
 
-void __httpsResponse_print(Response *response) {
+void __httpsResponse_print(T *response) {
   char *string;
-  HttpsResponse *httpsResponse = response->__private;
-  Message *msg = httpsResponse->message;
+  Message *message = response->__private;
   int status = __httpsResponse_stringify(response, &string);
   if (status) {
     printf("Response is empty\n");
@@ -275,13 +273,18 @@ void __httpsResponse_print(Response *response) {
 //   return 0;
 // }
 
-Response *__httpsResponse_set_status(Response *res, char *status);
-Response *__httpsResponse_set_body(Response *res, char *body);
-Response *__httpsResponse_add_header(Response *res, char *header);
+T *__httpsResponse_set_status(T *response, char *status){
+  return NULL;
+}
+T *__httpsResponse_set_body(T *response, char *body){
+  return NULL;
+}
+T *__httpsResponse_add_header(T *response, char *header){
+return NULL;
+}
 
-int __httpsResponse_receive(Response *response) {
-  HttpsResponse *private = response->__private;
-  Message *message = private->message;
+int __httpsResponse_receive(T *response) {
+  Message *message = response->__private;
   SSL *ssl = message->ssl;
   size_t response_size = 0;
   size_t response_capacity = 4096;
@@ -366,10 +369,10 @@ int __httpsResponse_read_response_bytes(SSL *ssl, char **response_ptr, size_t *r
     return -1; // Timeout error
 }
 
-char *__httpsResponse_get_status(Response *response) {
-  HttpsResponse *private = response->__private;
-  Message *message = private->message;
+char *__httpsResponse_get_status(T *response) {
+  Message *message = response->__private;
   return message->status;
 }
 
 #undef MAX_TIMEOUT_SECONDS 
+#undef T

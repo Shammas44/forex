@@ -9,7 +9,7 @@ typedef T *(HttpsResponseBuilder_build)(T *builder, SSL*ssl);
 typedef T *(HttpsResponseBuilder_set_body)(T *builder, char* body);
 typedef T *(HttpsResponseBuilder_add_header)(T *builder, char* header);
 typedef T *(HttpsResponseBuilder_set_status)(T *builder, char* status);
-typedef Response *(HttpsResponseBuilder_get)(T *builder);
+typedef HttpsResponse *(HttpsResponseBuilder_get)(T *builder);
 typedef void (HttpsResponseBuilder_destructor)(T *builder);
 
 struct T {

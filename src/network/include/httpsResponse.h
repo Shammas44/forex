@@ -20,17 +20,28 @@
 typedef struct T T;
 typedef struct HttpsResponse_prefill HttpsResponse_prefill;
 
-typedef Response *(HttpsResponse_set_status)(Response *res, char* status);
-typedef Response *(HttpsResponse_set_body)(Response *res, char* body);
-typedef Response *(HttpsResponse_add_header)(Response *res, char* header);
+typedef T *(HttpsResponse_set_status)(T *res, char* status);
+typedef T *(HttpsResponse_set_body)(T *res, char* body);
+typedef T *(HttpsResponse_add_header)(T *res, char* header);
+typedef int (HttpsResponse_receive)(T *res);
+// typedef T * (Response_constructor)(Response_prefill prefill);
+typedef int (HttpsResponse_destructor)(T * response);
+typedef int (HttpsResponse_stringify)(T * response, char **out);
+typedef void (HttpsResponse_print)(T *response);
+typedef char* (HttpsResponse_get_status)(T *response);
 
 struct T {
-    Message *message;
+    HttpsResponse_destructor *destructor;
     HttpsResponse_set_status *set_status;
     HttpsResponse_set_body *set_body;
     HttpsResponse_add_header *add_header;
+    HttpsResponse_receive *receive;
+    HttpsResponse_stringify *stringify;
+    HttpsResponse_print *print;
+    HttpsResponse_get_status *get_status;
+    void * __private;
 };
 
-Response * httpsResponse_constructor(SSL*ssl);
+T * httpsResponse_constructor(SSL*ssl);
 #undef T
 #endif

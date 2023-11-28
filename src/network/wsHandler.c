@@ -44,7 +44,7 @@ void __wsHandler_destructor(T * ws){ }
 int __wsHandler_handshake(T * ws, HttpsRequest * request){
   Private * private = (Private*)ws->__private;
   Https * https = private->https;
-  Response * res = https->get(https, request);
+  HttpsResponse * res = https->get(https, request);
   char * status = res->get_status(res);
   return strcmp("101",status) == 0 ?0 :1;
 }

@@ -12,12 +12,12 @@
 // Prototypes functions
 // =========================================================================="
 
-Response* __https_fetch(Https *https, HttpsRequest *request);
-Response* __https_get(Https *https, HttpsRequest *request);
-Response* __https_post(Https *https, HttpsRequest*request);
-Response* __https_put(Https *https, HttpsRequest *request);
-Response* __https_patch(Https *https, HttpsRequest *request);
-Response* __https_delete(Https *https, HttpsRequest *request);
+HttpsResponse* __https_fetch(Https *https, HttpsRequest *request);
+HttpsResponse* __https_get(Https *https, HttpsRequest *request);
+HttpsResponse* __https_post(Https *https, HttpsRequest*request);
+HttpsResponse* __https_put(Https *https, HttpsRequest *request);
+HttpsResponse* __https_patch(Https *https, HttpsRequest *request);
+HttpsResponse* __https_delete(Https *https, HttpsRequest *request);
 SSL* __https_ws_handshake(Https *https, HttpsRequest *request);
 void __https_destructor(Https *https);
 
@@ -50,12 +50,12 @@ void __https_destructor(Https *https){
   if(ctx!=NULL) SSL_CTX_free(ctx);
 }
 
-Response* __https_fetch(Https *https, HttpsRequest *request){
+HttpsResponse* __https_fetch(Https *https, HttpsRequest *request){
   HttpsResponseBuilder *res_builder = https->response_builder;
 
   request->send(request);
   res_builder->build(res_builder, request->get_connection(request));
-  Response * res = res_builder->get(res_builder);
+  HttpsResponse * res = res_builder->get(res_builder);
   int error = res->receive(res);
   if(error){
     printf("SSL_get_error: %d\n", error);
@@ -72,7 +72,7 @@ SSL* __https_ws_handshake(Https *https, HttpsRequest *request){
   request->send(request);
   SSL *ssl = request->get_connection(request);
   res_builder->build(res_builder, ssl);
-  Response * res = res_builder->get(res_builder);
+  HttpsResponse * res = res_builder->get(res_builder);
   int error = res->receive(res);
   if(error){
     printf("SSL_get_error: %d\n", error);
@@ -84,27 +84,27 @@ SSL* __https_ws_handshake(Https *https, HttpsRequest *request){
   return ssl;
 }
 
-Response* __https_get(Https *https, HttpsRequest *request){
+HttpsResponse* __https_get(Https *https, HttpsRequest *request){
   request->set_method(request,GET);
   return __https_fetch(https, request);
 }
 
-Response* __https_post(Https *https, HttpsRequest*request){
+HttpsResponse* __https_post(Https *https, HttpsRequest*request){
   request->set_method(request,POST);
   return __https_fetch(https, request);
 }
 
-Response* __https_put(Https *https, HttpsRequest *request){
+HttpsResponse* __https_put(Https *https, HttpsRequest *request){
   request->set_method(request,PUT);
   return __https_fetch(https, request);
 }
 
-Response* __https_patch(Https *https, HttpsRequest *request){
+HttpsResponse* __https_patch(Https *https, HttpsRequest *request){
   request->set_method(request,PATCH);
   return __https_fetch(https, request);
 }
 
-Response* __https_delete(Https *https, HttpsRequest *request){
+HttpsResponse* __https_delete(Https *https, HttpsRequest *request){
   request->set_method(request,DELETE);
   return __https_fetch(https, request);
 }

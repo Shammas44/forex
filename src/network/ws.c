@@ -19,7 +19,7 @@ void __ws_cleanup(bool ignore, SSL*ssl, SOCKET sockfd);
 // Public functions
 // =========================================================================="
 
-int ws_establish_handshake(SSL **ssl, Request *request, Response *res) {
+// int ws_establish_handshake(SSL **ssl, Request *request, Response *res) {
   // int sockfd;
   // int status = 0;
 
@@ -31,8 +31,8 @@ int ws_establish_handshake(SSL **ssl, Request *request, Response *res) {
   // int myBool = (status != 0);
   // __ws_cleanup(!myBool,*ssl, sockfd);
   // return status;
-  return 0;
-}
+//   return 0;
+// }
 
 void ws_send_message(SSL *ssl, const char *message) {
     // Create a WebSocket frame for sending a text message

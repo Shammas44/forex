@@ -4,9 +4,8 @@
 #define T HttpsResponseBuilder
 #define GET_HTTPS_RESPONSE_FROM_RESPONSE(builder) \
 ({ \
-  Response *_response = builder->__private; \
-  HttpsResponse *_https_response = (HttpsResponse*)_response->__private; \
-  _https_response; \
+  HttpsResponse *_response = builder->__private; \
+  _response; \
 })
 
 
@@ -15,11 +14,11 @@
  T *__httpsResponseBuilder_set_status(T *builder, char* status);
  T *__httpsResponseBuilder_add_header(T *builder, char* header);
 void __httpsResponseBuilder_destructor(T *builder);
-Response *__httpsResponseBuilder_get(T *builder);
+HttpsResponse *__httpsResponseBuilder_get(T *builder);
 
 T *httpsResponseBuilder_constructor(){
   T *builder = malloc(sizeof(T));
-  builder->__private = malloc(sizeof(Response));
+  builder->__private = malloc(sizeof(HttpsResponse));
   builder->build = __httpsResponseBuilder_build;
   builder->set_body = __httpsResponseBuilder_set_body;
   builder->add_header = __httpsResponseBuilder_add_header;
@@ -30,7 +29,7 @@ T *httpsResponseBuilder_constructor(){
 }
 
 void __httpsResponseBuilder_destructor(T *builder){
-  Response *response = builder->__private;
+  HttpsResponse *response = builder->__private;
   if(response != NULL){
     response->destructor(response);
   }
@@ -43,28 +42,25 @@ void __httpsResponseBuilder_destructor(T *builder){
 }
 
 T *__httpsResponseBuilder_set_body(T *builder, char* body){
-  Response * response = builder->__private;
-  HttpsResponse *https_response = (HttpsResponse *)response->__private;
-  https_response->set_body(response, body);
+  HttpsResponse * response = builder->__private;
+  response->set_body(response, body);
   return builder;
 }
 
  T *__httpsResponseBuilder_add_header(T *builder, char* header){
-  Response * response = builder->__private;
-  HttpsResponse *https_response = (HttpsResponse *)response->__private;
-  https_response->add_header(response, header);
+  HttpsResponse * response = builder->__private;
+  response->add_header(response, header);
   return builder;
 }
 
  T *__httpsResponseBuilder_set_status(T *builder, char* status){
-  Response * response = builder->__private;
-  HttpsResponse *https_response = (HttpsResponse *)response->__private;
-  https_response->set_status(response, status);
+  HttpsResponse * response = builder->__private;
+  response->set_status(response, status);
   return builder;
 }
 
-Response *__httpsResponseBuilder_get(T *builder){
-  Response * response = builder->__private;
+HttpsResponse *__httpsResponseBuilder_get(T *builder){
+  HttpsResponse * response = builder->__private;
   builder->__private = NULL;
   return response;
 }
