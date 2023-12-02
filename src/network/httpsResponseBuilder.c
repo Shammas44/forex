@@ -9,7 +9,7 @@
 })
 
 
- T *__httpsResponseBuilder_build(T *builder, SSL*ssl);
+ T *__httpsResponseBuilder_build(T *builder, char* raw_response);
  T *__httpsResponseBuilder_set_body(T *builder, char* body);
  T *__httpsResponseBuilder_set_status(T *builder, char* status);
  T *__httpsResponseBuilder_add_header(T *builder, char* header);
@@ -36,8 +36,8 @@ void __httpsResponseBuilder_destructor(T *builder){
   free(builder);
 }
 
- T *__httpsResponseBuilder_build(T *builder, SSL*ssl){
-  builder->__private = httpsResponse_constructor(ssl);
+ T *__httpsResponseBuilder_build(T *builder, char *raw_response){
+  builder->__private = httpsResponse_constructor(raw_response);
   return builder;
 }
 

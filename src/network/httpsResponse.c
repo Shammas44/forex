@@ -14,14 +14,12 @@ struct Message {
   Hashmap *headers;
   char *body;
   size_t body_length;
-  SSL *ssl;
 };
 
 // =========================================================================="
 // Prototypes functions
 // =========================================================================="
 
-int __httpsResponse_receive(T *res);
 int __httpsResponse_destructor(T *response);
 int __httpsResponse_stringify(T *response, char **out);
 void __httpsResponse_print(T *response);
@@ -32,15 +30,16 @@ T *__httpsResponse_set_status(T *res, char *status);
 T *__httpsResponse_set_body(T *res, char *body);
 T *__httpsResponse_add_header(T *res, char *header);
 Hashmap* __httpsResponse_extract_headers(const char *rawResponse);
+Hashmap * __httpsResponse_get_headers(T *response);
+char * __httpsResponse_get_body(T *response);
 
 // =========================================================================="
 // Public functions
 // =========================================================================="
 
-T *httpsResponse_constructor(SSL *ssl) {
+T *httpsResponse_constructor(char *raw_response) {
   T *response = malloc(sizeof(T));
   Message *message = malloc(sizeof(Message));
-  response->receive = __httpsResponse_receive;
   response->destructor = __httpsResponse_destructor;
   response->stringify = __httpsResponse_stringify;
   response->print = __httpsResponse_print;
@@ -48,12 +47,14 @@ T *httpsResponse_constructor(SSL *ssl) {
   response->set_status = __httpsResponse_set_status;
   response->set_body = __httpsResponse_set_body;
   response->add_header = __httpsResponse_add_header;
+  response->get_body = __httpsResponse_get_body;
+  response->get_headers = __httpsResponse_get_headers;
   response->__private = message;
-  message->ssl = ssl;
   message->body = NULL;
   message->headers = NULL;
   message->status = NULL;
   message->body_length = 0;
+  int status = __httpsResponse_parse(raw_response, message);
   return response;
 }
 
@@ -283,95 +284,105 @@ T *__httpsResponse_add_header(T *response, char *header){
 return NULL;
 }
 
-int __httpsResponse_receive(T *response) {
-  Message *message = response->__private;
-  SSL *ssl = message->ssl;
-  size_t response_size = 0;
-  size_t response_capacity = 4096;
-  char *raw_response = buffer_init(response_capacity);
-  if (!response)
-    return get_error("malloc() failed.");
-  int status = __httpsResponse_read_response_bytes(
-      ssl, &raw_response, &response_size, &response_capacity);
-  if (status)
-    return status;
-  status = __httpsResponse_parse(raw_response, message);
-  free(raw_response);
-  return status;
-}
+// int __httpsResponse_receive(T *response) {
+//   Message *message = response->__private;
+//   SSL *ssl = message->ssl;
+//   size_t response_size = 0;
+//   size_t response_capacity = 4096;
+//   char *raw_response = buffer_init(response_capacity);
+//   if (!response)
+//     return get_error("malloc() failed.");
+//   int status = __httpsResponse_read_response_bytes(
+//       ssl, &raw_response, &response_size, &response_capacity);
+//   if (status)
+//     return status;
+//   status = __httpsResponse_parse(raw_response, message);
+//   free(raw_response);
+//   return status;
+// }
 
 
-int setSocketNonBlocking(int socket_fd) {
-    int flags = fcntl(socket_fd, F_GETFL, 0);
-    if (flags == -1) {
-        perror("fcntl F_GETFL");
-        return -1;
-    }
+// int setSocketNonBlocking(int socket_fd) {
+//     int flags = fcntl(socket_fd, F_GETFL, 0);
+//     if (flags == -1) {
+//         perror("fcntl F_GETFL");
+//         return -1;
+//     }
 
-    if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-        perror("fcntl F_SETFL O_NONBLOCK");
-        return -1;
-    }
+//     if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+//         perror("fcntl F_SETFL O_NONBLOCK");
+//         return -1;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
-int __httpsResponse_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity) {
-    ssize_t bytes_received;
-    int socket_fd = SSL_get_fd(ssl);
+// int __httpsResponse_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity) {
+//     ssize_t bytes_received;
+//     int socket_fd = SSL_get_fd(ssl);
 
-    //TODO: invesiagte why does the following code interrupt data flow in ws listening
-    // Set socket to non-blocking mode
-    // if (setSocketNonBlocking(socket_fd) == -1) {
-    //     return -1;
-    // }
+//     //TODO: invesiagte why does the following code interrupt data flow in ws listening
+//     // Set socket to non-blocking mode
+//     // if (setSocketNonBlocking(socket_fd) == -1) {
+//     //     return -1;
+//     // }
 
-    int total_wait_seconds = 0;
+//     int total_wait_seconds = 0;
 
-    while (total_wait_seconds < MAX_TIMEOUT_SECONDS) {
-        bytes_received = SSL_read(ssl, *response_ptr + *response_size, *response_capacity - *response_size);
-        if (bytes_received > 0) {
-            *response_size += bytes_received;
-            if (*response_size == *response_capacity) {
-                *response_capacity *= 2; // Double the capacity
-                char *new_response = realloc(*response_ptr, *response_capacity);
-                if (!new_response) {
-                    free(*response_ptr);
-                    return -1; // Adjust this error handling according to your needs
-                }
-                *response_ptr = new_response;
-            }
-            return 0; // Successful read
-        } else if (bytes_received == 0) {
-            // No more data
-            break;
-        } else {
-            int err = SSL_get_error(ssl, bytes_received);
-            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
-                // Retry if more data is expected
-                sleep(1); // Adjust sleep time as needed
-                total_wait_seconds++;
-                continue;
-            } else if (err == SSL_ERROR_SYSCALL && errno == EAGAIN) {
-                // Timeout occurred
-                printf("SSL read timeout occurred after %d seconds.\n", MAX_TIMEOUT_SECONDS);
-                return -1; // Timeout error
-            } else {
-                // Other error occurred
-                fprintf(stderr, "SSL read error: %s\n", ERR_reason_error_string(ERR_get_error()));
-                return -1; // Adjust error handling as needed
-            }
-        }
-    }
+//     while (total_wait_seconds < MAX_TIMEOUT_SECONDS) {
+//         bytes_received = SSL_read(ssl, *response_ptr + *response_size, *response_capacity - *response_size);
+//         if (bytes_received > 0) {
+//             *response_size += bytes_received;
+//             if (*response_size == *response_capacity) {
+//                 *response_capacity *= 2; // Double the capacity
+//                 char *new_response = realloc(*response_ptr, *response_capacity);
+//                 if (!new_response) {
+//                     free(*response_ptr);
+//                     return -1; // Adjust this error handling according to your needs
+//                 }
+//                 *response_ptr = new_response;
+//             }
+//             return 0; // Successful read
+//         } else if (bytes_received == 0) {
+//             // No more data
+//             break;
+//         } else {
+//             int err = SSL_get_error(ssl, bytes_received);
+//             if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+//                 // Retry if more data is expected
+//                 sleep(1); // Adjust sleep time as needed
+//                 total_wait_seconds++;
+//                 continue;
+//             } else if (err == SSL_ERROR_SYSCALL && errno == EAGAIN) {
+//                 // Timeout occurred
+//                 printf("SSL read timeout occurred after %d seconds.\n", MAX_TIMEOUT_SECONDS);
+//                 return -1; // Timeout error
+//             } else {
+//                 // Other error occurred
+//                 fprintf(stderr, "SSL read error: %s\n", ERR_reason_error_string(ERR_get_error()));
+//                 return -1; // Adjust error handling as needed
+//             }
+//         }
+//     }
 
-    // Timeout occurred
-    printf("SSL read timeout occurred after %d seconds.\n", MAX_TIMEOUT_SECONDS);
-    return -1; // Timeout error
-}
+//     // Timeout occurred
+//     printf("SSL read timeout occurred after %d seconds.\n", MAX_TIMEOUT_SECONDS);
+//     return -1; // Timeout error
+// }
 
 char *__httpsResponse_get_status(T *response) {
   Message *message = response->__private;
   return message->status;
+}
+
+char *__httpsResponse_get_body(T *response) {
+  Message *message = response->__private;
+  return message->body;
+}
+
+Hashmap *__httpsResponse_get_headers(T *response) {
+  Message *message = response->__private;
+  return message->headers;
 }
 
 #undef MAX_TIMEOUT_SECONDS 

@@ -5,7 +5,7 @@
 #define T HttpsResponseBuilder 
 typedef struct T T;
 
-typedef T *(HttpsResponseBuilder_build)(T *builder, SSL*ssl);
+typedef T *(HttpsResponseBuilder_build)(T *builder, char* raw_response);
 typedef T *(HttpsResponseBuilder_set_body)(T *builder, char* body);
 typedef T *(HttpsResponseBuilder_add_header)(T *builder, char* header);
 typedef T *(HttpsResponseBuilder_set_status)(T *builder, char* status);

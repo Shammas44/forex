@@ -21,15 +21,12 @@ struct Message {
     size_t body_length;
     char** headers;
     size_t header_count;
-    SSL* ssl;
-    int sockfd;
 };
 
 // =========================================================================="
 // Prototypes functions
 // =========================================================================="
 
-int __httpsRequest_send(T *res);
 void __httpsRequest_destructor(T * request);
 int __httpsRequest_stringify(T * request, char **out);
 void __httpsRequest_print(T *request);
@@ -38,33 +35,24 @@ char *__httpsRequest_method_to_string(HttpsRequest_method method);
 T *__httpsRequest_set_method(T *req, HttpsRequest_method method);
 T *__httpsRequest_set_body(T *req, char* body);
 T *__httpsRequest_add_header(T *req, char* header);
-SSL *__httpsRequest_get_ssl(T* request);
-void __httpsRequest_cleanup(T*request);
+Url *__httpsRequest_get_url(T* request);
 
 T *httpsRequest_constructor(HttpsRequest_prefill prefill) {
   Message *message = malloc(sizeof(Message));
   T *request = malloc(sizeof(T));
   request->print = __httpsRequest_print;
   request->stringify = __httpsRequest_stringify;
-  request->send = __httpsRequest_send;
   request->destructor = __httpsRequest_destructor;
-  request->get_connection = __httpsRequest_get_ssl;
   request->set_body = __httpsRequest_set_body;
   request->set_method = __httpsRequest_set_method;
   request->add_header = __httpsRequest_add_header;
-  request->cleanup = __httpsRequest_cleanup;
+  request->get_url = __httpsRequest_get_url;
   request->__private = message;
 
-  //message
-  message->ssl = NULL;
   //message->url
   Url *url = url_constructor(prefill.url);
   message->url = url;
-  //message->method
-  // message->method = __httpsRequest_method_to_string(prefill.method);
   sprintf(message->method, "%s", __httpsRequest_method_to_string(prefill.method));
-  // char *method = malloc(sizeof(char)* strlen(method_as_string));
-  // sprintf(method, "%s", method_as_string);
   //message->body
   char *body;
   size_t body_length = prefill.body!=NULL ? strlen(prefill.body) : 0;
@@ -168,80 +156,6 @@ int __httpsRequest_stringify(T *request, char **out) {
   return offset;
 }
 
-int __httpsRequest_send(T *request){
-  struct addrinfo *add_info = NULL;
-  Message *message = GET_MESSAGE_FROM_REQUEST(request);
-  int status;
-  char *host = message->url->host;
-  char *path = message->url->path;
-  char *port = message->url->port;
-  int domain_len = strlen(message->url->host);
-  int error = 0;
-  SSL **ssl = &message->ssl;
-  int *sockfd = &message->sockfd;
-
-  while (error == 0) {
-
-    network_ini_openssl();
-
-    status = set_ssl_context();
-    if (ONERROR(status)) {
-      error = get_error("SSL_CTX_new() failed.");
-    }
-
-    //disble ssl certificate verification -- only for dev
-    // SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
-
-    status = network_get_adresses(host, port, &add_info);
-    if (ONERROR(status)) {
-      error = get_error("getaddrinfo() failed.");
-    }
-
-    *sockfd = network_get_socket(add_info);
-    if (!ISVALIDSOCKET(sockfd)) {
-      error = get_error("socket() failed.");
-    }
-
-    status = connect(*sockfd, add_info->ai_addr, add_info->ai_addrlen);
-    if (status) {
-      error = get_error("connect() failed.");
-    }
-
-    if (!ctx) {
-      error = get_error("SSL_CTX is NULL.");
-    } else {
-      *ssl = SSL_new(ctx);
-      if (!ssl) {
-        error = get_error("SSL_new() failed.");
-      }
-    }
-
-    if (!SSL_set_tlsext_host_name(*ssl, host)) {
-      error = get_error("SSL_set_tlsext_host_name() failed.");
-    }
-
-    SSL_set_fd(*ssl, *sockfd);
-    if (SSL_connect(*ssl) == -1) {
-      error = get_error("SSL_connect() failed.");
-    }
-
-    char *str_request = NULL;
-
-    int request_len = __httpsRequest_stringify(request, &str_request);
-    status = SSL_write(*ssl, str_request, request_len);
-
-    free(str_request);
-    if (status == -1) {
-      error = get_error("ssl_write() failed.");
-    }
-    break;
-  }
-  if (add_info != NULL)
-    freeaddrinfo(add_info);
-
-  return error;
-}
-
 char* __httpsRequest_method_to_string(HttpsRequest_method method) {
     char* methods[] = {
         [GET] = "GET",
@@ -283,15 +197,10 @@ T *__httpsRequest_add_header(T *request, char* header){
   return request;
 }
 
- SSL *__httpsRequest_get_ssl(T* request){
+ Url *__httpsRequest_get_url(T* request){
   Message *message = GET_MESSAGE_FROM_REQUEST(request);
-  return message->ssl;
+  return message->url;
 }
 
-void __httpsRequest_cleanup(T*request){
-  Message *message = GET_MESSAGE_FROM_REQUEST(request);
-  if(message->ssl!=NULL) SSL_shutdown(message->ssl);
-  if(ISVALIDSOCKET(message->sockfd)) CLOSESOCKET(message->sockfd);
-}
 
 #undef T
