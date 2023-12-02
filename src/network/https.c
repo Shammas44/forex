@@ -59,7 +59,7 @@ void __https_destructor(Https *https){
 HttpsResponse* __https_fetch(Https *https, HttpsRequest *request){
   HttpsResponseBuilder *res_builder = https->response_builder;
   SSL *ssl = NULL;
-  int *sockfd = NULL;
+  int *sockfd = malloc(sizeof(int));
 
   int status = __https_send_request(request, &ssl, sockfd);
   HttpsResponse * response = __https_receive(ssl);
@@ -72,9 +72,8 @@ HttpsResponse* __https_fetch(Https *https, HttpsRequest *request){
 }
 
 SSL* __https_ws_handshake(Https *https, HttpsRequest *request){
-  HttpsResponseBuilder *res_builder = https->response_builder;
   SSL *ssl = NULL;
-  int *sockfd = NULL;
+  int *sockfd = malloc(sizeof(int));
 
   request->set_method(request,GET);
   int status1 = __https_send_request(request, &ssl, sockfd);
