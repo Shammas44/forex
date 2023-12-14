@@ -57,11 +57,11 @@ int connectors_read_websocket_frames(Mtqueue_list *q) {
     char status[20];
     for (int i = 1; i < token_num; i++) {
       if (json_cmp_token_to_string(out_message, &tokens[i], "type") == 0) {
-        json_extract_token("type", tokens, i, out_message, type, to_char);
+        json_extract_token(tokens, i, out_message, type, to_char);
         i++;
       }
       if (json_cmp_token_to_string(out_message, &tokens[i], "status") == 0) {
-        json_extract_token("status", tokens, i, out_message, status, to_char);
+        json_extract_token(tokens, i, out_message, status, to_char);
         i++;
       }
     }

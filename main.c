@@ -2,6 +2,7 @@
 #include "candleprod.h"
 #include "connectors.h"
 #include "csv.h"
+#include "json.h"
 #include "server.h"
 #include "strategy.h"
 #include "ordersProcessor.h"
@@ -14,6 +15,7 @@
 #include "https.h"
 #include "RuntimeErrorStub.h"
 #include "wsHandler.h"
+// #include "tickParser.h"
 
 // void observer_callback(Observer* observer, void* newState){
 //   puts("observer_callback");
@@ -58,16 +60,32 @@ int main(int argc, char *argv[]) {
   // queues.sync = sync;
 
   // pthread_t prod_tick, prod_candle, trade_logic, order_process, server;
-
+  typedef struct {
+    char* lastName;
+    char* firstName;
+    char* age;
+    char* job;
+  } Person;
+  char json[] =
+    "{"
+    "\"nom\":\"Doe\","
+    "\"prénom\":\"John\","
+    "\"age\":\"20\""
+    "\"job\":\"Administrator system IT\""
+    "}";
+  Person* person = json_create_struct(json,sizeof(Person));
+  printf("nom: %s\n",person->lastName);
+  printf("prénom: %s\n",person->firstName);
+  printf("age: %s\n",person->age);
+  printf("job: %s\n",person->job);
+  exit(0);
   Https *https = https_constructor();
   WsHandler *ws = wsHandler_constructor(https);
   HttpsRequestBuilder *req_builder = httpsRequestBuilder_constructor();
   char authorization[] = "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZGFkIiwiZXhwIjoxNzAxNjAwOTA2LCJzY29wZSI6InVzZXIiLCJpYXQiOjE3MDA5OTYxMDZ9.XJNIetdnqH5f68xERchlI18TAuCASP12NNh6H1A62zQ";
 
 
-  // req_builder->build(req_builder,"https://127.0.0.1:443");
   req_builder->build(req_builder,"https://127.0.0.1:443/api");
-  // req_builder->set_body(req_builder,body);
   req_builder->add_header(req_builder,authorization);
   // req_builder->add_header(req_builder,"Connection: close");
   req_builder->add_header(req_builder,"Connection: Upgrade");
@@ -80,7 +98,7 @@ int main(int argc, char *argv[]) {
   SSL* ssl = https->ws_handshake(https,req);
   ssl != NULL ? puts("connection established") : puts("connection failed");
   req_builder->destructor(req_builder);
-  ws->listen(ws,ssl);
+  // ws->listen(ws,ssl);
   https->destructor(https);
 
 

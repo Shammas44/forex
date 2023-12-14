@@ -18,9 +18,10 @@ static char* errors[50] = {
 void __wsHandler_destructor(T * ws);
 int __wsHandler_handshake(T * ws, HttpsRequest * request);
 void __wsHandler_send(T * ws, SSL *ssl, const char *message);
-int __wsHandler_listen(T * ws, SSL *ssl);
+int __wsHandler_listen(T * ws, SSL *ssl, Parser* parser);
 int __wsHandler_get_frame_length(SSL *ssl,char second_byte, int *bytes_received, int *res);
 int __wsHandler_create_frame(SSL *ssl, char **out_message);
+Https* __wsHandler_get_https_handler(T*ws);
 
 typedef struct Private {
   Https *https;
@@ -46,11 +47,14 @@ int __wsHandler_handshake(T * ws, HttpsRequest * request){
   Https * https = private->https;
   HttpsResponse * res = https->get(https, request);
   char * status = res->get_status(res);
-  return strcmp("101",status) == 0 ?0 :1;
+  bool out = strcmp("101",status) == 0 ?0 :1;
+  if(res)res->destructor(res);
+  return out;
 }
+
 void __wsHandler_send(T * ws, SSL *ssl, const char *message){}
 
-int __wsHandler_listen(T * ws, SSL *ssl){
+int __wsHandler_listen(T * ws, SSL *ssl, Parser* parser){
   int status = 0;
   while (1) {
   char *out_message = NULL;
@@ -60,7 +64,7 @@ int __wsHandler_listen(T * ws, SSL *ssl){
       free(out_message);
       break;
     }
-    // printf("\033[2J\033[1;1H");
+    parser->parse(parser,out_message);
     printf("%s\n", out_message);
   }
   return status;
@@ -148,6 +152,10 @@ int __wsHandler_get_frame_length(SSL *ssl,char second_byte, int *bytes_received,
             (int64_t)extended_payload[7];
     }
   return 0;
+}
+
+Https* __wsHandler_get_https_handler(T*ws){
+  return ((Private*)ws->__private)->https;
 }
 
 #undef T

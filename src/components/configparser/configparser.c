@@ -21,36 +21,36 @@ void configparser_init(const char *path, Tsmetadata *m){
 
   for (int i = 1; i < token_num; i++) {
     if (json_cmp_token_to_string(file_content, &tokens[i], "mode") == 0) {
-      json_extract_token("mode", tokens, i, file_content, &m->mode, to_mode);
+      json_extract_token(tokens, i, file_content, &m->mode, to_mode);
       i++;
     }
     if (json_cmp_token_to_string(file_content, &tokens[i], "strategy") == 0) {
-      json_extract_token("strategy", tokens, i, file_content, &m->strategy, to_strategy);
-      json_extract_token("strategy", tokens, i, file_content, &m->strategy_name, to_char);
+      json_extract_token(tokens, i, file_content, &m->strategy, to_strategy);
+      json_extract_token(tokens, i, file_content, &m->strategy_name, to_char);
       i++;
     }
     if (json_cmp_token_to_string(file_content, &tokens[i], "spread") == 0) {
-      json_extract_token("spread", tokens, i, file_content, &m->spread, to_double);
+      json_extract_token(tokens, i, file_content, &m->spread, to_double);
       i++;
     }
     if (json_cmp_token_to_string(file_content, &tokens[i], "capital") == 0) {
-      json_extract_token("capital", tokens, i, file_content, &m->capital, to_double);
+      json_extract_token(tokens, i, file_content, &m->capital, to_double);
       i++;
     }
     if (json_cmp_token_to_string(file_content, &tokens[i], "leverage") == 0) {
-      json_extract_token("leverage", tokens, i, file_content, &m->leverage, to_int);
+      json_extract_token(tokens, i, file_content, &m->leverage, to_int);
       i++;
     }
     if (json_cmp_token_to_string(file_content, &tokens[i], "backtest_data") == 0) {
-      json_extract_token("backtest_data", tokens, i, file_content, &m->backtest_data, to_char);
+      json_extract_token(tokens, i, file_content, &m->backtest_data, to_char);
       i++;
     }
     if (json_cmp_token_to_string(file_content, &tokens[i], "broker_commision_dpm") == 0) {
-      json_extract_token("broker_commision_dpm", tokens, i, file_content, &m->broker_commision_dpm, to_double);
+      json_extract_token(tokens, i, file_content, &m->broker_commision_dpm, to_double);
       i++;
     }
     if (json_cmp_token_to_string(file_content, &tokens[i], "symbol") == 0) {
-      json_extract_token("symbol", tokens, i, file_content, &m->symbol, to_char);
+      json_extract_token(tokens, i, file_content, &m->symbol, to_char);
       i++;
     }
   }

@@ -25,8 +25,8 @@ typedef struct T {
   https_put * put;
   https_patch * patch;
   https_delete * delete;
+  https_fetch * fetch;
   https_ws_handshake * ws_handshake;
-  HttpsResponseBuilder * response_builder;
 } T;
 
 T * https_constructor();

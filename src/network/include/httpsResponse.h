@@ -29,6 +29,8 @@ typedef void(HttpsResponse_print)(T *response);
 typedef char *(HttpsResponse_get_status)(T *response);
 typedef char *(HttpsResponse_get_body)(T *response);
 typedef Hashmap *(HttpsResponse_get_headers)(T *response);
+typedef char *(HttpsResponse_get_header)(T *response,const char*);
+typedef char *(HttpsResponse_get_content_type)(T *response);
 
 struct T {
   HttpsResponse_destructor *destructor;
@@ -40,6 +42,8 @@ struct T {
   HttpsResponse_get_status *get_status;
   HttpsResponse_get_body *get_body;
   HttpsResponse_get_headers *get_headers;
+  HttpsResponse_get_header *get_header;
+  HttpsResponse_get_content_type *get_content_type;
   void *__private;
 };
 

@@ -1,5 +1,4 @@
 #include "https.h"
-#include "httpsResponseBuilder.h"
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
@@ -33,9 +32,7 @@ HttpsResponse *__https_receive(SSL *ssl);
 
 Https * https_constructor(){
   Https * https = (Https*)malloc(sizeof(Https));
-  HttpsResponseBuilder * response_builder = httpsResponseBuilder_constructor();
   https->destructor = __https_destructor;
-  https->response_builder = response_builder;
   https->ws_handshake = __https_ws_handshake;
   https->get = __https_get;
   https->post = __https_post;
@@ -50,14 +47,11 @@ Https * https_constructor(){
 // =========================================================================="
 
 void __https_destructor(Https *https){
-  HttpsResponseBuilder * response_builder = https->response_builder;
-  response_builder->destructor(response_builder);
   free(https);
   if(ctx!=NULL) SSL_CTX_free(ctx);
 }
 
 HttpsResponse* __https_fetch(Https *https, HttpsRequest *request){
-  HttpsResponseBuilder *res_builder = https->response_builder;
   SSL *ssl = NULL;
   int *sockfd = malloc(sizeof(int));
 
@@ -68,6 +62,17 @@ HttpsResponse* __https_fetch(Https *https, HttpsRequest *request){
   }
   __https_cleanup(ssl, *sockfd);
   request->destructor(request);
+  return response;
+}
+
+HttpsResponse * __https_fetch_keep_open(Https *https, HttpsRequest *request, SSL**ssl){
+  int *sockfd = malloc(sizeof(int));
+
+  int status = __https_send_request(request, ssl, sockfd);
+  HttpsResponse * response = __https_receive(*ssl);
+  if(!response){
+    return NULL;
+  }
   return response;
 }
 
@@ -82,6 +87,7 @@ SSL* __https_ws_handshake(Https *https, HttpsRequest *request){
     return NULL;
   }
   char *status = res->get_status(res);
+  char *content_type = res->get_content_type(res);
 
   if(strcmp("101",status) != 0) __https_cleanup(ssl, *sockfd);
   request->destructor(request);
@@ -195,6 +201,7 @@ HttpsResponse *__https_receive(SSL *ssl) {
   if (status)
     return NULL;
   HttpsResponse * response = httpsResponse_constructor(raw_response);
+  printf("%s\n", raw_response);
   free(raw_response);
   return response;
 }

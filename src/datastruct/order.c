@@ -74,7 +74,7 @@ Order order_create(char *json, jsmntok_t **tokens, int token_num) {
   for (int i = 1; i < token_num; i++) {
     for (int j = 0; j < ORDER_PROPS_NUM; j++) {
       if (json_cmp_token_to_string(json, &((*tokens)[i]), prop[j].label) == 0) {
-        json_extract_token(prop[j].label, *tokens, i, json, prop[j].prop,
+        json_extract_token(*tokens, i, json, prop[j].prop,
                            prop[j].fun);
         i++;
       }
