@@ -1,45 +1,33 @@
 #ifndef EXCHANGE_H
 #define EXCHANGE_H
 #include "observer.h"
+#include "parser.h"
+#include "wsHandler.h"
+#define T Exchange
 
-typedef enum Exchange_protocols {
-  Exchange_protocols_HTTPS,
-  Exchange_protocols_WS,
-  Exchange_protocols_FIX,
-} Exchange_protocols;
+typedef struct T T;
 
-struct Exchange;
+typedef int (*Exchange_connect)(T* exchange);
+typedef int (*Exchange_subscribe)(T* exchange);
+typedef int (*Exchange_authenticate)(T* exchange, void *credentials);
+typedef char* (*Exchange_get_auth)(T* exchange);
+typedef int (*Exchange_unsubscribe)(T* exchange);
+typedef void (*Exchange_destructor)(T *exchange);
 
-typedef struct Exchange* (*Exchange_constructor)(struct Exchange *exchange);
-typedef int (*Exchange_connect)(struct Exchange* exchange);
-typedef int (*Exchange_subscribe)(struct Exchange* exchange);
-typedef int (*Exchange_authenticate)(struct Exchange* exchange, void *credentials);
-typedef char* (*Exchange_get_auth)(struct Exchange* exchange);
-typedef int (*Exchange_unsubscribe)(struct Exchange* exchange);
-typedef void (*Exchange_destructor)(struct Exchange *exchange);
+typedef struct T {
+Exchange_destructor *destructor;
+Exchange_connect *connect;
+Exchange_subscribe *subscribe;
+Exchange_authenticate *authenticate;
+Exchange_get_auth *get_auth;
+Exchange_unsubscribe *unsubscribe;
+void * __private;
+}T;
 
-/**
- * constructor
- * @param protocols - protocols type
- * @param url - exchange base url
- * @param token - auth token
- * @return Exchange*
- */
-struct Exchange* exchange_constructor(struct Exchange* exchange);
+T* exchange_constructor(WsHandler*ws,Parser*parser);
 
-int exchange_connect(struct Exchange* exchange);
+// void exchange_attach_observer(struct Exchange* exchange, Observer* observer);
 
-int exchange_authenticate(struct Exchange* exchange, void *credentials);
-
-int exchange_subscribe(struct Exchange* exchange);
-
-char* exchange_get_auth(struct Exchange* exchange);
-
-int exchange_unsubscribe(struct Exchange* exchange);
-
-int exchange_destructor(struct Exchange *exchange);
-
-void exchange_attach_observer(struct Exchange* exchange, Observer* observer);
-
-void exchange_notify_observers(struct Exchange* exchange,void * state);
+// void exchange_notify_observers(struct Exchange* exchange,void * state);
+#undef T
 #endif 

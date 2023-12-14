@@ -1,7 +1,7 @@
-#include <criterion/criterion.h>
-#include <stdio.h>
-#include <string.h>
-#include "array.h"
+// #include <criterion/criterion.h>
+// #include <stdio.h>
+// #include <string.h>
+// #include "array.h"
 // the 3 laws of tdd
 // 1. your are not allowed to write production code unless it make a falling test pass
 // 2. your are not allowed to any more of a unit test that is sufficient to fail

@@ -25,13 +25,16 @@ all: main
 
 .PHONY: bear 
 bear:
-	make clean; bear -- make all
+	make clean; bear -- make test
 
 main: $(OBJS) main.o
 	$(CC) $(FLAGS) $^ -o $(BIN_DIR)$@ $(LIB) 
 
-test: $(OBJS_TEST)
-	$(CC) $(FLAGS_TEST) $(LIB_TEST) $^ -o $(BIN_DIR)$@
+test: $(OBJS) $(TEST_FILES:.c=.o)
+	$(CC) $(FLAGS_TEST) $(INC) $(INC_TEST) $(LIB) $(LIB_TEST) $^ -o $(BIN_DIR)$@
+
+tests/%.o: tests/%.c
+	$(CC) $(FLAGS_TEST) $(INC) $(INC_TEST) -c $< -o $@
 
 %.o: %.c
 	$(CC) $(FLAGS) $(INC) -c $< -o $@ -g
@@ -45,7 +48,7 @@ exec: main
 
 .PHONY: watch_main
 watch_main: 
-	watch -n 1 --color make exec
+	watch -n 5 --color "make exec
 
 # Remove every object file in the project
 .PHONY: clean

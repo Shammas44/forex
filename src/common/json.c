@@ -26,7 +26,7 @@ void json_print_token(const char *key, jsmntok_t *tokens, int i, char *json) {
   printf("%s: %.*s\n", key, token_length, token_string);
 }
 
-void json_extract_token(const char *key, jsmntok_t *tokens, int i, char *json, void*res, Convert_callback callback) {
+void json_extract_token(jsmntok_t *tokens, int i, char *json, void*res, Convert_callback callback) {
   int token_start = tokens[i + 1].start;
   int token_end = tokens[i + 1].end;
   int token_length = token_end - token_start;
@@ -106,6 +106,37 @@ int json_parse(char *json, jsmntype_t expected_type, jsmntok_t **tokens, int *to
     }
 
     return 0;
+}
+
+void* json_create_struct(char* json, size_t size) {
+    int token_num;
+    jsmntok_t *tokens = NULL;
+    int status = json_parse(json, JSMN_OBJECT, &tokens, &token_num);
+    int j = 0;
+    if (status != 0) return NULL;
+
+    void* out = malloc(size);
+    if (out == NULL) return NULL;
+
+    enum { VALUE = 1 };
+
+    for (int i = 0; i < token_num; i++) {
+        int token_start = tokens[i + 1].start;
+        int token_end = tokens[i + 1].end;
+        int token_length = token_end - token_start;
+        char* token_string = json + token_start;
+        char* string = malloc(token_length + 1);
+        strncpy(string, token_string, token_length);
+        string[token_length] = '\0'; // Null-terminate the string
+
+        if (i % 2 == VALUE){
+            char* p = (char*)out + j * sizeof(char*);
+            memcpy(p, &string, sizeof(char*)); // Copy the string pointer to the out+i location
+            j++;
+        }
+    }
+
+    return out;
 }
 
 // =========================================================================="
