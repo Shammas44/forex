@@ -7,7 +7,7 @@
 #include "network.h"
 #include "response.h"
 #include "tls.h"
-#include "wsFrame.h"
+#include "wsframe.h"
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <stdbool.h>
