@@ -3,6 +3,17 @@
 #include <stddef.h>
 #include <stdlib.h>
 #define T Hashmap
+#define HASHMAP_GET_STRING(map,key) \
+({ \
+  char* _value = (char*)map->get(map,key); \
+  _value; \
+})
+
+#define HASHMAP_GET_OBJECT(map,key) \
+({ \
+  Hashmap* _value = (Hashmap*)map->get(map,key); \
+  _value; \
+})
 
 typedef struct T T;
 

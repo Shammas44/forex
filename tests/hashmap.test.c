@@ -31,9 +31,12 @@ Test(hashmap, map_size_is_positiv, .fini = teardown) {
 }
 
 Test(hashmap, insertion, .init = setup, .fini = teardown) {
-  char key[10] = "DOLLAR", value[10] = "$";
-  map->push(map, key, value);
+  char key1[10] = "DOLLAR", value1[10] = "$";
+  map->push(map, key1, value1);
   cr_assert_eq(map->size, 1, "Size should be 1");
+  char key2[10] = "Euro", value2[10] = "€";
+  map->push(map, key2, value2);
+  cr_assert_eq(map->size, 2, "Size should be 2");
 }
 
 Test(hashmap, retrieve, .init = setup, .fini = teardown) {
