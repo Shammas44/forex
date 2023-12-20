@@ -42,10 +42,9 @@ int connectors_read_websocket_frames(Mtqueue_list *q) {
     }
 
     jsmntok_t *tokens = NULL;
-    int token_num;
-    status = json_parse(out_message, JSMN_OBJECT, &tokens, &token_num);
+    int token_num = json_parse(out_message, JSMN_OBJECT, &tokens);
 
-    if (status != 0) {
+    if (token_num <= 0) {
       free(out_message);
       if (tokens) {
         free(tokens);
