@@ -144,9 +144,11 @@ int json_to_array(char *json, Darray**array){
 
     if(tokens[i].type == JSMN_OBJECT){
       inner_token_num = json_to_map(string, (Hashmap**)&value);
+      inner_token_num--;
     }
     else if(tokens[i].type == JSMN_ARRAY){
       inner_token_num = json_to_array(string, (Darray**)&value);
+      inner_token_num--;
     }else {
       value = string;
     }
@@ -186,6 +188,7 @@ Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num) {
       char*key = __json_extract_string(json,&tokens[i]);
       i++;
       char *value = __json_extract_string(json,&tokens[i]);
+      // printf("%s: %s\n", key, value);
       switch (tokens[i].type) {
         case JSMN_STRING:
           map->push(map,key,value);
