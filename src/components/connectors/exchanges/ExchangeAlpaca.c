@@ -1,4 +1,5 @@
 #include "ExchangeAlpaca.h"
+#include "common.h"
 #define T ExchangeAlpaca
 
 #define GET_REQUEST(exchange,route) \
@@ -28,7 +29,7 @@ static HttpsRequest* __build_query(T *exchange, char*route,HttpsRequest_method m
 static HttpsResponse* __send(T*exchange, char*route, HttpsRequest_method method, void*body);
 static void __account_informations(T*exchange);
 
-T *exchangeAlpaca_constructor(WsHandler *handler, Parser *parser){
+T *exchangeAlpaca_constructor(WsHandler *handler,ConfigWrapper*config, Parser *parser){
   T *self = malloc(sizeof(T));
   if (self == NULL) return NULL;
   Private *private = malloc(sizeof(Private));
@@ -36,13 +37,16 @@ T *exchangeAlpaca_constructor(WsHandler *handler, Parser *parser){
   HttpsRequestBuilder *req_builder = httpsRequestBuilder_constructor();
   if (req_builder == NULL) return NULL;
   private->ws = handler;
-  private->req_builder =
+  private->req_builder = req_builder;
+  private->key_id = config->get(config,"key_id");
+  private->secret_key = config->get(config,"secret_key");
+
+  bool paper = config->paper(config);
+  if(paper == true) private->mode = Paper;
+  else if(paper == false) private->mode = Live;
+  else private->mode = Paper;
   self->__private = private;
 
-
-  // self->key_id = key_id;
-  // self->secret_key = secret_key;
-  // self->paper = paper;
   return self;
 }
 

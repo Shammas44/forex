@@ -3,7 +3,7 @@
 
 # FLAGS=-W -Wall -ansi -pedantic -std=c99 -g 
 FLAGS=-g
-FLAGS_TEST=-W -Wall -Wextra -Werror
+FLAGS_TEST=-g -W -Wall -Wextra -Werror
 OUT=app
 BIN_DIR=bin/
 INC_DIRS:=$(shell find . -type d -name "include")

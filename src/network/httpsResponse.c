@@ -140,7 +140,7 @@ Hashmap* __httpsResponse_extract_headers(const char *rawResponse) {
     if (colon != NULL) {
       char *header = __copy_str(token, ':');
       char *value = __copy_str(colon + 2, '\0');
-      headers->push(headers, header, value);
+      headers->push(headers, header, value,NULL);
       index++;
       free(header);
     }
@@ -168,7 +168,7 @@ int __httpsResponse_parse(char *raw_response, Message *response) {
 }
 
 int __httpsResponse_parse_content_type(Hashmap*headers, Message*response){
-  char *content_type = headers->get(headers, "Content-Type");
+  char *content_type = headers->get(headers, "Content-Type",NULL);
   if (content_type == NULL) {
     const char default_type[] = "None/unspecified";
     size_t default_length = strlen(default_type);
@@ -311,7 +311,7 @@ void __httpsResponse_print(T *response) {
 
 char * __httpsResponse_get_header(T *response,const char*header){
   Hashmap* headers = response->get_headers(response);
-  return headers->get(headers,header);
+  return headers->get(headers,header,NULL);
 }
 
 T *__httpsResponse_set_status(T *response, char *status){

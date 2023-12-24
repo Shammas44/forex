@@ -40,7 +40,7 @@ void __tickParser_destructor(T *tickParser){
 void* __tickParser_parse(T *tickParser, char*input){
 
   jsmntok_t *tokens = NULL;
-  int token_num = json_parse(input, JSMN_OBJECT, &tokens);
+  int token_num = json_parse(input, &tokens);
 
   if (token_num <= 0) {
     if (tokens) {

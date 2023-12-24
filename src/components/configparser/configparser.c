@@ -7,7 +7,7 @@ void to_mode(void* res, int token_length ,char* token_string);
 void configparser_init(const char *path, Tsmetadata *m){
   char *file_content = file_read(path);
   jsmntok_t *tokens = NULL;
-  int token_num = json_parse(file_content, JSMN_OBJECT, &tokens);
+  int token_num = json_parse(file_content, &tokens);
 
   if (token_num <= 0) {
     free(file_content);

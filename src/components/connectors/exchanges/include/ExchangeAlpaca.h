@@ -6,7 +6,7 @@
 
 typedef Exchange T;
 
-T* exchangeAlpaca_constructor(WsHandler*ws,Parser*parser);
+T* exchangeAlpaca_constructor(WsHandler*ws,ConfigWrapper*config,Parser*parser);
 
 #undef T
 #endif

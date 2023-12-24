@@ -8,7 +8,7 @@
 typedef struct T T;
 
 typedef void (WsHandler_destructor)(T * ws);
-typedef int (WsHandler_handshake)(T * ws, HttpsRequest * request);
+typedef SSL* (WsHandler_handshake)(T * ws, HttpsRequest * request);
 typedef void (WsHandler_send)(T * ws, SSL *ssl, const char *message);
 typedef int (WsHandler_listen)(T * ws, SSL *ssl, Parser *parser);
 typedef Https* (WsHandler_get_https_handler)(T * ws);

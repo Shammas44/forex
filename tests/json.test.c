@@ -1,7 +1,7 @@
 #include "json.h"
 #include <criterion/criterion.h>
 Hashmap *h;
-Darray *a;
+Array *a;
 char json01[] = "{"
                 "\"nom\":\"Doe\","
                 "\"prénom\":\"John\","
@@ -103,7 +103,7 @@ char json10[] = "["
 static void teardown(void) { free(h); }
 
 Test(json_to_map, get_string, .fini = teardown) {
-  json_to_map(json02,&h);
+  json_to_map(json02,&h,NULL,0);
   cr_expect_str_eq(HASHMAP_GET_STRING(h, "nom"), "Doe", "Wrong value");
   cr_expect_str_eq(HASHMAP_GET_STRING(h, "prénom"), "John", "Wrong value");
   cr_expect_str_eq(HASHMAP_GET_STRING(h, "age"), "20", "Wrong value");
@@ -111,8 +111,8 @@ Test(json_to_map, get_string, .fini = teardown) {
 }
 
 Test(json_to_map, get_inner_object, .fini = teardown) {
-  json_to_map(json03,&h);
-  Hashmap *job = h->get(h, "job");
+  json_to_map(json03,&h,NULL,0);
+  Hashmap *job = h->get(h, "job",NULL);
   cr_expect_not_null(job, "job is null");
   cr_expect_str_eq(HASHMAP_GET_STRING(job, "title"), "Administrator system IT", "wrong value");
   cr_expect_str_eq(HASHMAP_GET_STRING(job, "company"), "XYZ Corp.", "wrong value");
@@ -120,10 +120,10 @@ Test(json_to_map, get_inner_object, .fini = teardown) {
 }
 
 Test(json_to_map, get_inner_inner_object, .fini = teardown) {
-  json_to_map(json04,&h);
-  Hashmap *job = h->get(h, "job");
+  json_to_map(json04,&h,NULL,0);
+  Hashmap *job = h->get(h, "job",NULL);
   cr_expect_not_null(job, "job is null");
-  Hashmap *company = job->get(job, "company");
+  Hashmap *company = job->get(job, "company",NULL);
   cr_expect_not_null(company, "company is null");
   cr_expect_str_eq(HASHMAP_GET_STRING(company, "name"), "XYZ Corp.");
   cr_expect_str_eq(HASHMAP_GET_STRING(company, "type"), "Sa");
@@ -132,7 +132,7 @@ Test(json_to_map, get_inner_inner_object, .fini = teardown) {
 }
 
 Test(json_to_map, get_primitive, .fini = teardown) {
-  json_to_map(json05,&h);
+  json_to_map(json05,&h,NULL,0);
   cr_expect_str_eq(HASHMAP_GET_STRING(h, "isAdmin"), "false", "wrong value");
   cr_expect_str_eq(HASHMAP_GET_STRING(h, "isWorking"), "true", "wrong value");
   cr_expect_str_eq(HASHMAP_GET_STRING(h, "company"), "null", "wrong value");
@@ -140,12 +140,12 @@ Test(json_to_map, get_primitive, .fini = teardown) {
 }
 
 Test(json_to_map, get_array, .fini = teardown) {
-  json_to_map(json01,&h);
+  json_to_map(json01,&h,NULL,0);
   cr_expect_str_eq(HASHMAP_GET_STRING(h, "nom"), "Doe", "Wrong value");
   cr_expect_str_eq(HASHMAP_GET_STRING(h, "prénom"), "John", "Wrong value");
   cr_expect_str_eq(HASHMAP_GET_STRING(h, "age"), "20", "Wrong value");
   cr_expect_eq(h->size, 5, "Wrong size");
-  Darray *children = h->get(h, "children");
+  Array *children = h->get(h, "children",NULL);
   cr_expect_eq(children->length, 3, "Wrong size");
   cr_expect_not_null(children, "children is null");
   cr_expect_str_eq(children->get(children,0), "Louis", "Wrong value");
@@ -154,8 +154,8 @@ Test(json_to_map, get_array, .fini = teardown) {
 }
 
 Test(json_to_map, get_array_of_objects, .fini = teardown) {
-  json_to_map(json07,&h);
-  Darray *companies = h->get(h, "companies");
+  json_to_map(json07,&h,NULL,0);
+  Array *companies = h->get(h, "companies",NULL);
   cr_expect_not_null(companies, "companies is null");
 
   Hashmap*c1 = companies->get(companies,0);
@@ -178,14 +178,14 @@ Test(json_to_map, get_array_of_objects, .fini = teardown) {
 }
 
 Test(json_to_array, get_array, .fini = teardown) {
-  json_to_array(json08,&a);
+  json_to_array(json08,&a,NULL,0);
   cr_expect_str_eq(a->get(a,0), "Sam",  "Wrong value");
   cr_expect_str_eq(a->get(a,1), "Doe",  "Wrong value");
   cr_expect_str_eq(a->get(a,2), "John",  "Wrong value");
 }
 
 Test(json_to_array, get_array_of_objects, .fini = teardown) {
-  json_to_array(json09,&a);
+  json_to_array(json09,&a,NULL,0);
   Hashmap*c1 = a->get(a,0);
   cr_expect_not_null(c1, "company is null");
   cr_expect_str_eq(HASHMAP_GET_STRING(c1, "name"), "X Corp.", "Wrong value");
@@ -201,18 +201,18 @@ Test(json_to_array, get_array_of_objects, .fini = teardown) {
 }
 
 Test(json_to_array, get_array_of_array, .fini = teardown) {
-  json_to_array(json10,&a);
-  Darray*a1 = a->get(a,0);
+  json_to_array(json10,&a,NULL,0);
+  Array*a1 = a->get(a,0);
   cr_expect_not_null(a1, "array is null");
   cr_expect_str_eq(a1->get(a1,0), "Sam", "Wrong value");
   cr_expect_str_eq(a1->get(a1,1), "Doe", "Wrong value");
   cr_expect_str_eq(a1->get(a1,2), "John", "Wrong value");
-  Darray*a2 = a->get(a,1);
+  Array*a2 = a->get(a,1);
   cr_expect_not_null(a2, "array is null");
   cr_expect_str_eq(a2->get(a2,0), "1", "Wrong value");
   cr_expect_str_eq(a2->get(a2,1), "2", "Wrong value");
   cr_expect_str_eq(a2->get(a2,2), "3", "Wrong value");
-  Darray*a3 = a->get(a,2);
+  Array*a3 = a->get(a,2);
   cr_expect_not_null(a3, "array is null");
   cr_expect_str_eq(a3->get(a3,0), "true", "Wrong value");
   cr_expect_str_eq(a3->get(a3,1), "false", "Wrong value");

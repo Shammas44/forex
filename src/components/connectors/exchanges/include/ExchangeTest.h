@@ -1,9 +1,11 @@
 #ifndef EXCHANGETEST_H
 #define EXCHANGETEST_H
-#include "connectors.h"
 #include "Exchange.h"
-#include "url.h"
 
- struct Exchange* exchangeTest_constructor(Mtqueue_list *args, Url* url, char* auth_token);
+#define T ExchangeTest
 
+typedef Exchange T;
+
+T* exchangeTest_constructor(WsHandler*ws,ConfigWrapper*config,Parser*parser);
+#undef T
 #endif 

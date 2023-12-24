@@ -184,6 +184,7 @@ char* __httpsRequest_method_to_string(HttpsRequest_method method) {
   T *__httpsRequest_set_body(T *request, char* body){
   Message *message = GET_MESSAGE_FROM_REQUEST(request);
   message->body = body;
+  message->body_length = strlen(body);
   return request;
 }
 

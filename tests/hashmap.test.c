@@ -32,24 +32,24 @@ Test(hashmap, map_size_is_positiv, .fini = teardown) {
 
 Test(hashmap, insertion, .init = setup, .fini = teardown) {
   char key1[10] = "DOLLAR", value1[10] = "$";
-  map->push(map, key1, value1);
+  map->push(map, key1, value1,0);
   cr_assert_eq(map->size, 1, "Size should be 1");
   char key2[10] = "Euro", value2[10] = "€";
-  map->push(map, key2, value2);
+  map->push(map, key2, value2,0);
   cr_assert_eq(map->size, 2, "Size should be 2");
 }
 
 Test(hashmap, retrieve, .init = setup, .fini = teardown) {
   char key[10] = "DOLLAR", value[10] = "$";
-  map->push(map, key, value);
-  char *result = map->get(map, key);
+  map->push(map, key, value,0);
+  char *result = map->get(map, key,NULL);
   cr_assert_eq(result, value, "Result should be equal to '$'");
 }
 
 Test(hashmap, case_sensitive, .init = setup, .fini = teardown) {
   char key[10] = "DOLLAR", value[10] = "$";
-  map->push(map, key, value);
-  char *result = map->get(map, "dollar");
+  map->push(map, key, value,0);
+  char *result = map->get(map, "dollar",NULL);
   cr_assert_null(result, "Result should be NULL");
 }
 
@@ -58,12 +58,12 @@ Test(hashmap, resize_is_triggered, .init = setup, .fini = teardown) {
   char result[2];
   for (int i = 1; i <= 7; i++) {
     snprintf(result, sizeof(result), "%d", i);
-    map->push(map, result, "$");
+    map->push(map, result, "$",0);
   }
   cr_assert_eq(map->capacity, 10, "Capacity should be 10");
   for (int i = 7; i <= 10; i++) {
     snprintf(result, sizeof(result), "%d", i);
-    map->push(map, result, "$");
+    map->push(map, result, "$",0);
   }
   cr_assert_eq(map->capacity, 20, "Capacity should have been doubled");
 }

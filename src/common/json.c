@@ -1,7 +1,8 @@
 #include "json.h"
-#include "darray.h"
+#include "array.h"
 #include "hashmap.h"
-#include "darray.h"
+#include "array.h"
+#define T JsonParser
 
 enum { KEY = 1, VALUE = 0 };
 // =========================================================================="
@@ -12,10 +13,50 @@ void handle_ticks(char *json, jsmntok_t **tokens, int token_num);
 Hashmap *__json_parse_object(char *json, jsmntok_t *tokens, int *token_num);
 Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num);
 void *__json_extract_string(char*json,jsmntok_t*token);
+void __jsonParser_destructor(T *parser);
+void* __jsonParser_parse(T *parser,char*input);
 
 // =========================================================================="
 // Public functions
 // =========================================================================="
+
+
+T * jsonParser_constructor(){
+  T *self = malloc(sizeof(T));
+  self->destructor = __jsonParser_destructor;
+  self->parse = __jsonParser_parse;
+  return self;
+}
+
+void __jsonParser_destructor(T *parser){
+  free(parser);
+}
+
+void* __jsonParser_parse(T *parser,char*input){
+  jsmntok_t *tokens = NULL;
+  int token_num = json_parse(input, &tokens);
+  void*value =NULL;
+  if(token_num <= 1) return NULL;
+  jsmntype_t type = tokens[0].type;
+  switch (type) {
+    case JSMN_OBJECT:
+      json_to_map(input, (Hashmap**)&value,NULL,NULL);
+    break;
+    case JSMN_ARRAY:
+      json_to_array(input, (Array**)&value,NULL,NULL);
+    break;
+    case JSMN_STRING:
+      value = NULL;
+    break;
+    case JSMN_PRIMITIVE:
+      value = NULL;
+    break;
+    case JSMN_UNDEFINED:
+      value = NULL;
+    break;
+  }
+  return value;
+}
 
 int json_cmp_token_to_string(const char *json, jsmntok_t *tok, const char *s) {
   if (tok->type == JSMN_STRING && (int)strlen(s) == tok->end - tok->start &&
@@ -87,7 +128,7 @@ void to_time(void *res, int token_length, char *token_string) {
   }
 }
 
-int json_parse(char *json, jsmntype_t expected_type, jsmntok_t **tokens) {
+int json_parse(char *json, jsmntok_t **tokens) {
   int token_num = 0;
   jsmn_parser parser;
   jsmn_init(&parser);
@@ -108,33 +149,37 @@ int json_parse(char *json, jsmntype_t expected_type, jsmntok_t **tokens) {
     return get_error("Failed to parse JSON");
   }
 
-  if (token_num < 1 || (*tokens)[0].type != expected_type) {
+  if (token_num < 1 ) {
     free(*tokens);
     *tokens = NULL;
-    return get_error("jsmn expected another type of data");
+    return get_error("Nothing to parse");
   }
 
   return token_num;
 }
 
-int json_to_map(char *json, Hashmap**map) {
+int json_to_map(char *json, Hashmap**map,jsmntok_t *tokens, int token_num) {
   char *key, *value;
-  jsmntok_t *tokens = NULL;
-  // puts("here");
-  int token_num = json_parse(json, JSMN_OBJECT, &tokens);
-  if (token_num <= 0) return NULL;
+  if(tokens ==NULL && token_num == 0){
+   tokens = NULL;
+   token_num = json_parse(json, &tokens);
+  }
+  if(tokens[0].type != JSMN_OBJECT) return NULL;
+  if (token_num <= 0) return -1;
   *map = __json_to(json, tokens, token_num);
   return token_num;
 }
 
-int json_to_array(char *json, Darray**array){
+int json_to_array(char *json, Array**array,jsmntok_t *tokens, int token_num){
   char *key;
   void* value = NULL;
-  jsmntok_t *tokens = NULL;
-  int token_num = json_parse(json, JSMN_ARRAY, &tokens);
-  // printf("token_num: %d\n",token_num);
+  if(tokens ==NULL && token_num == 0){
+   tokens = NULL;
+   token_num = json_parse(json, &tokens);
+  }
+  if(tokens[0].type != JSMN_ARRAY) return NULL;
   if (token_num <= 0) return NULL;
-  *array = darray_constructor(token_num);
+  *array = array_constructor(token_num);
   if(array == NULL) return NULL;
   for (int i = 1; i < token_num; i++) {
     int inner_token_num = 0;
@@ -143,11 +188,11 @@ int json_to_array(char *json, Darray**array){
     if(string == NULL) return NULL;
 
     if(tokens[i].type == JSMN_OBJECT){
-      inner_token_num = json_to_map(string, (Hashmap**)&value);
+      inner_token_num = json_to_map(string, (Hashmap**)&value,NULL,NULL);
       inner_token_num--;
     }
     else if(tokens[i].type == JSMN_ARRAY){
-      inner_token_num = json_to_array(string, (Darray**)&value);
+      inner_token_num = json_to_array(string, (Array**)&value,NULL,NULL);
       inner_token_num--;
     }else {
       value = string;
@@ -174,7 +219,7 @@ void *__json_extract_string(char*json,jsmntok_t*token){
 Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num) {
   Hashmap *map = hashmap_constructor(100);
   Hashmap*inner_map = NULL; 
-  Darray*inner_array = NULL; 
+  Array*inner_array = NULL; 
   void*value = NULL;
   char *key = NULL;
   if (map == NULL) return NULL;
@@ -191,20 +236,20 @@ Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num) {
       // printf("%s: %s\n", key, value);
       switch (tokens[i].type) {
         case JSMN_STRING:
-          map->push(map,key,value);
+          map->push(map,key,value,NULL);
           break;
         case JSMN_PRIMITIVE:
-          map->push(map,key,value);
+          map->push(map,key,value,NULL);
           break;
         case JSMN_OBJECT:
-          inner_token_num = json_to_map(value, &inner_map);
+          inner_token_num = json_to_map(value, &inner_map,NULL,NULL);
           inner_token_num--;
-          map->push(map,key,inner_map);
+          map->push(map,key,inner_map,Hashmap_types_hashmap);
           break;
         case JSMN_ARRAY:
-          inner_token_num = json_to_array(value,&inner_array);
+          inner_token_num = json_to_array(value,&inner_array,NULL,NULL);
           inner_token_num--;
-          map->push(map,key,inner_array);
+          map->push(map,key,inner_array,Hashmap_types_array);
           break;
         default:
           printf("Value: Unhandled type\n");

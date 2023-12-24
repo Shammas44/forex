@@ -1,29 +1,48 @@
 #ifndef MAP_H
 #define MAP_H
+#include "array.h"
 #include <stddef.h>
 #include <stdlib.h>
 #define T Hashmap
 #define HASHMAP_GET_STRING(map,key) \
 ({ \
-  char* _value = (char*)map->get(map,key); \
+  Hashmap_types* _type; \
+  char* _value = (char*)map->get(map,key,&_type); \
   _value; \
 })
 
 #define HASHMAP_GET_OBJECT(map,key) \
 ({ \
-  Hashmap* _value = (Hashmap*)map->get(map,key); \
+  Hashmap_types* _type; \
+  Hashmap* _value = (Hashmap*)map->get(map,key,&_type); \
+  _value; \
+})
+
+#define HASHMAP_GET_ARRAY(map,key) \
+({ \
+  Hashmap_types* _type; \
+  Array* _value = (Array*)map->get(map,key,&_type); \
   _value; \
 })
 
 typedef struct T T;
 
-typedef void(Hashmap_push)(T *map, const char *key, void *value);
+typedef enum {
+Hashmap_types_default,
+Hashmap_types_hashmap,
+Hashmap_types_array,
+} Hashmap_types;
+
+typedef void(Hashmap_destructor_callback)(void*value);
+typedef void(Hashmap_push)(T *map, const char *key, void *value, Hashmap_types type);
 typedef void(Hashmap_destructor)(T *map);
-typedef void *(Hashmap_get)(T *map, const char *key);
+typedef void *(Hashmap_get)(T *map, const char *key, Hashmap_types**type);
 
 typedef struct {
   char *key;
   void *value;
+  Hashmap_types type;
+  Hashmap_destructor_callback *destructor;
 } Hashmap_entry;
 
 struct T {
@@ -36,6 +55,7 @@ struct T {
 };
 
 T *hashmap_constructor(size_t initial_capacity);
+void hashmap_destructor(T *map);
 
 #undef T
 #endif

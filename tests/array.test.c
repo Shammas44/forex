@@ -1,33 +1,50 @@
-// #include <criterion/criterion.h>
-// #include <stdio.h>
-// #include <string.h>
-// #include "array.h"
-// the 3 laws of tdd
-// 1. your are not allowed to write production code unless it make a falling test pass
-// 2. your are not allowed to any more of a unit test that is sufficient to fail
-// 3. your are not allowed to write any more production code than is sufficient to pass the one failing unit test
-
-// void print_int(const void *current_value, const int index, const size_t array_size) {
-//   int val = *(int *)current_value;
-//   printf("array[%d] = %i; array-size = %zu\n", index, val,array_size);
+#include "array.h"
+#include <criterion/criterion.h>
+#define T Array
+T*d = NULL;
+// static void setup(void) {
+//   // puts("Runs before the test");
 // }
 
-// int truc(char *str){
-//   size_t length = 0;
-//   while (str[length] != '\0') {
-//     length++;
-//   }
-//   return length;
-// }
+static void teardown(void) { free(d); }
 
+Test(darray, constructor, .fini = teardown) {
+  T*d = array_constructor(10);
+  cr_expect_not_null(d, "d is null");
+  cr_expect_not_null(d->destructor, "destructor is not implemented");
+  cr_expect_not_null(d->get, "get is not implemented");
+  // cr_expect_not_null(d->pop, "pop is not implemented");
+  cr_expect_not_null(d->push, "push is not implemented");
+  cr_expect_eq(d->length, 0);
+}
 
-// Test(foreach, is_defined){
-//   int int_array[] = {1, 2, 3};
-//   size_t int_array_size = sizeof(int_array) / sizeof(int);
-//   foreach(int_array, int_array_size, sizeof(int), print_int);
-// }
+Test(darray, push, .fini = teardown) {
+  int size = 10;
+  T*d = array_constructor(size);
+  for (int i = 0; i < size; i++) {
+    int * value = malloc(sizeof(int));
+    *value = i;
+    d->push(d, value);
+  }
+  cr_expect_eq(d->length, 10);
+}
 
-// Test(str_len, is_defined){
-//   int res = truc("");
-//   cr_assert_eq(0,res);
-// }
+Test(darray, get, .fini = teardown) {
+  int size = 3;
+  T*d = array_constructor(size);
+  for (int i = 0; i < size; i++) {
+    int * value = malloc(sizeof(int));
+    *value = i;
+    d->push(d, value);
+  }
+  int value0 = *(int*)d->get(d,0);
+  int value1 = *(int*)d->get(d,1);
+  int value2 = *(int*)d->get(d,2);
+  void* value3 = d->get(d,3);
+  cr_expect_eq(d->length, 3);
+  cr_expect_eq(value0, 0);
+  cr_expect_eq(value1, 1);
+  cr_expect_eq(value2, 2);
+  cr_expect_null(value3);
+}
+

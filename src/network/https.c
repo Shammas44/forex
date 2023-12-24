@@ -34,6 +34,7 @@ Https * https_constructor(){
   Https * https = (Https*)malloc(sizeof(Https));
   https->destructor = __https_destructor;
   https->ws_handshake = __https_ws_handshake;
+  https->fetch = __https_fetch;
   https->get = __https_get;
   https->post = __https_post;
   https->put = __https_put;
@@ -201,7 +202,6 @@ HttpsResponse *__https_receive(SSL *ssl) {
   if (status)
     return NULL;
   HttpsResponse * response = httpsResponse_constructor(raw_response);
-  printf("%s\n", raw_response);
   free(raw_response);
   return response;
 }
