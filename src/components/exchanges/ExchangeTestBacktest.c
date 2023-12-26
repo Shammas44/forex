@@ -21,6 +21,7 @@ static int __connect(T*exchange);
 static void __subscribe(T*exchange,char*path);
 static void __attach_observer(T*exchange,Observer*observer);
 static void __dettach_observer(T*exchange,Observer*observer);
+static void __on_row_receive(void*exchange,void*state);
 
 T* exchangeTestBacktest_constructor(WsHandler*ws,ConfigWrapper*config,Parser*parser){
   T *self = malloc(sizeof(T));
@@ -45,9 +46,6 @@ T* exchangeTestBacktest_constructor(WsHandler*ws,ConfigWrapper*config,Parser*par
 }
 
 static int __connect(T*exchange){
-  Private *private = exchange->__private;
-  ConfigWrapper *config = private->config;
-  char*file = config->backtest_data(config);
   return 0;
 }
 
@@ -56,12 +54,11 @@ static void __attach_observer(T*exchange,Observer*observer){
   subject->attach(subject,observer);
 }
 
-static void __on_frame_receive(void*exchange,void*state){
+static void __on_row_receive(void*exchange,void*state){
   T *self = exchange;
   Private *private = self->__private;
   Subject *subject = private->subject;
-  Parser *parser = private->parser;
-  Hashmap*map = parser->parse(parser,state);
+  Hashmap*map = (Hashmap*) state;
   subject->set_state(subject,map);
 }
 
@@ -70,13 +67,18 @@ static void __dettach_observer(T*exchange,Observer*observer){
   subject->detach(subject,observer);
 }
 
-void __notify(T* exchange) {
+static void __notify(T* exchange) {
   Subject *subject = SUBJECT(exchange);
   subject->notify(subject);
 }
 
-static void __subscribe(T*exchange,char*path){
-
+static void __subscribe(T*exchange,char*backtest_path){
+  Private *private = exchange->__private;
+  ConfigWrapper *config = private->config;
+  Parser *parser = private->parser;
+  if(backtest_path == NULL) backtest_path = config->backtest_data(config); 
+  printf("backtest_path: %s\n",backtest_path);
+  parser->parse_stream(parser,backtest_path,exchange,__on_row_receive);
 }
 
 // Account
