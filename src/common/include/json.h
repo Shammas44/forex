@@ -2,7 +2,7 @@
 #define JSON_H
 #include "jsmn.h"
 #include "array.h"
-#include "parser.h"
+#include "Parser.h"
 #include "hashmap.h"
 #include "date.h"
 #include "error.h"

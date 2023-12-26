@@ -37,6 +37,7 @@ static int __connect(T*exchange);
 static void __subscribe(T*exchange,char*path);
 static void __attach_observer(T*exchange,Observer*observer);
 static void __dettach_observer(T*exchange,Observer*observer);
+static void __notify(T* exchange);
 
 T *exchangeTest_constructor(WsHandler *handler,ConfigWrapper*config, Parser *parser){
   T *self = malloc(sizeof(T));
@@ -110,7 +111,7 @@ static void __dettach_observer(T*exchange,Observer*observer){
   subject->detach(subject,observer);
 }
 
-void __notify(T* exchange) {
+static void __notify(T* exchange) {
   Private *private = exchange->__private;
   Subject *subject = private->subject;
   subject->notify(subject);

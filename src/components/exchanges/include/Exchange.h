@@ -1,7 +1,7 @@
 #ifndef EXCHANGE_H
 #define EXCHANGE_H
 #include "observer.h"
-#include "parser.h"
+#include "Parser.h"
 #include "wsHandler.h"
 #include "configWrapper.h"
 #define T Exchange
