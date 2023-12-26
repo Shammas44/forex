@@ -64,13 +64,18 @@ static unsigned int __hash(const char *key, int capacity) {
 
 static void __resize(T *map) {
   int new_capacity = map->capacity * 2;
-  Hashmap_entry *new_entries =
-      (Hashmap_entry *)malloc(sizeof(Hashmap_entry) * new_capacity);
+  Hashmap_entry *new_entries = (Hashmap_entry *)malloc(sizeof(Hashmap_entry) * new_capacity);
   if (new_entries != NULL) {
     // Rehash all elements to the new array
     for (int i = 0; i < map->capacity; i++) {
       if (map->entries[i].key != NULL) {
         unsigned int index = __hash(map->entries[i].key, new_capacity);
+
+        while (new_entries[index].key != NULL) {
+          // Linear probing for collision resolution
+          index = (index + 1) % new_capacity; 
+        }
+
         new_entries[index] = map->entries[i];
       }
     }
@@ -87,8 +92,8 @@ static void __push_value(T *map, const char *key, void *value, Hashmap_types typ
 
   unsigned int index = __hash(key, map->capacity);
   while (map->entries[index].key != NULL) {
-    index =
-        (index + 1) % map->capacity; // Linear probing for collision resolution
+    // Linear probing for collision resolution
+    index = (index + 1) % map->capacity; 
   }
 
   map->entries[index].key = strdup(key);
