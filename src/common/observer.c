@@ -1,4 +1,5 @@
 #include "observer.h"
+#include <stdio.h>
 #include <stdlib.h>
 #define T Observer
 #define S Subject
@@ -9,6 +10,14 @@ void __subject_notify(S* subject);
 void __subject_setState(S* subject, void* newState);
 void subject_destructor(S* subject);
 
+T* observer_constructor(Observer_update update){
+    T* observer = (T*)malloc(sizeof(T));
+    if (observer != NULL) {
+        observer->update = update;
+    }
+    return observer;
+}
+
 S* subject_constructor(void* initialState) {
     S* subject = (Subject*)malloc(sizeof(Subject));
     if (subject != NULL) {
@@ -18,6 +27,7 @@ S* subject_constructor(void* initialState) {
         subject->attach = __subject_attach;
         subject->detach = __subject_detach;
         subject->notify = __subject_notify;
+        subject->set_state = __subject_setState;
         subject->destructor = subject_destructor;
     }
     return subject;
@@ -60,6 +70,7 @@ void subject_destructor(S* subject) {
         free(subject);
     }
 }
+
 
 #undef T
 #undef S

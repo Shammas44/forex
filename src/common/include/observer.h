@@ -34,11 +34,6 @@ struct S {
 S *subject_constructor(void* initial_state);
 
 T *observer_constructor(Observer_update update);
-// T *observer_constructor(Observer_update update){
-//   T* observer = (T*)malloc(sizeof(T));
-//   observer->update = update;
-//   return observer;
-// }
 
 #undef T
 #undef S

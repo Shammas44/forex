@@ -18,7 +18,7 @@ static char* errors[50] = {
 void __wsHandler_destructor(T * ws);
 SSL* __wsHandler_handshake(T * ws, HttpsRequest * request);
 void __wsHandler_send(T * ws, SSL *ssl, const char *message);
-int __wsHandler_listen(T * ws, SSL *ssl, Parser* parser);
+int __wsHandler_listen(T * ws, SSL *ssl,void* caller,Wshandler_on_frame_receive update );
 int __wsHandler_get_frame_length(SSL *ssl,char second_byte, int *bytes_received, int *res);
 int __wsHandler_create_frame(SSL *ssl, char **out_message);
 Https* __wsHandler_get_https_handler(T*ws);
@@ -51,7 +51,7 @@ SSL* __wsHandler_handshake(T * ws, HttpsRequest * request){
 
 void __wsHandler_send(T * ws, SSL *ssl, const char *message){}
 
-int __wsHandler_listen(T * ws, SSL *ssl, Parser* parser){
+int __wsHandler_listen(T * ws, SSL *ssl,void* caller,Wshandler_on_frame_receive update ){
   int status = 0;
   while (1) {
   char *out_message = NULL;
@@ -62,7 +62,10 @@ int __wsHandler_listen(T * ws, SSL *ssl, Parser* parser){
       break;
     }
     // void * value = parser->parse(parser,out_message);
-    printf("%s\n", out_message);
+    // printf("%s\n", out_message);
+    update(caller,out_message);
+    free(out_message);
+    // subject->notify(subject);
   }
   return status;
 }
