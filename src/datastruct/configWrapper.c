@@ -110,7 +110,7 @@ static char* __strategy(T*wrapper){
 
 static char* __backtest_data(T*wrapper){
   if(wrapper == NULL) return NULL;
-  return __get_string(wrapper,"backtest_data)");
+  return __get_string(wrapper,"backtest_data");
 }
 
 static bool __paper(T*wrapper){
