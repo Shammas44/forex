@@ -1,4 +1,4 @@
-#include "configWrapper.h"
+#include "ConfigWrapper.h"
 #ifndef COMMON_H
 #define COMMON_H
 

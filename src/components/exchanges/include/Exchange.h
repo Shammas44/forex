@@ -3,7 +3,7 @@
 #include "observer.h"
 #include "Parser.h"
 #include "wsHandler.h"
-#include "configWrapper.h"
+#include "ConfigWrapper.h"
 #define T Exchange
 
 typedef struct T T;

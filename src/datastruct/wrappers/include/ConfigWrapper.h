@@ -1,6 +1,7 @@
 #ifndef CONFIGWRAPPER_H
 #define CONFIGWRAPPER_H
 #include "hashmap.h"
+#include "wrapper.h"
 #include <stdbool.h>
 
 #define T ConfigWrapper
