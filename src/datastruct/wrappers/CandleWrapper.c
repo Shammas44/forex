@@ -28,8 +28,11 @@ static double  __total_volume(T *self);
 static double  __up_ticks(T *self);
 static double  __down_ticks(T *self);
 static int  __total_ticks(T *self);
+static time_t  __timestamp(T *self);
 
-T * configWrapper_constructor(Hashmap *map){
+static void __set_timestamp(T*self);
+
+T * candleWrapper_constructor(Hashmap *map){
   T *self = malloc(sizeof(T));
   if (self == NULL) return NULL;
   self->__private = map;
@@ -47,6 +50,8 @@ T * configWrapper_constructor(Hashmap *map){
   self->up_ticks = __up_ticks;
   self->down_ticks = __down_ticks;
   self->total_ticks = __total_ticks;
+  self->timestamp = __timestamp;
+  __set_timestamp(self);
   return self;
 }
 
@@ -55,68 +60,121 @@ static void __destructor(T*self){
   map->destructor(map);
 }
 
-static char* __get(T*wrapper,char*key){
-  return (void*)wrapper_get_string(MAP(wrapper),key);
+static char* __get(T*self,char*key){
+  return (void*)wrapper_get_string(MAP(self),key);
 }
-static char* __date(T*wrapper){
-  if(wrapper == NULL) return NULL;
-  return (void*)wrapper_get_string(MAP(wrapper),"date");
-}
-
-static char* __time(T*wrapper){
-  if(wrapper == NULL) return NULL;
-  return wrapper_get_string(MAP(wrapper),"time");
+static char* __date(T*self){
+  if(self == NULL) return NULL;
+  return (void*)wrapper_get_string(MAP(self),"Date");
 }
 
-static double __open(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"open");
+static char* __time(T*self){
+  if(self == NULL) return NULL;
+  return wrapper_get_string(MAP(self),"Time");
 }
 
-static double __high(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"high");
+static double __open(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"Open");
 }
 
-static double __low(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"low");
+static double __high(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"High");
 }
 
-static double __close(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"close");
+static double __low(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"Low");
 }
 
-static double __up_volume(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"upVolume");
+static double __close(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"Close");
 }
 
-static double __down_volume(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"downVolume");
+static double __up_volume(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"UpVolume");
 }
 
-static double __total_volume(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"totalVolume");
+static double __down_volume(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"DownVolume");
 }
 
-static double __up_ticks(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"upTicks");
+static double __total_volume(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"TotalVolume");
 }
 
-static double __down_ticks(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"downTicks");
+static double __up_ticks(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"UpTicks");
 }
 
-static int __total_ticks(T*wrapper){
-  if(wrapper == NULL) return -1;
-  return wrapper_get_double(MAP(wrapper),"total_ticks");
+static double __down_ticks(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"DownTicks");
 }
+
+static int __total_ticks(T*self){
+  if(self == NULL) return -1;
+  return wrapper_get_double(MAP(self),"Total_ticks");
+}
+
+static time_t __timestamp(T*self){
+  if(self == NULL) return -1;
+  Hashmap*map = self->__private; 
+  time_t *time = map->get(map,"Timestamp",0);
+  return *time;
+}
+
+static void __set_timestamp(T*self){
+  char*date =  wrapper_get_string(MAP(self),"Date");
+  char*time =  wrapper_get_string(MAP(self),"Time");
+  if(date==NULL || time == NULL) return;
+  char datetime_str[20];
+  snprintf(datetime_str, sizeof(datetime_str), "%s %s", date, time);
+
+  struct tm tm;
+  time_t epoch_time;
+
+#ifdef __APPLE__
+  if (strptime(datetime_str, "%m/%d/%Y %H:%M:%S", &tm) != NULL) {
+    epoch_time = mktime(&tm);
+    if (epoch_time == -1) {
+      fprintf(stderr, "Error converting to time_t\n");
+      return;
+    }
+  } else {
+    fprintf(stderr, "Error parsing the date-time string\n");
+      return;
+  }
+#else
+  if (sscanf(datetime_str, "%d/%d/%d %d:%d:%d", &tm.tm_mon, &tm.tm_mday,
+             &tm.tm_year, &tm.tm_hour, &tm.tm_min, &tm.tm_sec) == 6) {
+    tm.tm_year -= 1900; // Adjust year to be in years since 1900
+    tm.tm_mon -= 1;     // Adjust month to be in [0, 11]
+    tm.tm_isdst = -1;
+    epoch_time = mktime(&tm);
+
+    if (epoch_time == -1) {
+      fprintf(stderr, "Error converting to time_t\n");
+      return -1;
+    }
+  } else {
+    fprintf(stderr, "Error parsing the date-time string\n");
+    return -1;
+  }
+
+#endif
+  time_t* out = malloc(sizeof(time_t));
+  *out = epoch_time;
+  Hashmap*map = self->__private; 
+  map->push(map,"Timestamp",out,0);
+}
+
 
 #undef T
 #undef MAP
