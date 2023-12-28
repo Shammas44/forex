@@ -46,7 +46,7 @@ void __wsHandler_destructor(T * ws){ }
 SSL* __wsHandler_handshake(T * ws, HttpsRequest * request){
   Private * private = (Private*)ws->__private;
   Https * https = private->https;
-  return https->ws_handshake(https,request);
+  return https->ws_handshake(request);
 }
 
 void __wsHandler_send(T * ws, SSL *ssl, const char *message){}

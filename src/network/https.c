@@ -13,13 +13,13 @@
 // Prototypes functions
 // =========================================================================="
 
-HttpsResponse* __https_fetch(Https *https, HttpsRequest *request);
-HttpsResponse* __https_get(Https *https, HttpsRequest *request);
-HttpsResponse* __https_post(Https *https, HttpsRequest*request);
-HttpsResponse* __https_put(Https *https, HttpsRequest *request);
-HttpsResponse* __https_patch(Https *https, HttpsRequest *request);
-HttpsResponse* __https_delete(Https *https, HttpsRequest *request);
-SSL* __https_ws_handshake(Https *https, HttpsRequest *request);
+HttpsResponse* __https_fetch(HttpsRequest *request);
+HttpsResponse* __https_get(HttpsRequest *request);
+HttpsResponse* __https_post(HttpsRequest*request);
+HttpsResponse* __https_put(HttpsRequest *request);
+HttpsResponse* __https_patch(HttpsRequest *request);
+HttpsResponse* __https_delete(HttpsRequest *request);
+SSL* __https_ws_handshake(HttpsRequest *request);
 void __https_destructor(Https *https);
 int __https_send_request(HttpsRequest *request, SSL **ssl, int* sockfd);
 void __https_cleanup(SSL *ssl, int sockfd);
@@ -52,11 +52,12 @@ void __https_destructor(Https *https){
   if(ctx!=NULL) SSL_CTX_free(ctx);
 }
 
-HttpsResponse* __https_fetch(Https *https, HttpsRequest *request){
+HttpsResponse* __https_fetch(HttpsRequest *request){
   SSL *ssl = NULL;
   int *sockfd = malloc(sizeof(int));
 
   int status = __https_send_request(request, &ssl, sockfd);
+  if(status >0) return NULL;
   HttpsResponse * response = __https_receive(ssl);
   if(!response){
     return NULL;
@@ -66,10 +67,11 @@ HttpsResponse* __https_fetch(Https *https, HttpsRequest *request){
   return response;
 }
 
-HttpsResponse * __https_fetch_keep_open(Https *https, HttpsRequest *request, SSL**ssl){
+HttpsResponse * __https_fetch_keep_open(HttpsRequest *request, SSL**ssl){
   int *sockfd = malloc(sizeof(int));
 
   int status = __https_send_request(request, ssl, sockfd);
+  if(status>0) return NULL;
   HttpsResponse * response = __https_receive(*ssl);
   if(!response){
     return NULL;
@@ -77,58 +79,59 @@ HttpsResponse * __https_fetch_keep_open(Https *https, HttpsRequest *request, SSL
   return response;
 }
 
-SSL* __https_ws_handshake(Https *https, HttpsRequest *request){
+SSL* __https_ws_handshake(HttpsRequest *request){
   SSL *ssl = NULL;
   int *sockfd = malloc(sizeof(int));
 
   request->set_method(request,GET);
   int status1 = __https_send_request(request, &ssl, sockfd);
+  if(status1 >0) return NULL;
   HttpsResponse * res = __https_receive(ssl);
   if(!res){
     return NULL;
   }
   char *status = res->get_status(res);
-  char *content_type = res->get_content_type(res);
+  // char *content_type = res->get_content_type(res);
 
   if(strcmp("101",status) != 0) __https_cleanup(ssl, *sockfd);
   request->destructor(request);
   return ssl;
 }
 
-HttpsResponse* __https_get(Https *https, HttpsRequest *request){
+HttpsResponse* __https_get(HttpsRequest *request){
   request->set_method(request,GET);
-  return __https_fetch(https, request);
+  return __https_fetch(request);
 }
 
-HttpsResponse* __https_post(Https *https, HttpsRequest*request){
+HttpsResponse* __https_post(HttpsRequest*request){
   request->set_method(request,POST);
-  return __https_fetch(https, request);
+  return __https_fetch(request);
 }
 
-HttpsResponse* __https_put(Https *https, HttpsRequest *request){
+HttpsResponse* __https_put(HttpsRequest *request){
   request->set_method(request,PUT);
-  return __https_fetch(https, request);
+  return __https_fetch(request);
 }
 
-HttpsResponse* __https_patch(Https *https, HttpsRequest *request){
+HttpsResponse* __https_patch(HttpsRequest *request){
   request->set_method(request,PATCH);
-  return __https_fetch(https, request);
+  return __https_fetch(request);
 }
 
-HttpsResponse* __https_delete(Https *https, HttpsRequest *request){
+HttpsResponse* __https_delete(HttpsRequest *request){
   request->set_method(request,DELETE);
-  return __https_fetch(https, request);
+  return __https_fetch(request);
 }
 
 int __https_send_request(HttpsRequest *request, SSL **ssl, int* sockfd){
   struct addrinfo *add_info = NULL;
-  Message *message = request->__private;
+  // Message *message = request->__private;
   Url * url = request->get_url(request);
   int status;
   char *host = url->host;
-  char *path = url->path;
+  // char *path = url->path;
   char *port = url->port;
-  int domain_len = strlen(url->host);
+  // int domain_len = strlen(url->host);
   int error = 0;
 
   while (error == 0) {
@@ -208,7 +211,7 @@ HttpsResponse *__https_receive(SSL *ssl) {
 
 int __https_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity) {
     ssize_t bytes_received;
-    int socket_fd = SSL_get_fd(ssl);
+    // int socket_fd = SSL_get_fd(ssl);
 
     //TODO: invesiagte why does the following code interrupt data flow in ws listening
     // Set socket to non-blocking mode

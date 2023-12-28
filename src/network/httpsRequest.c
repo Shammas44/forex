@@ -68,7 +68,7 @@ T *httpsRequest_constructor(HttpsRequest_prefill prefill) {
   //message->headers
   char **headers = malloc(sizeof(char*) * 10);
   if (headers != NULL) {
-    for (int i = 0; i < 10; i++) {
+    for (size_t i = 0; i < 10; i++) {
       headers[i] = malloc(sizeof(char) * 200);
       if (headers[i] != NULL) {
         if (i < prefill.header_count && prefill.headers[i] != NULL) {

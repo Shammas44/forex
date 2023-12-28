@@ -8,18 +8,18 @@
 
 typedef struct T T;
 
-typedef void(ConfigWrapper_destructor)(T *config);
-typedef char* (ConfigWrapper_get)(T *config,char*key);
+typedef void(ConfigWrapper_destructor)(T *self);
+typedef char* (ConfigWrapper_get)(T *self,char*key);
 
-typedef char *(ConfigWrapper_mode)(T *config);
-typedef char *(ConfigWrapper_symbol)(T *config);
-typedef char *(ConfigWrapper_strategy)(T *config);
-typedef char *(ConfigWrapper_backtest_data)(T *config);
-typedef double(ConfigWrapper_spread)(T *config);
-typedef bool (ConfigWrapper_paper)(T *config);
-typedef double(ConfigWrapper_capital)(T *config);
-typedef int(ConfigWrapper_leverage)(T *config);
-typedef double(ConfigWrapper_broker_commision_dpm)(T *config);
+typedef char *(ConfigWrapper_mode)(T *self);
+typedef char *(ConfigWrapper_symbol)(T *self);
+typedef char *(ConfigWrapper_strategy)(T *self);
+typedef char *(ConfigWrapper_backtest_data)(T *self);
+typedef double(ConfigWrapper_spread)(T *self);
+typedef bool (ConfigWrapper_paper)(T *self);
+typedef double(ConfigWrapper_capital)(T *self);
+typedef int(ConfigWrapper_leverage)(T *self);
+typedef double(ConfigWrapper_broker_commision_dpm)(T *self);
 
 typedef struct T {
   ConfigWrapper_destructor *destructor;
@@ -39,4 +39,5 @@ typedef struct T {
 T *configWrapper_constructor(Hashmap *map);
 
 #undef T
+#undef F
 #endif

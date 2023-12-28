@@ -10,9 +10,6 @@ char* __url_parse_string(char *string,char *out, const char* delimiters, size_t 
 Url *url_constructor(char *url) {
   if(url == NULL) return NULL;
   Url *url_struct = malloc(sizeof(Url));
-  int i = 0;
-  int j = 0;
-  int k = 0;
   char *host = malloc(sizeof(char) * 128);
   char *protocol = malloc(sizeof(char) * 8);
   char *path = malloc(sizeof(char) * 128);

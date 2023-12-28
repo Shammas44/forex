@@ -65,7 +65,7 @@ int wsframe_read_single_frame(SSL *ssl, char **out_message) {
     return get_error("SSL_read() failed.");
   }
 
-  char fin = (header[0] & x128) >> 7;
+  // char fin = (header[0] & x128) >> 7;
   char opcode = header[0] & x127;
 
   if (opcode != 1) {

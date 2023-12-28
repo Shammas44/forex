@@ -139,7 +139,7 @@ static HttpsResponse* __send(T*exchange, char*route, HttpsRequest_method method,
   Https *https = ws->get_https_handler(ws); 
   HttpsRequest *request = __build_query(exchange,route,method);
   request->set_body(request,body);
-  return https->fetch(https,request);
+  return https->fetch(request);
 }
 
 // Account
