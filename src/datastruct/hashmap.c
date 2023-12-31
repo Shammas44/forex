@@ -42,6 +42,9 @@ void hashmap_destructor(T *map) {
     Array*array = NULL;
     if (map != NULL) {
         for (int i = 0; i < map->capacity; i++) {
+          if(map->entries[i].key != NULL) {
+            continue;
+          }
           Hashmap_types type = map->entries[i].type;
           Hashmap_destructor_callback *destructor = map->entries[i].destructor;
           void*value = map->entries[i].value;
@@ -53,6 +56,32 @@ void hashmap_destructor(T *map) {
         map = NULL;
     }
 }
+
+//function to clone deeply a hashmap
+T* __clone(T*map){
+  T*clone = hashmap_constructor(map->capacity);
+  if(clone == NULL) return NULL;
+  for (int i = 0; i < map->capacity; i++) {
+    char* key = map->entries[i].key;
+    if(key != NULL) {
+      Hashmap_types type = map->entries[i].type;
+      if(type == Hashmap_types_array){
+        // Array*array = map->entries[i].value;
+        // Array*clone_array = array->clone(array);
+        // clone->push(clone,array->key,clone_array,Hashmap_types_array);
+      }else if(type == Hashmap_types_hashmap){
+        T*map_tmp = map->entries[i].value;
+        T*clone_map = __clone(map_tmp);
+        clone->push(clone,key,clone_map,Hashmap_types_hashmap);
+      }else{
+        clone->push(clone,key,map->entries[i].value,type);
+      }
+    }
+  }
+  return clone;
+} 
+
+
 
 static unsigned int __hash(const char *key, int capacity) {
   unsigned int hash = 0;
