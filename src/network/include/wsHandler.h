@@ -14,12 +14,14 @@ typedef SSL* (WsHandler_handshake)(T * ws, HttpsRequest * request);
 typedef void (WsHandler_send)(T * ws, SSL *ssl, const char *message);
 typedef int (WsHandler_listen)(T * ws, SSL *ssl, void*caller, Wshandler_on_frame_receive update);
 typedef Https* (WsHandler_get_https_handler)(T * ws);
+typedef void (WsHandler_sendClose)(T*ws,SSL *ssl);
 
  struct T {
   WsHandler_destructor *destructor;
   WsHandler_handshake *handshake;
   WsHandler_listen *listen;
   WsHandler_send *send;
+  WsHandler_sendClose *close;
   WsHandler_get_https_handler *get_https_handler;
   void * __private;
 };

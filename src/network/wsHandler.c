@@ -1,4 +1,5 @@
 #include "wsHandler.h"
+#include "common.h"
 #include "https.h"
 #define T WsHandler
 #define x128 0x80
@@ -6,6 +7,14 @@
 #define x126 0x7e
 #define x125 0x7d
 
+typedef enum Opcode {
+  CONTINUATION=0x0,
+  TEXT=0x1,
+  BINARY=0x2,
+  FIN=0x8,
+  PING=0x9,
+  PONG=0xA,
+}Opcode;
 
 enum err {
 SSL_READ_FAILED,
@@ -22,6 +31,7 @@ int __wsHandler_listen(T * ws, SSL *ssl,void* caller,Wshandler_on_frame_receive 
 int __wsHandler_get_frame_length(SSL *ssl,char second_byte, int *bytes_received, int *res);
 int __wsHandler_create_frame(SSL *ssl, char **out_message);
 Https* __wsHandler_get_https_handler(T*ws);
+void __wsHandler_sendClose(T*ws, SSL *ssl);
 
 typedef struct Private {
   Https *https;
@@ -34,6 +44,7 @@ T *wsHandler_constructor(Https * https){
   ws->handshake = __wsHandler_handshake;
   ws->send = __wsHandler_send;
   ws->listen = __wsHandler_listen;
+  ws->close = __wsHandler_sendClose;
   ws->get_https_handler = __wsHandler_get_https_handler;
   Private * private = malloc(sizeof(Private));
   private->https = https;
@@ -43,13 +54,78 @@ T *wsHandler_constructor(Https * https){
 
 void __wsHandler_destructor(T * ws){ }
 
+static void __wsHandler_generateMask(unsigned char mask[4]) {
+    RAND_bytes(mask, 4);
+}
+
 SSL* __wsHandler_handshake(T * ws, HttpsRequest * request){
   Private * private = (Private*)ws->__private;
   Https * https = private->https;
   return https->ws_handshake(request);
 }
 
-void __wsHandler_send(T * ws, SSL *ssl, const char *message){}
+void __wsHandler_send(T * ws, SSL *ssl, const char *message){
+    // Create a WebSocket frame for sending a text message
+    unsigned char frame[14]; // Assuming a maximum message length of 10 bytes plus masking
+    size_t message_len = strlen(message);
+    
+    frame[0] = 0x81; // FIN bit set, opcode for text frame (0x81)
+    
+    // Determine the length of the message and set the appropriate length bits
+    if (message_len <= 125) {
+        frame[1] = (unsigned char)(message_len | 0x80); // Set the MASK bit
+        frame[2] = '\0';
+    } else if (message_len <= 65535) {
+        frame[1] = 126 | 0x80; // Set the MASK bit
+        frame[2] = (unsigned char)((message_len >> 8) & 0xFF);
+        frame[3] = (unsigned char)(message_len & 0xFF);
+    } else {
+        frame[1] = 127 | 0x80; // Set the MASK bit
+        for (int i = 0; i < 8; i++) {
+            frame[2 + i] = (unsigned char)((message_len >> ((7 - i) * 8)) & 0xFF);
+        }
+    }
+
+    // Generate a random 32-bit mask
+    unsigned char mask[4];
+    __wsHandler_generateMask(mask);
+    memcpy(&frame[2 + ((frame[1] == 126) ? 2 : ((frame[1] == 127) ? 8 : 0))], mask, 4);
+
+    // Send the frame header
+    SSL_write(ssl, frame, 2 + ((frame[1] == 126) ? 2 : ((frame[1] == 127) ? 8 : 0)) + 4);
+
+    // Initialize a new message buffer with masking
+    unsigned char *masked_message = malloc(message_len);
+    if (masked_message == NULL) {
+        // Handle memory allocation error
+        return;
+    }
+
+    // Apply the mask to the message
+    for (size_t i = 0; i < message_len; i++) {
+        masked_message[i] = message[i] ^ mask[i % 4];
+    }
+    
+    // Send the message payload
+    SSL_write(ssl, masked_message, message_len);
+
+    // Free the masked_message buffer
+    free(masked_message);
+    
+    // Message sent!
+}
+
+void __wsHandler_sendClose(T*ws, SSL *ssl) {
+    // uint8_t mask[4];
+    // __wsHandler_generateMask(mask);
+    uint8_t closeFrame[] = {
+        0x88, 0x80 | 0x02, // FIN bit set, Opcode for Close frame (0x88), Payload length with MASK bit
+        0x00, 0x00, 0x00, 0x00, // Masking key
+        0x03, 0xE8 // Status code 1000 (Normal closure)
+    };
+    SSL_write(ssl, closeFrame, sizeof(closeFrame));
+}
+
 
 int __wsHandler_listen(T * ws, SSL *ssl,void* caller,Wshandler_on_frame_receive update ){
   int status = 0;
@@ -92,8 +168,13 @@ int __wsHandler_create_frame(SSL *ssl, char **out_message) {
   char fin = (header[0] & x128) >> 7;
   char opcode = header[0] & x127;
 
-  if (opcode != 1) {
-    return get_error("opcode != 1");
+  switch ((int)opcode) {
+    case FIN:
+      return 0;
+    case BINARY:
+      return RUNTIME_ERROR("Binary format not handled by wsHandler",1);
+    default:
+      break;
   }
 
   unsigned char masked = (header[1] & x128) >> 7;
