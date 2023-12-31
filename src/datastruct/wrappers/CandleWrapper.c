@@ -29,12 +29,14 @@ static double  __up_ticks(T *self);
 static double  __down_ticks(T *self);
 static int  __total_ticks(T *self);
 static time_t  __timestamp(T *self);
+static double  __volume(T *self);
 
 static void __set_timestamp(T*self);
+static void __set_volume(T*self);
 
 T * candleWrapper_constructor(Hashmap *map){
   T *self = malloc(sizeof(T));
-  if (self == NULL) return NULL;
+  if (self == NULL) map = hashmap_constructor(20);
   self->__private = map;
   self->destructor = __destructor;
   self->get = __get;
@@ -51,7 +53,9 @@ T * candleWrapper_constructor(Hashmap *map){
   self->down_ticks = __down_ticks;
   self->total_ticks = __total_ticks;
   self->timestamp = __timestamp;
+  self->volume = __volume;
   __set_timestamp(self);
+  __set_volume(self);
   return self;
 }
 
@@ -175,6 +179,21 @@ static void __set_timestamp(T*self){
   map->push(map,"Timestamp",out,0);
 }
 
+static void __set_volume(T*self){
+  Hashmap* map = self->__private; 
+  double up_volume =  wrapper_get_double(map,"DownVolume");
+  double down_volume =  wrapper_get_double(map,"UpVolume");
+  double *volume = malloc(sizeof(double));
+  *volume = up_volume + down_volume;
+  map->push(map,"Volume",volume,0);
+}
+
+static double __volume(T*self){
+  if(self == NULL) return -1;
+  Hashmap* map = self->__private; 
+  double* volume = map->get(MAP(self),"Volume",0);
+  return *volume;
+}
 
 #undef T
 #undef MAP

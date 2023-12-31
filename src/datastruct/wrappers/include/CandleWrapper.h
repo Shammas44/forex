@@ -24,6 +24,7 @@ typedef double (CandleWrapper_up_ticks)(T *self);
 typedef double (CandleWrapper_down_ticks)(T *self);
 typedef int (CandleWrapper_total_ticks)(T *self);
 typedef time_t (CandleWrapper_timestamp)(T *self);
+typedef double (CandleWrapper_volume)(T *self);
 
 typedef struct T {
   CandleWrapper_destructor *destructor;
@@ -41,6 +42,7 @@ typedef struct T {
   CandleWrapper_down_ticks *down_ticks;
   CandleWrapper_total_ticks *total_ticks;
   CandleWrapper_timestamp *timestamp;
+  CandleWrapper_volume *volume;
   void *__private;
 } T;
 
