@@ -52,12 +52,14 @@ function createWebSocketServer(httpServer) {
 
     ws.on('message', (message) => {
       const rawMessage = String(message);
+      console.log(rawMessage)
       onMessageReceived(ws, rawMessage, currentChannel);
     });
 
     ws.on('close', () => {
       const currentChannel = 0;
       const response = setUserResponse(MSG.USER_DISCONNECTION);
+      console.log("User disconnected")
       broadcastMessage(response, currentChannel);
       channels[currentChannel].delete(client.sub);
       ws.terminate();
