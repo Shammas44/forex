@@ -11,26 +11,35 @@
 #include "url.h"
 #include "observer.h"
 #include "https.h"
-#include "RuntimeErrorStub.h"
 #include "wsHandler.h"
-#include "configWrapper.h"
+#include "CandleWrapper.h"
+#include "ConfigWrapper.h"
 #include "common.h"
 #include "CsvParser.h"
 
-void observer_callback(void* newState){
+void live_callback(void* newState){
   Hashmap*map = (Hashmap*)newState;
   puts("-------");
-  printf("Time: %s\n",HASHMAP_GET_STRING(map, "Time"));
-  printf("Date: %s\n",HASHMAP_GET_STRING(map, "Date"));
+  printf("type: %s\n",HASHMAP_GET_STRING(map, "type"));
+  printf("instrument_id: %s\n",HASHMAP_GET_STRING(map, "instrument_id"));
   map->destructor(map);
 }
 
+void backtest_callback(void* newState){
+  Hashmap*map = (Hashmap*)newState;
+  CandleWrapper * candle = candleWrapper_constructor(map);
+
+  puts("-------");
+  printf("Time: %s\n",candle->time(candle));
+  printf("Date: %s\n",candle->date(candle));
+  printf("Timestamp: %ld\n",candle->timestamp(candle));
+  printf("Volume: %f\n",candle->volume(candle));
+  candle->destructor(candle);
+}
+
 int main(int argc, char *argv[]) {
-  // int value = 1;
-  // const char *msg = "pas cool"; 
-  // RUNTIME_ERROR(msg, value);
-  const char*error = runtimeErrorStub_get_last_error();
-  printf("%s\n", error);
+  // RUNTIME_ERROR("pas cool", 1);
+  // Error error = runtimeError_get_last_error();
 
   struct timeval start_time, end_time;
   gettimeofday(&start_time, NULL);
@@ -76,6 +85,7 @@ int main(int argc, char *argv[]) {
   Https *https = https_constructor();
   WsHandler *ws = wsHandler_constructor(https);
   Exchange * exchange = NULL;
+  Observer *observer;
 
   if(isBacktest){
     parser->destructor(parser);
@@ -85,14 +95,15 @@ int main(int argc, char *argv[]) {
     Parser_config_obj *c = (Parser_config_obj *) &csv_config;
     parser->config(parser,c);
     exchange = exchangeTestBacktest_constructor(ws, config,parser);
+    observer = observer_constructor(backtest_callback);
   }else {
     parser = jsonParser_constructor();
     exchange = exchangeTest_constructor(ws, config,parser);
+    observer = observer_constructor(live_callback);
   }
 
   int status = exchange->connect(exchange);
   if(status != 0) exit(1);
-  Observer *observer = observer_constructor(observer_callback);
   exchange->attach_observer(exchange,observer);
   exchange->subscribe(exchange,NULL);
   exit(0);
