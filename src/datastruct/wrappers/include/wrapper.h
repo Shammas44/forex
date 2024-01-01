@@ -1,19 +1,24 @@
 #ifndef WRAPPER_H
 #define WRAPPER_H
 #include "hashmap.h"
-#include <stdbool.h>
 
 #define T Wrapper
 
 typedef struct T T;
+typedef void* Object;
 
-char* wrapper_get_string(Hashmap*map,const char*key);
+typedef void (Wrapper_destructor)(T*self);
+typedef const char* (Wrapper_get_type)(T*self);
+typedef Object (Wrapper_get_content)(T*self);
 
-int wrapper_get_int(Hashmap*map,const char*key);
+typedef struct T {
+  Wrapper_destructor *destructor;
+  Wrapper_get_type *type;
+  Wrapper_get_content *content;
+  void* __private;
+} T;
 
-bool wrapper_get_bool(Hashmap*map,const char*key);
-
-double wrapper_get_double(Hashmap*map,const char*key);
+T* wrapper_constructor(const char*type,Object object);
 
 #undef T
 #endif

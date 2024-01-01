@@ -1,10 +1,12 @@
 #ifndef STRATEGY_TEST_H
 #define STRATEGY_TEST_H
-#include "candle.h"
-#include "csv.h"
-#include "order.h"
-#include "tsmetadata.h"
+#include "Strategy.h"
 
-Order *strategy_test(Tsmetadata *metadata, Candle candle);
+#define T Strategy_test
 
+typedef Strategy T;
+
+T* strategy_test_constructor(Metadata*metadata);
+
+#undef T
 #endif

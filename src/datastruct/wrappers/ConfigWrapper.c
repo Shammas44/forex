@@ -47,61 +47,61 @@ static void __destructor(T*wrapper){
 
 static char* __get(T*wrapper,char*key){
   Hashmap*map = wrapper->__private;
-  return (void*)wrapper_get_string(map,key);
+  return (void*)hashmap_get_string(map,key);
 }
 
 static char* __mode(T*wrapper){
   if(wrapper == NULL) return NULL;
   Hashmap*map = wrapper->__private;
-  return wrapper_get_string(map,"mode");
+  return hashmap_get_string(map,"mode");
 }
 
 static char* __symbol(T*wrapper){
   if(wrapper == NULL) return NULL;
   Hashmap*map = wrapper->__private;
-  return wrapper_get_string(map,"symbol");
+  return hashmap_get_string(map,"symbol");
 }
 
 static char* __strategy(T*wrapper){
   if(wrapper == NULL) return NULL;
   Hashmap*map = wrapper->__private;
-  return wrapper_get_string(map,"strategy");
+  return hashmap_get_string(map,"strategy");
 }
 
 static char* __backtest_data(T*wrapper){
   if(wrapper == NULL) return NULL;
   Hashmap*map = wrapper->__private;
-  return wrapper_get_string(map,"backtest_data");
+  return hashmap_get_string(map,"backtest_data");
 }
 
 static bool __paper(T*wrapper){
   if(wrapper == NULL) return NULL;
   Hashmap*map = wrapper->__private;
-  return wrapper_get_bool(map,"paper");
+  return hashmap_get_bool(map,"paper");
 }
 
 static double __spread(T*wrapper){
   if(wrapper == NULL) return -1;
   Hashmap*map = wrapper->__private;
-  return wrapper_get_double(map,"strategy");
+  return hashmap_get_double(map,"strategy");
 }
 
 static double __capital(T*wrapper){
   if(wrapper == NULL) return -1;
   Hashmap*map = wrapper->__private;
-  return wrapper_get_double(map,"capital");
+  return hashmap_get_double(map,"capital");
 }
 
 static int __leverage(T*wrapper){
   if(wrapper == NULL) return -1;
   Hashmap*map = wrapper->__private;
-  return wrapper_get_int(map,"leverage");
+  return hashmap_get_int(map,"leverage");
 }
 
 static double __broker_commision_dpm(T*wrapper){
   if(wrapper == NULL) return -1;
   Hashmap*map = wrapper->__private;
-  return wrapper_get_double(map,"broker_commision_dpm");
+  return hashmap_get_double(map,"broker_commision_dpm");
 }
 
 #undef T

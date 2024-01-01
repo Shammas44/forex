@@ -70,15 +70,15 @@ void to_strategy(void* res, int token_length ,char* token_string){
   } 
   char_res[token_length] = '\0';  
 
-  if(strcmp(char_res, "STRATEGY_TEST") == 0){
-    *final_res = STRATEGY_TEST;
-  }
-  else if (strcmp(char_res, "STRATEGY_TREND_FOLLOWING") == 0){
-    *final_res = STRATEGY_TREND_FOLLOWING;
-  }else{
-    printf("Error: strategy not found\n");
-    exit(EXIT_FAILURE);
-  }
+  // if(strcmp(char_res, "STRATEGY_TEST") == 0){
+  //   *final_res = STRATEGY_TEST;
+  // }
+  // else if (strcmp(char_res, "STRATEGY_TREND_FOLLOWING") == 0){
+  //   *final_res = STRATEGY_TREND_FOLLOWING;
+  // }else{
+  //   printf("Error: strategy not found\n");
+  //   exit(EXIT_FAILURE);
+  // }
 }
 
 void to_mode(void* res, int token_length ,char* token_string){

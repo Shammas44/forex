@@ -15,64 +15,26 @@
 #include "CandleWrapper.h"
 #include "ConfigWrapper.h"
 #include "common.h"
+#include "globalState.h"
+#include "MtsQueue.h"
 #include "CsvParser.h"
-
-void live_callback(void* newState){
-  Hashmap*map = (Hashmap*)newState;
-  puts("-------");
-  printf("type: %s\n",HASHMAP_GET_STRING(map, "type"));
-  printf("instrument_id: %s\n",HASHMAP_GET_STRING(map, "instrument_id"));
-  map->destructor(map);
-}
-
-void backtest_callback(void* newState){
-  Hashmap*map = (Hashmap*)newState;
-  CandleWrapper * candle = candleWrapper_constructor(map);
-
-  puts("-------");
-  printf("Time: %s\n",candle->time(candle));
-  printf("Date: %s\n",candle->date(candle));
-  printf("Timestamp: %ld\n",candle->timestamp(candle));
-  printf("Volume: %f\n",candle->volume(candle));
-  candle->destructor(candle);
-}
+#include "strategyThread.h"
+#include "exchangeThread.h"
 
 int main(int argc, char *argv[]) {
-  // RUNTIME_ERROR("pas cool", 1);
-  // Error error = runtimeError_get_last_error();
-
   struct timeval start_time, end_time;
   gettimeofday(&start_time, NULL);
-  // Tsmetadata *metadata = malloc(sizeof(Tsmetadata));
   char * config_path = argv[1];
   if (argv[1] == NULL) config_path = "./config.json";
 
-  // configparser_init(config,metadata);
-  // tsmetadata_print(metadata);
+  MtsQueue *candles_queue = mtsQueue_constructor(1);
+  if (!candles_queue)
+    return RUNTIME_ERROR("Failed to init candles queue",1);
+  MtsQueue *orders_queue = mtsQueue_constructor(1);
+  if (!orders_queue)
+    return RUNTIME_ERROR("Failed to init orders queue",1);
 
-  // Mtqueue *ticks_queue = mtqueue_init(1);
-  // if (!ticks_queue)
-  //   return get_error("Failed to init queue\n");
-  // Mtqueue *bars_queue = mtqueue_init(1);
-  // if (!bars_queue)
-  //   return get_error("Failed to init queue\n");
-  // Mtqueue *orders_queue = mtqueue_init(1);
-  // if (!orders_queue)
-  //   return get_error("Failed to init queue\n");
-
-  // SSL *ssl = NULL;
-
-  // Sync *sync = sync_init(SYNC_STATE_BARS);
-
-  // Mtqueue_list queues;
-  // queues.bars = bars_queue;
-  // queues.ticks = ticks_queue;
-  // queues.orders = orders_queue;
-  // queues.ssl = ssl;
-  // queues.metadata = metadata;
-  // queues.sync = sync;
-
-  // pthread_t prod_tick, prod_candle, trade_logic, order_process, server;
+  pthread_t exchange_thread, strategy_thread, order_process_thread, server_thread;
 
   Parser*parser = jsonParser_constructor();
   char *file_content = file_read(config_path);
@@ -85,7 +47,6 @@ int main(int argc, char *argv[]) {
   Https *https = https_constructor();
   WsHandler *ws = wsHandler_constructor(https);
   Exchange * exchange = NULL;
-  Observer *observer;
 
   if(isBacktest){
     parser->destructor(parser);
@@ -95,27 +56,28 @@ int main(int argc, char *argv[]) {
     Parser_config_obj *c = (Parser_config_obj *) &csv_config;
     parser->config(parser,c);
     exchange = exchangeTestBacktest_constructor(ws, config,parser);
-    observer = observer_constructor(backtest_callback);
   }else {
     parser = jsonParser_constructor();
     exchange = exchangeTest_constructor(ws, config,parser);
-    observer = observer_constructor(live_callback);
   }
 
-  int status = exchange->connect(exchange);
-  if(status != 0) exit(1);
-  exchange->attach_observer(exchange,observer);
-  exchange->subscribe(exchange,NULL);
-  exit(0);
+  SSL *ssl = NULL;
+  // Sync *sync = sync_init(SYNC_STATE_BARS);
 
-  // if (metadata->mode == TSMETADATA_MODE_BACKTEST) {
-  // pthread_create(&prod_candle, NULL, candleprod_produce_from_file, &queues);
-  // } else if (metadata->mode == TSMETADATA_MODE_REAL) {
-  // pthread_create(&prod_tick, NULL, connectors_produce_tick, &queues);
-  // pthread_join(prod_tick, NULL);
-  // pthread_create(&prod_candle, NULL, connectors_produce_candle, &queues);
-  // pthread_join(prod_candle, NULL);
-  // }
+  GlobalState state;
+  state.candles = candles_queue;
+  state.orders = orders_queue;
+  state.config = config;
+  state.ssl = ssl;
+  state.exchange = exchange;
+  state.sync = NULL;
+  state.metadata = metadata_constructor();
+
+  pthread_create(&exchange_thread, NULL, exchangeThread, &state);
+  pthread_create(&strategy_thread, NULL, strategyThread, &state);
+
+  pthread_join(exchange_thread, NULL);
+  pthread_join(strategy_thread, NULL);
 
   // pthread_create(&trade_logic, NULL, strategy_processor, &queues);
 

@@ -65,66 +65,66 @@ static void __destructor(T*self){
 }
 
 static char* __get(T*self,char*key){
-  return (void*)wrapper_get_string(MAP(self),key);
+  return (void*)hashmap_get_string(MAP(self),key);
 }
 static char* __date(T*self){
   if(self == NULL) return NULL;
-  return (void*)wrapper_get_string(MAP(self),"Date");
+  return (void*)hashmap_get_string(MAP(self),"Date");
 }
 
 static char* __time(T*self){
   if(self == NULL) return NULL;
-  return wrapper_get_string(MAP(self),"Time");
+  return hashmap_get_string(MAP(self),"Time");
 }
 
 static double __open(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"Open");
+  return hashmap_get_double(MAP(self),"Open");
 }
 
 static double __high(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"High");
+  return hashmap_get_double(MAP(self),"High");
 }
 
 static double __low(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"Low");
+  return hashmap_get_double(MAP(self),"Low");
 }
 
 static double __close(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"Close");
+  return hashmap_get_double(MAP(self),"Close");
 }
 
 static double __up_volume(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"UpVolume");
+  return hashmap_get_double(MAP(self),"UpVolume");
 }
 
 static double __down_volume(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"DownVolume");
+  return hashmap_get_double(MAP(self),"DownVolume");
 }
 
 static double __total_volume(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"TotalVolume");
+  return hashmap_get_double(MAP(self),"TotalVolume");
 }
 
 static double __up_ticks(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"UpTicks");
+  return hashmap_get_double(MAP(self),"UpTicks");
 }
 
 static double __down_ticks(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"DownTicks");
+  return hashmap_get_double(MAP(self),"DownTicks");
 }
 
 static int __total_ticks(T*self){
   if(self == NULL) return -1;
-  return wrapper_get_double(MAP(self),"Total_ticks");
+  return hashmap_get_double(MAP(self),"Total_ticks");
 }
 
 static time_t __timestamp(T*self){
@@ -135,8 +135,8 @@ static time_t __timestamp(T*self){
 }
 
 static void __set_timestamp(T*self){
-  char*date =  wrapper_get_string(MAP(self),"Date");
-  char*time =  wrapper_get_string(MAP(self),"Time");
+  char*date =  hashmap_get_string(MAP(self),"Date");
+  char*time =  hashmap_get_string(MAP(self),"Time");
   if(date==NULL || time == NULL) return;
   char datetime_str[20];
   snprintf(datetime_str, sizeof(datetime_str), "%s %s", date, time);
@@ -181,8 +181,8 @@ static void __set_timestamp(T*self){
 
 static void __set_volume(T*self){
   Hashmap* map = self->__private; 
-  double up_volume =  wrapper_get_double(map,"DownVolume");
-  double down_volume =  wrapper_get_double(map,"UpVolume");
+  double up_volume =  hashmap_get_double(map,"DownVolume");
+  double down_volume =  hashmap_get_double(map,"UpVolume");
   double *volume = malloc(sizeof(double));
   *volume = up_volume + down_volume;
   map->push(map,"Volume",volume,0);

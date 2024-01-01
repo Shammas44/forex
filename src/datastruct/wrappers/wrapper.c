@@ -1,43 +1,48 @@
-#include "wrapper.h"
+#include "Wrapper.h"
 #include "hashmap.h"
 #include <string.h>
 #define T Wrapper
 
-char* wrapper_get_string(Hashmap*map,const char*key){
-  if(key == NULL) return NULL;
-  char* value = HASHMAP_GET_STRING(map, key);
-  if(value == NULL) return NULL;
-  size_t len = strlen(value);
-  char* out = malloc(sizeof(char) * len +1);
-  strcpy(out,value);
-  return out;
+typedef void(__destructor_callback)(void*value);
+
+typedef struct {
+  const char *type;
+  void *content;
+} Private;
+
+static void __destructor(T *self);
+static const char* __get_type(T*self);
+static Object __get_content(T*self);
+
+T* wrapper_constructor(const char*type, void* object){
+  T*self = malloc(sizeof(T));
+  if(self == NULL) return NULL;
+  self->destructor = __destructor;
+  self->content = __get_content;
+  self->type = __get_type;
+  Private *private = malloc(sizeof(Private));
+  private->type = type;
+  private->content = object;
+  self->__private = private;
+  return self;
 }
 
-int wrapper_get_int(Hashmap*map,const char*key){
-  if(key == NULL) return -1;
-  char*value = HASHMAP_GET_STRING(map, key);
-  if(value == NULL) return -1;
-  int out = atoi(value);
-  free(value);
-  return out;
+static void __destructor(T *self){
+  Private*private = self->__private;
+  // __destructor_callback *destructor = private->content;
+  // destructor(private->content);
+  free(private);
+  free(self);
 }
 
-bool wrapper_get_bool(Hashmap*map,const char*key){
-  if(key == NULL) return NULL;
-  char*value = HASHMAP_GET_STRING(map, key);
-  if(value == NULL) return NULL;
-  bool out = NULL;
-  if(strcmp(value,"true") == 0) out = true;
-  if(strcmp(value,"false") == 0) out = false;
-  free(value);
-  return out;
+static const char* __get_type(T*self){
+  Private*private = self->__private;
+  return private->type;
 }
 
-double wrapper_get_double(Hashmap*map,const char*key){
-  if(key == NULL) return -1;
-  char*value = HASHMAP_GET_STRING(map, key);
-  if(value == NULL) return -1;
-  int out = atof(value);
-  free(value);
-  return out;
+static Object __get_content(T*self){
+  Private*private = self->__private;
+  return private->content;
 }
+
+#undef T

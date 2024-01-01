@@ -137,11 +137,8 @@ int __wsHandler_listen(T * ws, SSL *ssl,void* caller,Wshandler_on_frame_receive 
       free(out_message);
       break;
     }
-    // void * value = parser->parse(parser,out_message);
-    // printf("%s\n", out_message);
     update(caller,out_message);
     free(out_message);
-    // subject->notify(subject);
   }
   return status;
 }
@@ -170,7 +167,8 @@ int __wsHandler_create_frame(SSL *ssl, char **out_message) {
 
   switch ((int)opcode) {
     case FIN:
-      return 0;
+      //TODO: return a status code instead of an error number
+      return 1;
     case BINARY:
       return RUNTIME_ERROR("Binary format not handled by wsHandler",1);
     default:

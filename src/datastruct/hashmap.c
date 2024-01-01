@@ -57,6 +57,45 @@ void hashmap_destructor(T *map) {
     }
 }
 
+char* hashmap_get_string(Hashmap*map,const char*key){
+  if(key == NULL) return NULL;
+  char* value = HASHMAP_GET_STRING(map, key);
+  if(value == NULL) return NULL;
+  size_t len = strlen(value);
+  char* out = malloc(sizeof(char) * len +1);
+  strcpy(out,value);
+  return out;
+}
+
+int hashmap_get_int(Hashmap*map,const char*key){
+  if(key == NULL) return -1;
+  char*value = HASHMAP_GET_STRING(map, key);
+  if(value == NULL) return -1;
+  int out = atoi(value);
+  free(value);
+  return out;
+}
+
+bool hashmap_get_bool(Hashmap*map,const char*key){
+  if(key == NULL) return NULL;
+  char*value = HASHMAP_GET_STRING(map, key);
+  if(value == NULL) return NULL;
+  bool out = NULL;
+  if(strcmp(value,"true") == 0) out = true;
+  if(strcmp(value,"false") == 0) out = false;
+  free(value);
+  return out;
+}
+
+double hashmap_get_double(Hashmap*map,const char*key){
+  if(key == NULL) return -1;
+  char*value = HASHMAP_GET_STRING(map, key);
+  if(value == NULL) return -1;
+  int out = atof(value);
+  free(value);
+  return out;
+}
+
 //function to clone deeply a hashmap
 T* __clone(T*map){
   T*clone = hashmap_constructor(map->capacity);

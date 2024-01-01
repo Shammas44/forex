@@ -1,7 +1,7 @@
 #ifndef CANDLE_ORDER_H
 #define CANDLE_ORDER_H
 #include "candle.h"
-#include "order.h"
+#include "Order.h"
 
 typedef struct Candle_order {
   Order *order;

@@ -1,12 +1,12 @@
 #ifndef STRATEGY_TREND_FOLLOWING_H
 #define STRATEGY_TREND_FOLLOWING_H
-#include "candle.h"
-#include "csv.h"
-#include "movingaverage.h"
-#include "order.h"
-#include "slidingwindow.h"
-#include "tsmetadata.h"
+#include "Strategy.h"
 
-Order *strategy_trend_following(Tsmetadata *metadata, Candle candle);
+#define T Strategy_trend_following
 
+typedef Strategy T;
+
+T* strategy_trend_following_constructor(Metadata*metadata);
+
+#undef T
 #endif

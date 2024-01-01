@@ -4,5 +4,6 @@
 #define COMMON_H
 
 extern ConfigWrapper *CONFIG;
+
 #endif
 

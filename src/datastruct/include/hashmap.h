@@ -1,6 +1,7 @@
 #ifndef MAP_H
 #define MAP_H
 #include "array.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #define T Hashmap
@@ -56,6 +57,10 @@ struct T {
 
 T *hashmap_constructor(size_t initial_capacity);
 void hashmap_destructor(T *map);
+char* hashmap_get_string(Hashmap*map,const char*key);
+int hashmap_get_int(Hashmap*map,const char*key);
+bool hashmap_get_bool(Hashmap*map,const char*key);
+double hashmap_get_double(Hashmap*map,const char*key);
 
 #undef T
 #endif

@@ -1,7 +1,7 @@
 #ifndef CANDLEWRAPPER_H
 #define CANDLEWRAPPER_H
 #include "hashmap.h"
-#include "wrapper.h"
+#include "Wrapper.h"
 #include <time.h>
 
 #define T CandleWrapper
