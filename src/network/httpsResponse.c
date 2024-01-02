@@ -140,7 +140,7 @@ Hashmap* __httpsResponse_extract_headers(const char *rawResponse) {
     if (colon != NULL) {
       char *header = __copy_str(token, ':');
       char *value = __copy_str(colon + 2, '\0');
-      headers->push(headers, header, value,NULL);
+      headers->push(headers, header, value,0);
       index++;
       free(header);
     }

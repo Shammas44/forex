@@ -24,7 +24,7 @@ Test(darray, push, .fini = teardown) {
   for (int i = 0; i < size; i++) {
     int * value = malloc(sizeof(int));
     *value = i;
-    d->push(d, value);
+    d->push(d, value,0);
   }
   cr_expect_eq(d->length, 10);
 }
@@ -35,12 +35,12 @@ Test(darray, get, .fini = teardown) {
   for (int i = 0; i < size; i++) {
     int * value = malloc(sizeof(int));
     *value = i;
-    d->push(d, value);
+    d->push(d, value,0);
   }
-  int value0 = *(int*)d->get(d,0);
-  int value1 = *(int*)d->get(d,1);
-  int value2 = *(int*)d->get(d,2);
-  void* value3 = d->get(d,3);
+  int value0 = *(int*)d->get(d,0,0);
+  int value1 = *(int*)d->get(d,1,0);
+  int value2 = *(int*)d->get(d,2,0);
+  void* value3 = d->get(d,3,0);
   cr_expect_eq(d->length, 3);
   cr_expect_eq(value0, 0);
   cr_expect_eq(value1, 1);

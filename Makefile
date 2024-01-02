@@ -71,3 +71,11 @@ run_test: test
 .PHONY: watch_test
 watch_test: 
 	watch -n 1 --color make run_test
+
+.PHONY: core_enable core_disable
+
+core_enable:
+	ulimit -c unlimited
+
+core_disable:
+	ulimit -c 0

@@ -51,11 +51,11 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
       char *key = malloc(sizeof(char) * strlen(token));
       if ('\n' == token[strlen(token) - 1]) {
         strncpy(key, token, strlen(token) - 2);
-        array->push(array, key);
+        array->push(array, key,0);
         break;
       }
       strcpy(key, token);
-      array->push(array, key);
+      array->push(array, key,0);
       token = strtok(NULL, separator);
     }
   }
@@ -68,7 +68,7 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
     int i = 0;
 
     while (token != NULL && i < columns) {
-      char *key = array->get(array, i);
+      char *key = array->get(array, i,0);
       char *value = malloc(sizeof(char) * strlen(token));
 
       if ('\n' == token[strlen(token) - 1]) {

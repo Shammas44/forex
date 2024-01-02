@@ -6,6 +6,7 @@
 typedef enum Sync_state  {
   SYNC_STATE_BARS,
   SYNC_STATE_ORDERS,
+  SYNC_STATE_EXCHANGE,
 } Sync_state;
 
 typedef struct Sync {

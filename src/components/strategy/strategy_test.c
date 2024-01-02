@@ -1,10 +1,12 @@
 #include "Strategy_test.h"
 #include "common.h"
-#define EQUITY_FILE "equity.csv"
+#include "EquityReport.h"
 #define T Strategy_test
+static char* report_name = "equity.csv";
 
 typedef struct {
   Metadata*metadata;
+  Report*report;
   bool first_run;
 } Private;
 
@@ -20,6 +22,7 @@ T* strategy_test_constructor(Metadata*metadata){
   Private * private = malloc(sizeof(Private));
   private->first_run = true;
   private->metadata = metadata;
+  private->report = equityReport_constructor(metadata,report_name);
   self->__private = private;
   self->destructor = __destructor;
   self->execute = __execute;
@@ -38,48 +41,48 @@ static void __destructor(T*self){
 static Order* __execute(T*self, CandleWrapper*candle){
   Private * private = self->__private;
   Metadata *metadata = private->metadata;
+  Report *report = private->report;
   if (private->first_run) {
       private->first_run = false;
-//     csv_erase_content(EQUITY_FILE);
-//     csv_add_new_line(EQUITY_FILE, "equity,timestamp");
+      report->erase(report);
+      report->add_header(report);
   }
   double close = candle->close(candle);
   double open = candle->open(candle);
   int market_position = metadata->get_market_position(metadata);
-  Order * order = order_constructor(-1);
-  order->price(order,WRITE,close);
-  order->status(order,WRITE,ORDER_CANCELLED);
-  order->type(order,WRITE,"Market");
+  puts("-------");
+  Order *order = NULL;
+  // Order * order = order_constructor(-1);
+  puts("-------");
+  // order->price(order,WRITE,close);
+  // order->status(order,WRITE,ORDER_CANCELLED);
+  // order->type(order,WRITE,"Market");
 
-  if (close > open && market_position >= 0) {
-    order->side(order,WRITE,SELL);
-    order->status(order,WRITE,ORDER_PENDING);
-    if (market_position == 0) {
-    order->size(order,WRITE,10000);
-    } else {
-    order->size(order,WRITE,20000);
-    }
-  }
+  // printf("price: %f\n", order->price(order,READ,0));
 
-  if (close < open && market_position <= 0) {
-    order->side(order,WRITE,BUY); 
-    order->status(order,WRITE,ORDER_PENDING);
-    if (market_position == 0) {
-      order->size(order,WRITE, 10000);
-    } else {
-      order->size(order,WRITE, 20000);
-    }
-  }
-//   strategy_test_report(metadata, candle.timestamp);
+  // if (close > open && market_position >= 0) {
+  //   order->side(order,WRITE,SELL);
+  //   order->status(order,WRITE,ORDER_PENDING);
+  //   if (market_position == 0) {
+  //   order->size(order,WRITE,10000);
+  //   } else {
+  //   order->size(order,WRITE,20000);
+  //   }
+  // }
+
+  // if (close < open && market_position <= 0) {
+  //   order->side(order,WRITE,BUY); 
+  //   order->status(order,WRITE,ORDER_PENDING);
+  //   if (market_position == 0) {
+  //     order->size(order,WRITE, 10000);
+  //   } else {
+  //     order->size(order,WRITE, 20000);
+  //   }
+  // }
+  // Report_entry entry = {.timestamp=candle->timestamp(candle)};
+  // report->add_entry(report,&entry);
   return order;
 }
 
 #undef T
 #undef EQUITY_FILE
-
-// void strategy_test_report(Tsmetadata *m, time_t timestamp) {
-//   double equity = tsmetadata_get_equity(m);
-//   char line[50];
-//   sprintf(line, "%f,%ld", equity, timestamp);
-//   csv_add_new_line(EQUITY_FILE, line);
-// }

@@ -1,7 +1,7 @@
 #include "Order.h"
 #include "common.h"
-#include "hashmap.h"
 #define T Order
+#define MAX_STR_LENGTH 20
 
 #define PRIVATE(self,error) \
 ({ \
@@ -10,7 +10,7 @@
     return error; \
   } \
   Private *_private = self->__private; \
-  if(private == NULL){ \
+  if(_private == NULL){ \
     RUNTIME_ERROR("private is NULL",1); \
     return error; \
   } \
@@ -37,6 +37,10 @@ typedef struct {
 
 T* order_constructor(int id){
   T* self = (T*) malloc(sizeof(T));
+  if(self == NULL){
+    RUNTIME_ERROR("self is NULL",1);
+    return NULL;
+  }
   self->destructor = __destructor;
   self->id = __id;
   self->type = __type;
@@ -47,6 +51,19 @@ T* order_constructor(int id){
   self->size = __size;
   self->executed_price = __executed_price;
   self->ttl = __ttl;
+  Private *private = malloc(sizeof(Private));
+  Hashmap*map = hashmap_constructor(10);
+  map->push(map,"id","-1",0);
+  map->push(map,"type","Market",0);
+  map->push(map,"status","0",0);
+  map->push(map,"limit","0",0);
+  map->push(map,"price","0",0);
+  map->push(map,"side","0",0);
+  map->push(map,"size","0",0);
+  map->push(map,"executed_price","0",0);
+  map->push(map,"ttl","0",0);
+  private->map = map;
+  self->__private = private;
   return self;
 }
 
@@ -134,7 +151,7 @@ static Side __side(T *self, Acces_mode mode, Side new){
 
 static double __size(T *self, Acces_mode mode, double new){
   char *key = "size";
-  Private *private = PRIVATE(self,-1);
+  Private *private = PRIVATE(self,0);
   Hashmap *map = private->map;
   if(mode == WRITE){
     _$set_double(map,key,new);
@@ -162,17 +179,27 @@ static int __ttl(T *self, Acces_mode mode, int new){
   return hashmap_get_int(map,key);
 }
 
-static void _$set_double(Hashmap*map, char* key, double value){
-    int length = sizeof(int);
-    char*buffer = malloc(length);
-    sprintf(buffer,"%f",value);
-    map->push(map,key,buffer,0);
+static void _$set_double(Hashmap* map, char* key, double value) {
+    char* buffer = malloc(MAX_STR_LENGTH * sizeof(char));
+    if (buffer != NULL) {
+      snprintf(buffer, MAX_STR_LENGTH, "%f", value);
+      map->push(map, key, buffer, 0);
+    } else {
+      RUNTIME_ERROR("memory allocation failed",1);
+      // Handle memory allocation failure
+    }
 }
 
-static void _$set_int(Hashmap*map, char* key, int value){
-    int length = sizeof(int);
-    char*buffer = malloc(length);
-    sprintf(buffer,"%d",value);
-    map->push(map,key,buffer,0);
+static void _$set_int(Hashmap* map, char* key, int value) {
+    char* buffer = malloc(MAX_STR_LENGTH * sizeof(char)); 
+    if (buffer != NULL) {
+      snprintf(buffer, MAX_STR_LENGTH, "%d", value); // Safely write formatted string
+      map->push(map, key, buffer, 0);
+    } else {
+      RUNTIME_ERROR("memory allocation failed",1);
+      // Handle memory allocation failure
+    }
 }
 #undef T
+#undef PRIVATE
+#undef MAX_STR_LENGTH

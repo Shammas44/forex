@@ -77,7 +77,6 @@ static void __subscribe(T*exchange,char*backtest_path){
   ConfigWrapper *config = private->config;
   Parser *parser = private->parser;
   if(backtest_path == NULL) backtest_path = config->backtest_data(config); 
-  printf("backtest_path: %s\n",backtest_path);
   parser->parse_stream(parser,backtest_path,exchange,__on_row_receive);
 }
 

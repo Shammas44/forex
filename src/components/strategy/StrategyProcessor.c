@@ -41,16 +41,18 @@ static Order *__run(T *self,CandleWrapper *candle) {
     exit(RUNTIME_ERROR("Strategy not found", 1));
   }
 
-  metadata->set_equity(metadata, candle->close(candle));
-  metadata->set_last_price(metadata, candle->close(candle));
+  double close = candle->close(candle);
+  metadata->set_equity(metadata, close);
+  metadata->set_last_price(metadata, close);
 
   Order *order = strategy->execute(strategy, candle);
-  free(candle);
+  candle->destructor(candle);
 
-  if (order->size != 0) {
-    int id = order->id(order,READ,NULL) + 1;
-    order->id(order,WRITE,id); 
-  }
+  // printf("size: %f\n", order->size(order,READ,0));
+  // if (order->size(order,READ,0) > 0) {
+  //   int id = order->id(order,READ,NULL) + 1;
+  //   order->id(order,WRITE,id); 
+  // }
   return order;
 }
 

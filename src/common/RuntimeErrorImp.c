@@ -18,7 +18,7 @@ int runtimeError(const char *m, int p, const char *f, int l) {
   time(&t);
   static char buffer[256];
 
-  sprintf(buffer, "%d; %ld; %s:%d; %s", p,t, f, l, m );
+  sprintf(buffer, "%s:%d; %s; %ld; %d", f,l, m, t, p );
   printf("%s%s%s\n",start,buffer,end);
   error = (Error){.timestamp = t,.message = m, .code = p, .file = f, .line = l};
   

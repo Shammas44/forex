@@ -5,7 +5,6 @@
 #include "globalState.h"
 #include "CandleWrapper.h"
 #include "MtsQueue.h"
-#include <sys/_types/_null.h>
 
 static void __live_callback(void* newState);
 static void __backtest_callback(void* newState);
@@ -42,8 +41,12 @@ static void __live_callback(void* newState){
 
 static void __backtest_callback(void* newState){
   Hashmap*map = (Hashmap*)newState;
+  Sync *sync = state->sync;
   CandleWrapper * candle = candleWrapper_constructor(map);
   Wrapper *wrapper = wrapper_constructor("Candle",candle);
   MtsQueue *candle_queue = state->candles;
+  puts("enqueue");
+  sync_wait_on_state(sync, SYNC_STATE_EXCHANGE);
   candle_queue->enqueue(candle_queue,wrapper);
+  sync_set_state(sync, SYNC_STATE_BARS);
 }

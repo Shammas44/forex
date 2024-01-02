@@ -36,7 +36,7 @@ static void __set_volume(T*self);
 
 T * candleWrapper_constructor(Hashmap *map){
   T *self = malloc(sizeof(T));
-  if (self == NULL) map = hashmap_constructor(20);
+  if (map == NULL) map = hashmap_constructor(20);
   self->__private = map;
   self->destructor = __destructor;
   self->get = __get;

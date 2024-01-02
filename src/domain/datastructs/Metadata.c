@@ -58,6 +58,7 @@ T* metadata_constructor(){
   Private *private = malloc(sizeof(Private));
   memset(private,0,sizeof(Private));
   pthread_mutex_init(&private->mutex, NULL);
+  self->__private = private;
   return self;
 }
 
@@ -73,19 +74,18 @@ static void __set_equity(T *self, double current_price) {
   private->equity += (current_price - private->last_price) * private->market_position;
 }
 
+static double __get_equity(T *self) {
+  Private *private = self->__private;
+  pthread_mutex_lock(&private->mutex);
+  double value = private->equity;
+  pthread_mutex_unlock(&private->mutex);
+  return value;
+}
 
 static double __get_available_funds(T *self) {
   Private *private = self->__private;
   pthread_mutex_lock(&private->mutex);
   double value = (private->capital + private->equity) * private->leverage - private->market_position / private->leverage;
-  pthread_mutex_unlock(&private->mutex);
-  return value;
-}
-
-static double __get_equity(T *self) {
-  Private *private = self->__private;
-  pthread_mutex_lock(&private->mutex);
-  double value = private->equity;
   pthread_mutex_unlock(&private->mutex);
   return value;
 }

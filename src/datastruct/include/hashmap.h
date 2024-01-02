@@ -38,6 +38,7 @@ typedef void(Hashmap_destructor_callback)(void*value);
 typedef void(Hashmap_push)(T *map, const char *key, void *value, Hashmap_types type);
 typedef void(Hashmap_destructor)(T *map);
 typedef void *(Hashmap_get)(T *map, const char *key, Hashmap_types**type);
+typedef char *(Hashmap_to_json)(T *map);
 
 typedef struct {
   char *key;
@@ -51,6 +52,7 @@ struct T {
   Hashmap_push *push;
   Hashmap_get *get;
   Hashmap_entry *entries;
+  Hashmap_to_json *to_json;
   int capacity;
   int size;
 };

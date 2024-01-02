@@ -1,3 +1,4 @@
+#include "Metadata.h"
 #include "candle.h"
 #include "candleprod.h"
 #include "csv.h"
@@ -62,7 +63,11 @@ int main(int argc, char *argv[]) {
   }
 
   SSL *ssl = NULL;
-  // Sync *sync = sync_init(SYNC_STATE_BARS);
+  Sync *sync = sync_init(SYNC_STATE_EXCHANGE);
+  Metadata*metadata = metadata_constructor();
+  if(metadata == NULL){
+    exit(RUNTIME_ERROR("Metadata is null",1));
+  }
 
   GlobalState state;
   state.candles = candles_queue;
@@ -70,8 +75,8 @@ int main(int argc, char *argv[]) {
   state.config = config;
   state.ssl = ssl;
   state.exchange = exchange;
-  state.sync = NULL;
-  state.metadata = metadata_constructor();
+  state.sync = sync;
+  state.metadata = metadata;
 
   pthread_create(&exchange_thread, NULL, exchangeThread, &state);
   pthread_create(&strategy_thread, NULL, strategyThread, &state);

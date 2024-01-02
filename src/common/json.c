@@ -40,10 +40,10 @@ void* __jsonParser_parse(T *parser,char*input){
   jsmntype_t type = tokens[0].type;
   switch (type) {
     case JSMN_OBJECT:
-      json_to_map(input, (Hashmap**)&value,NULL,NULL);
+      json_to_map(input, (Hashmap**)&value,NULL,0);
     break;
     case JSMN_ARRAY:
-      json_to_array(input, (Array**)&value,NULL,NULL);
+      json_to_array(input, (Array**)&value,NULL,0);
     break;
     case JSMN_STRING:
       value = NULL;
@@ -197,7 +197,7 @@ int json_to_array(char *json, Array**array,jsmntok_t *tokens, int token_num){
     }else {
       value = string;
     }
-    (*array)->push(*array,value);
+    (*array)->push(*array,value,0);
     i+=inner_token_num;
   }
   return token_num;
@@ -236,10 +236,10 @@ Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num) {
       // printf("%s: %s\n", key, value);
       switch (tokens[i].type) {
         case JSMN_STRING:
-          map->push(map,key,value,NULL);
+          map->push(map,key,value,0);
           break;
         case JSMN_PRIMITIVE:
-          map->push(map,key,value,NULL);
+          map->push(map,key,value,0);
           break;
         case JSMN_OBJECT:
           inner_token_num = json_to_map(value, &inner_map,NULL,NULL);
