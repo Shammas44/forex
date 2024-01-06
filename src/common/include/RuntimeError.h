@@ -2,6 +2,13 @@
 #define RUNTIMEERROR_H
 #include <time.h>
 
+typedef enum {
+  RuntimeErrors_mode_default,
+  RuntimeErrors_mode_silent,
+} RuntimeErrors_mode;
+
+extern RuntimeErrors_mode runtimeerrors_mode;
+
 int runtimeError(const char *message, int error_code, const char *file, int line);
 
 typedef struct {
