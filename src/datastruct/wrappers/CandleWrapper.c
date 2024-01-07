@@ -130,7 +130,7 @@ static int __total_ticks(T*self){
 static time_t __timestamp(T*self){
   if(self == NULL) return -1;
   Hashmap*map = self->__private; 
-  time_t *time = map->get(map,"Timestamp",0);
+  time_t *time = map->get(map,"Timestamp").value;
   return *time;
 }
 
@@ -176,7 +176,7 @@ static void __set_timestamp(T*self){
   time_t* out = malloc(sizeof(time_t));
   *out = epoch_time;
   Hashmap*map = self->__private; 
-  map->push(map,"Timestamp",out,0);
+  map->push(map,"Timestamp",(Item){.type=Item_default,.value=out});
 }
 
 static void __set_volume(T*self){
@@ -185,13 +185,13 @@ static void __set_volume(T*self){
   double down_volume =  hashmap_get_double(map,"UpVolume");
   double *volume = malloc(sizeof(double));
   *volume = up_volume + down_volume;
-  map->push(map,"Volume",volume,0);
+  map->push(map,"Volume",(Item){.type=Item_default,.value=volume});
 }
 
 static double __volume(T*self){
   if(self == NULL) return -1;
   Hashmap* map = self->__private; 
-  double* volume = map->get(MAP(self),"Volume",0);
+  double* volume = map->get(MAP(self),"Volume").value;
   return *volume;
 }
 

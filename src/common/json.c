@@ -1,4 +1,5 @@
 #include "json.h"
+#include "item.h"
 #include "array.h"
 #include "hashmap.h"
 #include "array.h"
@@ -197,7 +198,7 @@ int json_to_array(char *json, Array**array,jsmntok_t *tokens, int token_num){
     }else {
       value = string;
     }
-    (*array)->push(*array,value,0);
+    (*array)->push(*array,(Item){.type=Item_default,.value=value});
     i+=inner_token_num;
   }
   return token_num;
@@ -236,20 +237,20 @@ Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num) {
       // printf("%s: %s\n", key, value);
       switch (tokens[i].type) {
         case JSMN_STRING:
-          map->push(map,key,value,0);
+          map->push(map,key,(Item){.type=Item_default,.value=value});
           break;
         case JSMN_PRIMITIVE:
-          map->push(map,key,value,0);
+          map->push(map,key,(Item){.type=Item_default,.value=value});
           break;
         case JSMN_OBJECT:
           inner_token_num = json_to_map(value, &inner_map,NULL,NULL);
           inner_token_num--;
-          map->push(map,key,inner_map,Hashmap_types_hashmap);
+          map->push(map,key,(Item){.type=Item_map,.value=inner_map});
           break;
         case JSMN_ARRAY:
           inner_token_num = json_to_array(value,&inner_array,NULL,NULL);
           inner_token_num--;
-          map->push(map,key,inner_array,Hashmap_types_array);
+          map->push(map,key,(Item){.type=Item_array,.value=inner_array});
           break;
         default:
           printf("Value: Unhandled type\n");

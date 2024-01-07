@@ -93,7 +93,7 @@ static int __connect(T*exchange){
   if(strcmp(response->get_status(response),"200") ==0 ){
     Hashmap*map = NULL;
     json_to_map(response->get_body(response),&map,NULL,NULL);
-    private->token = map->get(map,"token",NULL);
+    private->token = map->get(map,"token").value;
     return 0;
   }
   return 1;

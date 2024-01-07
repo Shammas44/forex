@@ -34,8 +34,8 @@ void* exchangeThread(void *args){
 static void __live_callback(void* newState){
   Hashmap*map = (Hashmap*)newState;
   puts("-------");
-  printf("type: %s\n",HASHMAP_GET_STRING(map, "type"));
-  printf("instrument_id: %s\n",HASHMAP_GET_STRING(map, "instrument_id"));
+  printf("type: %s\n",(char*)map->get(map, "type").value);
+  printf("instrument_id: %s\n",(char*)map->get(map, "instrument_id").value);
   map->destructor(map);
 }
 

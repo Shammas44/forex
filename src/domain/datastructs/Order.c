@@ -53,15 +53,15 @@ T* order_constructor(int id){
   self->ttl = __ttl;
   Private *private = malloc(sizeof(Private));
   Hashmap*map = hashmap_constructor(10);
-  map->push(map,"id","-1",0);
-  map->push(map,"type","Market",0);
-  map->push(map,"status","0",0);
-  map->push(map,"limit","0",0);
-  map->push(map,"price","0",0);
-  map->push(map,"side","0",0);
-  map->push(map,"size","0",0);
-  map->push(map,"executed_price","0",0);
-  map->push(map,"ttl","0",0);
+  map->push(map,"id",(Item){.type=Item_default,.value="-1"});
+  map->push(map,"type",(Item){.type=Item_default,.value="Market"});
+  map->push(map,"status",(Item){.type=Item_default,.value="0"});
+  map->push(map,"limit",(Item){.type=Item_default,.value="0"});
+  map->push(map,"price",(Item){.type=Item_default,.value="0"});
+  map->push(map,"side",(Item){.type=Item_default,.value="0"});
+  map->push(map,"size",(Item){.type=Item_default,.value="0"});
+  map->push(map,"executed_price",(Item){.type=Item_default,.value="0"});
+  map->push(map,"ttl",(Item){.type=Item_default,.value="0"});
   private->map = map;
   self->__private = private;
   return self;
@@ -104,9 +104,9 @@ static char*  __type(T *self, Acces_mode mode, char* new){
   Private *private = PRIVATE(self,NULL);
   Hashmap *map = private->map;
   if(mode == WRITE){
-    map->push(map,key,new,0);
+    map->push(map,key,(Item){.type=Item_default,.value=new});
   }
-  return map->get(map,key,0);
+  return map->get(map,key).value;
 }
 
 static OrderStatus __status(T *self, Acces_mode mode, OrderStatus new){
@@ -183,7 +183,7 @@ static void _$set_double(Hashmap* map, char* key, double value) {
     char* buffer = malloc(MAX_STR_LENGTH * sizeof(char));
     if (buffer != NULL) {
       snprintf(buffer, MAX_STR_LENGTH, "%f", value);
-      map->push(map, key, buffer, 0);
+      map->push(map, key, (Item){.type=Item_default,.value=buffer});
     } else {
       RUNTIME_ERROR("memory allocation failed",1);
       // Handle memory allocation failure
@@ -194,7 +194,7 @@ static void _$set_int(Hashmap* map, char* key, int value) {
     char* buffer = malloc(MAX_STR_LENGTH * sizeof(char)); 
     if (buffer != NULL) {
       snprintf(buffer, MAX_STR_LENGTH, "%d", value); // Safely write formatted string
-      map->push(map, key, buffer, 0);
+      map->push(map, key, (Item){.type=Item_default,.value=buffer});
     } else {
       RUNTIME_ERROR("memory allocation failed",1);
       // Handle memory allocation failure

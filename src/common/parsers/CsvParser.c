@@ -51,11 +51,11 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
       char *key = malloc(sizeof(char) * strlen(token));
       if ('\n' == token[strlen(token) - 1]) {
         strncpy(key, token, strlen(token) - 2);
-        array->push(array, key,0);
+        array->push(array, (Item){.type=Item_default,.value=key});
         break;
       }
       strcpy(key, token);
-      array->push(array, key,0);
+        array->push(array, (Item){.type=Item_default,.value=key});
       token = strtok(NULL, separator);
     }
   }
@@ -68,18 +68,18 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
     int i = 0;
 
     while (token != NULL && i < columns) {
-      char *key = array->get(array, i,0);
+      char *key = array->get(array, i).value;
       char *value = malloc(sizeof(char) * strlen(token));
 
       if ('\n' == token[strlen(token) - 1]) {
         strncpy(value, token, strlen(token) - 2);
-        map->push(map, key, value, 0);
+        map->push(map,key, (Item){.type=Item_default,.value=value});
         on_data(caller,map);
         map = hashmap_constructor(columns*2);
         break;
       }
       strcpy(value, token);
-      map->push(map, key, value, 0);
+        map->push(map,key, (Item){.type=Item_default,.value=value});
       i++;
       token = strtok(NULL, separator);
     }
