@@ -4,16 +4,14 @@
 #include <stdlib.h>
 #define T Array
 
-typedef Array_item Entry;
-
 typedef struct {
-  Entry **array;
+  Item **array;
   size_t length;
   size_t capacity;
 } Private;
 
-static Array_item __get(T *self, size_t index);
-static void __push(T *self, Array_item item);
+static Item __get(T *self, size_t index);
+static void __push(T *self, Item item);
 static char *__to_json(T *self);
 static size_t __length(T *self);
 static size_t __capacity(T *self);
@@ -27,7 +25,7 @@ T *array_constructor(size_t size) {
   }
   self->length = 0;
   self->__private = malloc(sizeof(Private));
-  Entry **array = malloc(sizeof(Entry *) * size);
+  Item **array = malloc(sizeof(Item *) * size);
 
   for (int i = 0; i < size; i++) {
     array[i] = NULL;
@@ -54,25 +52,26 @@ static void __destructor(T *self) {
   size_t capacity = p->capacity;
   size_t length = p->length;
   for (size_t i=0;i<length;i++) {
-    Entry *entry = p->array[i];
-    Array_types type = entry->type;
+    Item *entry = p->array[i];
+    Item_type type = entry->type;
     void * value = entry->value;
     Hashmap* map;
     Array* array;
     switch (type) {
-      case Array_types_empty:
+      case Item_null:
       break;
-      case Array_types_array:
+      case Item_array:
         array = value;
         array->destructor(array);
       break;
-      case Array_types_hashmap:
+      case Item_map:
         map = value;
         map->destructor(map);
       break;
-      case Array_types_default:
-        free(value);
+      default: 
+      free(value);
       break;
+    
     }
     free(entry);
   }
@@ -119,30 +118,30 @@ char *__to_json(T *array) {
   return NULL;
 }
 
-static Array_item __get(T *self, size_t index) {
+static Item __get(T *self, size_t index) {
   Private *p = self->__private;
   if (index >= p->length || index < 0) {
     RUNTIME_ERROR("index out of bounds", 1);
-    return (Array_item){.type=Array_types_empty,.value=NULL};
+    return (Item){.type=Item_null,.value=NULL};
   }
 
-  Entry *entry = p->array[index];
-  Array_item item = {.type=entry->type,.value=entry->value};
+  Item *entry = p->array[index];
+  Item item = {.type=entry->type,.value=entry->value};
   return item;
 }
 
-static void __push(T *self, Array_item item) {
+static void __push(T *self, Item item) {
   Private *p = self->__private;
-  Entry *entry = malloc(sizeof(Entry));
+  Item *entry = malloc(sizeof(Item));
   entry->type = item.value ==NULL
-  ? Array_types_empty
+  ? Item_null
   :item.type;
   entry->value = item.value;
   p->array[p->length] = entry;
   p->length++;
   if (p->length == p->capacity) {
      p->capacity = p->capacity * 2;
-     p->array = realloc(p->array, sizeof(Entry *) * p->capacity);
+     p->array = realloc(p->array, sizeof(Item *) * p->capacity);
   }
 }
 
