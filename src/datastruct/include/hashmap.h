@@ -2,32 +2,14 @@
 #define MAP_H
 #include "array.h"
 #include "isDestroyable.h"
+#include "isIterable.h"
 #include "item.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #define T Hashmap
 
-typedef struct T T;
-
-typedef void(Hashmap_destructor_callback)(void*value);
-typedef void(Hashmap_push)(T *self, const char *key, Item item);
-typedef void(Hashmap_destructor)(T *self);
-typedef Item(Hashmap_get)(T *self, const char *key);
-typedef char *(Hashmap_to_json)(T *self);
-typedef size_t (Hashmap_capacity)(T *self);
-typedef size_t (Hashmap_length)(T *self);
-
-typedef struct T {
-  IsDestroyable __destructor;
-  Hashmap_destructor *destructor;
-  Hashmap_push *push;
-  Hashmap_get *get;
-  Hashmap_to_json *to_json;
-  Hashmap_capacity *capacity;
-  Hashmap_length *length;
-  void *__private;
-}T;
+typedef IsIterable T;
 
 T *hashmap_constructor(size_t initial_capacity);
 void hashmap_destructor(T *self);

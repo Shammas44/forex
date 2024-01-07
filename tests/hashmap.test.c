@@ -86,5 +86,37 @@ Test(hashmap_destructor, is_truly_destroyed, .fini = teardown) {
   cr_expect_neq(strcmp(value,"$"),0, "values are the same");
 }
 
+Test(hashmap_keys, correct_keys, .init=setup, .fini = teardown) {
+  char key[3];
+  int result = 1 + 2 + 3 + 4; 
+  int sum = 0;
+  for (int i = 0; i < 5; i++) {
+    sprintf(key,"%d",i);
+    map->push(map, key, (Item){.type=Item_null,.value=NULL});
+  }
+  char**keys = map->keys(map);
+  for (int i = 0; i < 5; i++) {
+    sum+= atoi(keys[i]);
+  }
+  cr_assert_eq(result,sum, "Should be equal");
+}
+
+Test(hashmap_values, correct_values, .init=setup, .fini = teardown) {
+  char key[3];
+  int result = 1 + 2 + 3 + 4; 
+  int sum = 0;
+  for (int i = 0; i < 5; i++) {
+    sprintf(key,"%d",i);
+    char* value = malloc(sizeof(char)*3);
+    sprintf(value,"%d",i);
+    map->push(map, key, (Item){.type=Item_null,.value=value});
+  }
+  Item**values = map->values(map);
+  for (int i = 0; i < 5; i++) {
+    sum+= atoi((char*)values[i]->value);
+  }
+  cr_assert_eq(result,sum, "Should be equal");
+}
+
 #undef MAX_CAPACITY
 #undef T

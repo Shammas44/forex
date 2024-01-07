@@ -23,9 +23,11 @@ static unsigned int __hash(const char *key, size_t capacity);
 static void __resize(T *self);
 static size_t __capacity(T *self);
 static size_t __length(T *self);
-static Item __get(T *self, const char *key);
+static Item __get(T *self, void *key);
 static void __push(T *self, const char *key, Item item);
 static char *__to_json(T *self);
+static char **__keys(T *self);
+static Item **__values(T *self);
 
 T *hashmap_constructor(size_t initial_capacity) {
   if (initial_capacity > MAX_CAPACITY)
@@ -46,6 +48,8 @@ T *hashmap_constructor(size_t initial_capacity) {
   self->get = __get;
   self->push = __push;
   self->to_json = __to_json;
+  self->keys = __keys;
+  self->values = __values;
   self->__destructor = (IsDestroyable){.destructor = hashmap_destructor};
   initial_capacity =
       initial_capacity + (initial_capacity * LOAD_FACTOR_THRESHOLD);
@@ -81,7 +85,7 @@ void hashmap_destructor(T *self) {
       if (is_destroyable) {
         IsDestroyable *element = (IsDestroyable *)value;
         void *callback = element->destructor;
-        Hashmap_destructor *destructor = (Hashmap_destructor *)callback;
+        IsIterable_destructor *destructor = (IsIterable_destructor *)callback;
         destructor(value);
       } else {
         free(value);
@@ -101,6 +105,69 @@ static size_t __length(T *self) {
 static size_t __capacity(T *self) {
   Private *p = self->__private;
   return p->capacity;
+}
+
+static char **__keys(T *self) {
+  Private *p = self->__private;
+  Entry *entries = p->entries;
+  size_t length = p->length;
+  size_t capacity = p->capacity;
+  char **output = malloc(sizeof(char *) * length);
+  size_t j = 0;
+  if (output == NULL)
+    return NULL;
+
+  for (int i = 0; i < capacity; i++) {
+    if (entries[i].key != NULL) {
+      output[j] = malloc(strlen(entries[i].key) + 1);
+
+      if (output[j] != NULL) {
+        strcpy(output[j], entries[i].key);
+        j++;
+      } else {
+        // Handle memory allocation failure
+        // Free previously allocated memory before returning NULL
+        for (int k = 0; k < j; k++) {
+          free(output[k]);
+        }
+        free(output);
+        return NULL;
+      }
+    }
+  }
+
+  return output;
+}
+
+static Item **__values(T *self) {
+  Private *p = self->__private;
+  Entry *entries = p->entries;
+  size_t length = p->length;
+  size_t capacity = p->capacity;
+  Item **output = malloc(sizeof(Item *) * length);
+  size_t j = 0;
+  if (output == NULL)
+    return NULL;
+
+  for (int i = 0; i < capacity; i++) {
+    if (entries[i].key != NULL) {
+      output[j] = malloc(sizeof(Item));
+      if (output[j] != NULL) {
+        output[j]->type = entries[i].type;
+        output[j]->value = entries[i].value;
+        j++;
+      } else {
+        // Handle memory allocation failure
+        // Free previously allocated memory before returning NULL
+        for (int k = 0; k < j; k++) {
+          free(output[k]);
+        }
+        free(output);
+        return NULL;
+      }
+    }
+  }
+  return output;
 }
 
 static char *__to_json(Hashmap *map) {
@@ -254,7 +321,7 @@ static void __push(T *self, const char *key, Item item) {
   }
 }
 
-static Item __get(T *self, const char *key) {
+static Item __get(T *self, void *key) {
   Private *private = self->__private;
   Entry *entries = private->entries;
   unsigned int index = __hash(key, private->capacity);
