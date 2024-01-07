@@ -8,65 +8,82 @@ static void setup(void) { map = hashmap_constructor(10); }
 
 static void teardown(void) { free(map); }
 
-Test(hashmap, build, .init = setup, .fini = teardown) {
-  Hashmap_entry *entries = map->entries;
-  cr_assert_not_null(map, "Result should not be NULL");
-  cr_assert_not_null(entries, "Result should not be NULL");
-  cr_assert_gt(map->capacity, 10, "Capacity should be greater than 10");
-  cr_assert_eq(map->size, 0, "Size should be 0");
-  cr_assert_not_null(map->entries, "entries should should not be NULL");
-  cr_assert_not_null(&map->destructor,
-                     "Destructor method should should be defined");
-  cr_assert_not_null(&map->get, "Get method should should be defined");
-  cr_assert_not_null(&map->push, "Push method should should be defined");
+Test(hashmap_constructor, build, .init = setup, .fini = teardown) {
+  cr_assert_not_null(map, "should not be NULL");
+  cr_assert_gt(map->capacity(map), 10, "Capacity should be greater");
+  cr_assert_eq(map->length(map), 0, "Length should be 0");
 }
 
-Test(hashmap, map_size_is_positiv, .fini = teardown) {
+Test(hashmap_constructor, param_check, .fini = teardown) {
   map = hashmap_constructor(0);
-  cr_assert_null(map, "map should be NULL");
+  cr_assert_null(map, "should be NULL");
   map = hashmap_constructor(-1);
-  cr_assert_null(map, "map should be NULL");
+  cr_assert_null(map, "should be NULL");
   map = hashmap_constructor(1000000);
   cr_assert_null(map, "map should be NULL");
 }
 
-Test(hashmap, insertion, .init = setup, .fini = teardown) {
-  char key1[10] = "DOLLAR", value1[10] = "$";
-  map->push(map, key1, value1,0);
-  cr_assert_eq(map->size, 1, "Size should be 1");
-  char key2[10] = "Euro", value2[10] = "€";
-  map->push(map, key2, value2,0);
-  cr_assert_eq(map->size, 2, "Size should be 2");
+Test(hashmap_push, insertion, .init = setup, .fini = teardown) {
+  char key0[10] = "DOLLAR", value0[10] = "$";
+  map->push(map, key0,(Item){.type=Item_default,.value=value0});
+  cr_assert_eq(map->length(map), 1, "Wrong length");
+  char key1[10] = "Euro", value1[10] = "€";
+  map->push(map, key1,(Item){.type=Item_default,.value=value1});
+  cr_assert_eq(map->length(map), 2, "Wrong length");
 }
 
-Test(hashmap, retrieve, .init = setup, .fini = teardown) {
-  char key[10] = "DOLLAR", value[10] = "$";
-  map->push(map, key, value,0);
-  char *result = map->get(map, key,NULL);
-  cr_assert_eq(result, value, "Result should be equal to '$'");
+Test(hashmap_get, retrieve, .init = setup, .fini = teardown) {
+  char key0[10] = "DOLLAR", value0[10] = "$";
+  map->push(map, key0,(Item){.type=Item_default,.value=value0});
+  char* v0 = map->get(map, key0).value;
+  cr_assert_eq(strcmp(v0,value0),0, "Should be equal");
+  char key1[10] = "Euro", value1[10] = "€";
+  map->push(map, key1,(Item){.type=Item_default,.value=value1});
+  char* v1 = map->get(map, key1).value;
+  cr_assert_eq(strcmp(v1,value1),0, "Should be equal");
 }
 
-Test(hashmap, case_sensitive, .init = setup, .fini = teardown) {
+Test(hashmap_get, case_sensitive, .init = setup, .fini = teardown) {
   char key[10] = "DOLLAR", value[10] = "$";
-  map->push(map, key, value,0);
-  char *result = map->get(map, "dollar",NULL);
+  map->push(map, key,(Item){.type=Item_default,.value=value});
+  char *result = map->get(map, "dollar").value;
   cr_assert_null(result, "Result should be NULL");
 }
 
-Test(hashmap, resize_is_triggered, .init = setup, .fini = teardown) {
-  map = hashmap_constructor(10);
-  char result[2];
-  for (int i = 1; i <= 7; i++) {
-    snprintf(result, sizeof(result), "%d", i);
-    map->push(map, result, "$",0);
+Test(hashmap_push, is_resized, .init=setup, .fini = teardown) {
+  char key[3];
+  for (int i = 0; i < 20; i++) {
+    sprintf(key,"%d",i);
+    map->push(map, key, (Item){.type=Item_null,.value=NULL});
   }
-  cr_assert_gt(map->capacity, 10, "Capacity should be greater than 10");
-  for (int i = 7; i <= 10; i++) {
-    snprintf(result, sizeof(result), "%d", i);
-    map->push(map, result, "$",0);
-  }
-  printf("capacit: %d\n", map->capacity);
-  cr_assert_gt(map->capacity, 40, "Capacity should have been at least doubled");
+  cr_assert_gt(map->capacity(map), 20, "Capacity should be greater");
+}
+
+Test(hashmap_push, nested_hashmap, .init = setup, .fini = teardown) {
+  T*map2 = hashmap_constructor(10);
+  map2->push(map2,"DOLLAR",(Item){.type=Item_default,.value="$"});
+  map->push(map, "Symbols",(Item){.type=Item_array,.value=map2});
+  T*map3 = map->get(map,"Symbols").value;
+  char *result = map3->get(map3, "DOLLAR").value;
+  cr_assert_eq(strcmp(result,"$"),0, "Should be equal");
+}
+
+Test(hashmap_push, replacement, .init = setup, .fini = teardown) {
+  map->push(map, "Symbols",(Item){.type=Item_array,.value="$"});
+  map->push(map, "Symbols",(Item){.type=Item_array,.value="€"});
+  char* result = map->get(map,"Symbols").value;
+  cr_assert_eq(strcmp(result,"€"),0, "Should be equal");
+}
+
+Test(hashmap_destructor, is_truly_destroyed, .fini = teardown) {
+  T*map = hashmap_constructor(10);
+  T*map2 = hashmap_constructor(10);
+  char* value = malloc(sizeof(char)*2);
+  sprintf(value,"$");
+  map2->push(map2,"DOLLAR",(Item){.type=Item_default,.value=value});
+  map->push(map, "Symbols",(Item){.type=Item_array,.value=map2});
+  map->destructor(map);
+  cr_expect_neq(strcmp(value,"$"),0, "values are the same");
 }
 
 #undef MAX_CAPACITY
