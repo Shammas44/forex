@@ -8,6 +8,7 @@
 #include "response.h"
 #include "tls.h"
 #include "wsframe.h"
+#include "common.h"
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <stdbool.h>
@@ -20,33 +21,26 @@
 
 typedef struct T T;
 
-typedef T *(HttpsResponse_set_status)(T *res, char *status);
-typedef T *(HttpsResponse_set_body)(T *res, char *body);
-typedef T *(HttpsResponse_add_header)(T *res, char *header);
-typedef int(HttpsResponse_destructor)(T *response);
-typedef int(HttpsResponse_stringify)(T *response, char **out);
-typedef void(HttpsResponse_print)(T *response);
-typedef char *(HttpsResponse_get_status)(T *response);
-typedef char *(HttpsResponse_get_body)(T *response);
-typedef Hashmap *(HttpsResponse_get_headers)(T *response);
-typedef char *(HttpsResponse_get_header)(T *response,const char*);
-typedef char *(HttpsResponse_get_content_type)(T *response);
+typedef void(HttpsResponse_destructor)(T *self);
+typedef char*(HttpsResponse_stringify)(T *self);
+typedef char* (HttpsResponse_body)(T *self);
+typedef char *(HttpsResponse_status)(T *self);
+typedef Hashmap *(HttpsResponse_headers)(T *self);
+typedef Item (HttpsResponse_header)(T *self, char* key);
+typedef char *(HttpsResponse_content_type)(T *self);
 
 struct T {
+  IsDestroyable __destructor;
   HttpsResponse_destructor *destructor;
-  HttpsResponse_set_status *set_status;
-  HttpsResponse_set_body *set_body;
-  HttpsResponse_add_header *add_header;
+  HttpsResponse_body *body;
   HttpsResponse_stringify *stringify;
-  HttpsResponse_print *print;
-  HttpsResponse_get_status *get_status;
-  HttpsResponse_get_body *get_body;
-  HttpsResponse_get_headers *get_headers;
-  HttpsResponse_get_header *get_header;
-  HttpsResponse_get_content_type *get_content_type;
+  HttpsResponse_headers *headers;
+  HttpsResponse_header *header;
+  HttpsResponse_status *status;
+  HttpsResponse_content_type *content_type;
   void *__private;
 };
 
-T *httpsResponse_constructor(char *raw_response);
+T *httpsResponse_constructor(Hashmap *map);
 #undef T
 #endif

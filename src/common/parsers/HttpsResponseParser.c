@@ -1,4 +1,5 @@
 #include "HttpsResponseParser.h"
+#include "httpsResponse.keys.h"
 #include "array.h"
 #include "common.h"
 #include "hashmap.h"
@@ -58,13 +59,13 @@ static void* __parse(T *self, char*input){
   Hashmap *map = hashmap_constructor(25);
   Hashmap *headers = _$extract_headers(input);
   FirstLine firstLine = _$extract_status(input);
-  map->push(map, "protocol_name",(Item){.type=Item_default,.value=strdup(firstLine.protocol_name)});
-  map->push(map, "protocol_version",(Item){.type=Item_default,.value=strdup(firstLine.protocol_version)});
-  map->push(map, "status_code",(Item){.type=Item_default,.value=strdup(firstLine.status_code)});
-  map->push(map, "status_message",(Item){.type=Item_default,.value=strdup(firstLine.status_message)});
-  map->push(map, "headers",(Item){.type=Item_map,.value=headers});
+  map->push(map, KEY(Protocol_Name),(Item){.type=Item_default,.value=strdup(firstLine.protocol_name)});
+  map->push(map, KEY(Protocol_Version),(Item){.type=Item_default,.value=strdup(firstLine.protocol_version)});
+  map->push(map, KEY(Status_Code),(Item){.type=Item_default,.value=strdup(firstLine.status_code)});
+  map->push(map, KEY(Status_Message),(Item){.type=Item_default,.value=strdup(firstLine.status_message)});
+  map->push(map, KEY(Headers),(Item){.type=Item_map,.value=headers});
   //TODO: parse body
-  map->push(map, "body",(Item){.type=Item_default,.value=strdup(separator + 4)});
+  map->push(map, KEY(Body),(Item){.type=Item_default,.value=strdup(separator + 4)});
   return map;
 }
 
@@ -141,8 +142,8 @@ static FirstLine _$extract_status(const char*response){
   char status_code[10];
   char status_message[50];
 
-    sscanf(firstLine, "%9s %9s %9s %49[^\n]", out.protocol_name,
-           out.protocol_name,
+    sscanf(firstLine, "%9[^/]/%9s %9s %49[^\n]", out.protocol_name,
+           out.protocol_version,
            out.status_code,
            out.status_message
            );
