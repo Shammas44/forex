@@ -18,15 +18,15 @@
 })
 
 static void __destructor(T *self);
-static int __id(T *self, Acces_mode mode, int new);
-static char*  __type(T *self, Acces_mode mode, char* new);
-static OrderStatus __status(T *self, Acces_mode mode, OrderStatus new);
-static double __limit(T *self, Acces_mode mode, double new);
-static double __price(T *self, Acces_mode mode, double new);
-static Side __side(T *self, Acces_mode mode, Side new);
-static double __size(T *self, Acces_mode mode, double new);
-static double __executed_price(T *self, Acces_mode mode, double new);
-static int __ttl(T *self, Acces_mode mode, int new);
+static int __id(T *self, Access_mode mode, int new);
+static char*  __type(T *self, Access_mode mode, char* new);
+static OrderStatus __status(T *self, Access_mode mode, OrderStatus new);
+static double __limit(T *self, Access_mode mode, double new);
+static double __price(T *self, Access_mode mode, double new);
+static Side __side(T *self, Access_mode mode, Side new);
+static double __size(T *self, Access_mode mode, double new);
+static double __executed_price(T *self, Access_mode mode, double new);
+static int __ttl(T *self, Access_mode mode, int new);
 
 static void _$set_double(Hashmap*map, char* key, double value);
 static void _$set_int(Hashmap*map, char* key, int value);
@@ -89,7 +89,7 @@ static void __destructor(T *self){
   free(self);
 }
 
-static int __id(T *self, Acces_mode mode, int new){
+static int __id(T *self, Access_mode mode, int new){
   char *key = "id";
   Private *private = PRIVATE(self,-1);
   Hashmap *map = private->map;
@@ -99,7 +99,7 @@ static int __id(T *self, Acces_mode mode, int new){
   return hashmap_get_int(map,key);
 }
 
-static char*  __type(T *self, Acces_mode mode, char* new){
+static char*  __type(T *self, Access_mode mode, char* new){
   char *key = "type";
   Private *private = PRIVATE(self,NULL);
   Hashmap *map = private->map;
@@ -109,7 +109,7 @@ static char*  __type(T *self, Acces_mode mode, char* new){
   return map->get(map,key).value;
 }
 
-static OrderStatus __status(T *self, Acces_mode mode, OrderStatus new){
+static OrderStatus __status(T *self, Access_mode mode, OrderStatus new){
   char *key = "status";
   Private *private = PRIVATE(self,-1);
   Hashmap *map = private->map;
@@ -119,7 +119,7 @@ static OrderStatus __status(T *self, Acces_mode mode, OrderStatus new){
   return hashmap_get_int(map,key);
 }
 
-static double __limit(T *self, Acces_mode mode, double new){
+static double __limit(T *self, Access_mode mode, double new){
   char *key = "limit";
   Private *private = PRIVATE(self,-1);
   Hashmap *map = private->map;
@@ -129,7 +129,7 @@ static double __limit(T *self, Acces_mode mode, double new){
   return hashmap_get_double(map,key);
 }
 
-static double __price(T *self, Acces_mode mode, double new){
+static double __price(T *self, Access_mode mode, double new){
   char *key = "price";
   Private *private = PRIVATE(self,-1);
   Hashmap *map = private->map;
@@ -139,7 +139,7 @@ static double __price(T *self, Acces_mode mode, double new){
   return hashmap_get_double(map,key);
 }
 
-static Side __side(T *self, Acces_mode mode, Side new){
+static Side __side(T *self, Access_mode mode, Side new){
   char *key = "side";
   Private *private = PRIVATE(self,-1);
   Hashmap *map = private->map;
@@ -149,7 +149,7 @@ static Side __side(T *self, Acces_mode mode, Side new){
   return hashmap_get_int(map,key);
 }
 
-static double __size(T *self, Acces_mode mode, double new){
+static double __size(T *self, Access_mode mode, double new){
   char *key = "size";
   Private *private = PRIVATE(self,0);
   Hashmap *map = private->map;
@@ -159,7 +159,7 @@ static double __size(T *self, Acces_mode mode, double new){
   return hashmap_get_double(map,key);
 }
 
-static double __executed_price(T *self, Acces_mode mode, double new){
+static double __executed_price(T *self, Access_mode mode, double new){
   char *key = "executed_price";
   Private *private = PRIVATE(self,-1);
   Hashmap *map = private->map;
@@ -169,7 +169,7 @@ static double __executed_price(T *self, Acces_mode mode, double new){
   return hashmap_get_double(map,key);
 }
 
-static int __ttl(T *self, Acces_mode mode, int new){
+static int __ttl(T *self, Access_mode mode, int new){
   char *key = "ttl";
   Private *private = PRIVATE(self,-1);
   Hashmap *map = private->map;

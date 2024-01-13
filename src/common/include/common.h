@@ -5,5 +5,15 @@
 
 extern ConfigWrapper *CONFIG;
 
+typedef enum {
+  READ,
+  WRITE,
+} Access_mode;
+
+typedef enum {
+  ADD,
+  REMOVE,
+} Edition_mode;
+
 #endif
 
