@@ -1,4 +1,4 @@
-#include "strategy.h"
+#include "Strategy.h"
 #include "Order.h"
 
 // void *strategy_processor(void *arg) {

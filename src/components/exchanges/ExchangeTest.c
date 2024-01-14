@@ -90,9 +90,9 @@ static int __connect(T*exchange){
   char *body = malloc(strlen(body_tmp) + strlen(email) + strlen(password) + 1);
   sprintf(body, body_tmp, email, password);
   HttpsResponse * response = __send(exchange,"auth",POST, body);
-  if(strcmp(response->get_status(response),"200") ==0 ){
+  if(strcmp(response->status(response),"200") ==0 ){
     Hashmap*map = NULL;
-    json_to_map(response->get_body(response),&map,NULL,NULL);
+    json_to_map(response->body(response),&map,NULL,NULL);
     private->token = map->get(map,"token").value;
     return 0;
   }
@@ -226,7 +226,7 @@ static HttpsResponse* __send(T*exchange, char*route, HttpsRequest_method method,
   Https *https = ws->get_https_handler(ws); 
   HttpsRequest *request = __build_query(exchange,route,method);
   request->set_body(request,body);
-  return https->fetch(request);
+  return https->fetch(https,request);
 }
 
 // Account

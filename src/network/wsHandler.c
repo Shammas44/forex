@@ -61,7 +61,7 @@ static void __wsHandler_generateMask(unsigned char mask[4]) {
 SSL* __wsHandler_handshake(T * ws, HttpsRequest * request){
   Private * private = (Private*)ws->__private;
   Https * https = private->https;
-  return https->ws_handshake(request);
+  return https->ws_handshake(https,request);
 }
 
 void __wsHandler_send(T * ws, SSL *ssl, const char *message){

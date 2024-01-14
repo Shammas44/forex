@@ -165,7 +165,7 @@ int json_to_map(char *json, Hashmap**map,jsmntok_t *tokens, int token_num) {
    tokens = NULL;
    token_num = json_parse(json, &tokens);
   }
-  if(tokens[0].type != JSMN_OBJECT) return NULL;
+  if(tokens[0].type != JSMN_OBJECT) return 0;
   if (token_num <= 0) return -1;
   *map = __json_to(json, tokens, token_num);
   return token_num;
@@ -178,22 +178,22 @@ int json_to_array(char *json, Array**array,jsmntok_t *tokens, int token_num){
    tokens = NULL;
    token_num = json_parse(json, &tokens);
   }
-  if(tokens[0].type != JSMN_ARRAY) return NULL;
-  if (token_num <= 0) return NULL;
+  if(tokens[0].type != JSMN_ARRAY) return 0;
+  if (token_num <= 0) return 0;
   *array = array_constructor(token_num);
-  if(array == NULL) return NULL;
+  if(array == NULL) return 0;
   for (int i = 1; i < token_num; i++) {
     int inner_token_num = 0;
     char*string = __json_extract_string(json,&tokens[i]);
 
-    if(string == NULL) return NULL;
+    if(string == NULL) return 0;
 
     if(tokens[i].type == JSMN_OBJECT){
-      inner_token_num = json_to_map(string, (Hashmap**)&value,NULL,NULL);
+      inner_token_num = json_to_map(string, (Hashmap**)&value,NULL,0);
       inner_token_num--;
     }
     else if(tokens[i].type == JSMN_ARRAY){
-      inner_token_num = json_to_array(string, (Array**)&value,NULL,NULL);
+      inner_token_num = json_to_array(string, (Array**)&value,NULL,0);
       inner_token_num--;
     }else {
       value = string;
@@ -243,12 +243,12 @@ Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num) {
           map->push(map,key,(Item){.type=Item_default,.value=value});
           break;
         case JSMN_OBJECT:
-          inner_token_num = json_to_map(value, &inner_map,NULL,NULL);
+          inner_token_num = json_to_map(value, &inner_map,NULL,0);
           inner_token_num--;
           map->push(map,key,(Item){.type=Item_map,.value=inner_map});
           break;
         case JSMN_ARRAY:
-          inner_token_num = json_to_array(value,&inner_array,NULL,NULL);
+          inner_token_num = json_to_array(value,&inner_array,NULL,0);
           inner_token_num--;
           map->push(map,key,(Item){.type=Item_array,.value=inner_array});
           break;

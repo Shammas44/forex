@@ -1,4 +1,5 @@
 #include "https.h"
+#include "json.h"
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
@@ -8,38 +9,48 @@
 #define GETSOCKETERRNO() (errno)
 #define ONERROR(s) ((s) < 0)
 #define MAX_TIMEOUT_SECONDS 5 // Change this according to your desired timeout
+#define T Https
+
+typedef struct {
+  JsonParser *json_parser;
+} Private;
 
 // =========================================================================="
 // Prototypes functions
 // =========================================================================="
 
-HttpsResponse* __https_fetch(HttpsRequest *request);
-HttpsResponse* __https_get(HttpsRequest *request);
-HttpsResponse* __https_post(HttpsRequest*request);
-HttpsResponse* __https_put(HttpsRequest *request);
-HttpsResponse* __https_patch(HttpsRequest *request);
-HttpsResponse* __https_delete(HttpsRequest *request);
-SSL* __https_ws_handshake(HttpsRequest *request);
-void __https_destructor(Https *https);
-int __https_send_request(HttpsRequest *request, SSL **ssl, int* sockfd);
-void __https_cleanup(SSL *ssl, int sockfd);
-int __https_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity);
-HttpsResponse *__https_receive(SSL *ssl);
+static void __destructor(Https *https);
+static HttpsResponse* __fetch(T*self,HttpsRequest *request);
+static HttpsResponse* __get(T*self,HttpsRequest *request);
+static HttpsResponse* __post(T*self,HttpsRequest*request);
+static HttpsResponse* __put(T*self,HttpsRequest *request);
+static HttpsResponse* __patch(T*self,HttpsRequest *request);
+static HttpsResponse* __delete(T*self,HttpsRequest *request);
+static SSL* __ws_handshake(T*self,HttpsRequest *request);
+
+static int _$send_request(HttpsRequest *request, SSL **ssl, int* sockfd);
+static void _$cleanup(SSL *ssl, int sockfd);
+static int _$read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity);
+static HttpsResponse *_$receive(T*self,SSL *ssl);
+static HttpsResponse * _$fetch_keep_open(T*self,HttpsRequest *request, SSL**ssl);
 
 // =========================================================================="
 // Public functions
 // =========================================================================="
 
-Https * https_constructor(){
+T * https_constructor(){
   Https * https = (Https*)malloc(sizeof(Https));
-  https->destructor = __https_destructor;
-  https->ws_handshake = __https_ws_handshake;
-  https->fetch = __https_fetch;
-  https->get = __https_get;
-  https->post = __https_post;
-  https->put = __https_put;
-  https->patch = __https_patch;
-  https->delete = __https_delete;
+  Private *private = malloc(sizeof(Private));
+  private->json_parser = jsonParser_constructor();
+  https->__private = private;
+  https->destructor = __destructor;
+  https->ws_handshake = __ws_handshake;
+  https->fetch = __fetch;
+  https->get = __get;
+  https->post = __post;
+  https->put = __put;
+  https->patch = __patch;
+  https->delete = __delete;
   return https;
 }
 
@@ -47,83 +58,87 @@ Https * https_constructor(){
 // Private functions
 // =========================================================================="
 
-void __https_destructor(Https *https){
-  free(https);
+static void __destructor(T *self){
+  Private *private = self->__private;
+  JsonParser *json_parser = private->json_parser;
+  json_parser->destructor(json_parser);
+  free(private);
+  free(self);
   if(ctx!=NULL) SSL_CTX_free(ctx);
 }
 
-HttpsResponse* __https_fetch(HttpsRequest *request){
+static HttpsResponse* __fetch(T*self,HttpsRequest *request){
   SSL *ssl = NULL;
   int *sockfd = malloc(sizeof(int));
 
-  int status = __https_send_request(request, &ssl, sockfd);
+  int status = _$send_request(request, &ssl, sockfd);
   if(status >0) return NULL;
-  HttpsResponse * response = __https_receive(ssl);
+  HttpsResponse * response = _$receive(self,ssl);
   if(!response){
     return NULL;
   }
-  __https_cleanup(ssl, *sockfd);
+  _$cleanup(ssl, *sockfd);
   request->destructor(request);
   return response;
 }
 
-HttpsResponse * __https_fetch_keep_open(HttpsRequest *request, SSL**ssl){
+static HttpsResponse * _$fetch_keep_open(T*self,HttpsRequest *request, SSL**ssl){
   int *sockfd = malloc(sizeof(int));
 
-  int status = __https_send_request(request, ssl, sockfd);
+  int status = _$send_request(request, ssl, sockfd);
   if(status>0) return NULL;
-  HttpsResponse * response = __https_receive(*ssl);
+  HttpsResponse * response = _$receive(self,*ssl);
   if(!response){
     return NULL;
   }
   return response;
 }
 
-SSL* __https_ws_handshake(HttpsRequest *request){
+static SSL* __ws_handshake(T*self,HttpsRequest *request){
   SSL *ssl = NULL;
   int *sockfd = malloc(sizeof(int));
 
   request->set_method(request,GET);
-  int status1 = __https_send_request(request, &ssl, sockfd);
+  int status1 = _$send_request(request, &ssl, sockfd);
   if(status1 >0) return NULL;
-  HttpsResponse * res = __https_receive(ssl);
+  HttpsResponse * res = _$receive(self,ssl);
   if(!res){
     return NULL;
   }
-  char *status = res->get_status(res);
+  char *status = res->status(res);
   // char *content_type = res->get_content_type(res);
 
-  if(strcmp("101",status) != 0) __https_cleanup(ssl, *sockfd);
+  if(strcmp("101",status) != 0) _$cleanup(ssl, *sockfd);
   request->destructor(request);
   return ssl;
 }
 
-HttpsResponse* __https_get(HttpsRequest *request){
+static HttpsResponse* __get(T*self,HttpsRequest *request){
   request->set_method(request,GET);
-  return __https_fetch(request);
+  return __fetch(self,request);
 }
 
-HttpsResponse* __https_post(HttpsRequest*request){
+static HttpsResponse* __post(T*self,HttpsRequest*request){
   request->set_method(request,POST);
-  return __https_fetch(request);
+  return __fetch(self,request);
 }
 
-HttpsResponse* __https_put(HttpsRequest *request){
+static HttpsResponse* __put(T*self,HttpsRequest *request){
   request->set_method(request,PUT);
-  return __https_fetch(request);
+  return __fetch(self,request);
 }
 
-HttpsResponse* __https_patch(HttpsRequest *request){
+static HttpsResponse* __patch(T*self,HttpsRequest *request){
   request->set_method(request,PATCH);
-  return __https_fetch(request);
+  return __fetch(self,request);
 }
 
-HttpsResponse* __https_delete(HttpsRequest *request){
+static HttpsResponse* __delete(T*self,HttpsRequest *request){
   request->set_method(request,DELETE);
-  return __https_fetch(request);
+  return __fetch(self,request);
 }
 
-int __https_send_request(HttpsRequest *request, SSL **ssl, int* sockfd){
+static int _$send_request(HttpsRequest *request, SSL **ssl, int* sockfd){
   struct addrinfo *add_info = NULL;
   // Message *message = request->__private;
   Url * url = request->get_url(request);
@@ -140,7 +155,7 @@ int __https_send_request(HttpsRequest *request, SSL **ssl, int* sockfd){
 
     status = set_ssl_context();
     if (ONERROR(status)) {
-      error = get_error("SSL_CTX_new() failed.");
+      error = RUNTIME_ERROR("SSL_CTX_new() failed.",1);
     }
 
     //disble ssl certificate verification -- only for dev
@@ -148,35 +163,35 @@ int __https_send_request(HttpsRequest *request, SSL **ssl, int* sockfd){
 
     status = network_get_adresses(host, port, &add_info);
     if (ONERROR(status)) {
-      error = get_error("getaddrinfo() failed.");
+      error = RUNTIME_ERROR("getaddrinfo() failed.",1);
     }
 
     *sockfd = network_get_socket(add_info);
     if (!ISVALIDSOCKET(*sockfd)) {
-      error = get_error("socket() failed.");
+      error = RUNTIME_ERROR("socket() failed.",1);
     }
 
     status = connect(*sockfd, add_info->ai_addr, add_info->ai_addrlen);
     if (status) {
-      error = get_error("connect() failed.");
+      error = RUNTIME_ERROR("connect() failed.",1);
     }
 
     if (!ctx) {
-      error = get_error("SSL_CTX is NULL.");
+      error = RUNTIME_ERROR("SSL_CTX is NULL.",1);
     } else {
       *ssl = SSL_new(ctx);
       if (!ssl) {
-        error = get_error("SSL_new() failed.");
+        error = RUNTIME_ERROR("SSL_new() failed.",1);
       }
     }
 
     if (!SSL_set_tlsext_host_name(*ssl, host)) {
-      error = get_error("SSL_set_tlsext_host_name() failed.");
+      error = RUNTIME_ERROR("SSL_set_tlsext_host_name() failed.",1);
     }
 
     SSL_set_fd(*ssl, *sockfd);
     if (SSL_connect(*ssl) == -1) {
-      error = get_error("SSL_connect() failed.");
+      error = RUNTIME_ERROR("SSL_connect() failed.",1);
     }
 
     char *str_request = NULL;
@@ -186,7 +201,7 @@ int __https_send_request(HttpsRequest *request, SSL **ssl, int* sockfd){
 
     free(str_request);
     if (status == -1) {
-      error = get_error("ssl_write() failed.");
+      error = RUNTIME_ERROR("ssl_write() failed.",1);
     }
     break;
   }
@@ -196,20 +211,24 @@ int __https_send_request(HttpsRequest *request, SSL **ssl, int* sockfd){
   return error;
 }
 
-HttpsResponse *__https_receive(SSL *ssl) {
+static HttpsResponse *_$receive(T*self,SSL *ssl) {
+  Private *private = self->__private;
+  JsonParser *json_parser = private->json_parser;
   size_t response_size = 0;
   size_t response_capacity = 4096;
   char *raw_response = buffer_init(response_capacity);
-  int status = __https_read_response_bytes(
+  int status = _$read_response_bytes(
       ssl, &raw_response, &response_size, &response_capacity);
   if (status)
     return NULL;
-  HttpsResponse * response = httpsResponse_constructor(raw_response);
+
+  Hashmap* json = json_parser->parse(json_parser,raw_response);
+  HttpsResponse * response = httpsResponse_constructor(json);
   free(raw_response);
   return response;
 }
 
-int __https_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity) {
+static int _$read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity) {
     ssize_t bytes_received;
     // int socket_fd = SSL_get_fd(ssl);
 
@@ -262,9 +281,10 @@ int __https_read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_
     return -1; // Timeout error
 }
 
-void __https_cleanup(SSL *ssl, int sockfd){
+static void _$cleanup(SSL *ssl, int sockfd){
   if(ssl!=NULL) SSL_shutdown(ssl);
   if(ISVALIDSOCKET(sockfd)) CLOSESOCKET(sockfd);
 }
 
 #undef MAX_TIMEOUT_SECONDS
+#undef T

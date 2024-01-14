@@ -70,7 +70,7 @@ static HttpsResponse* __send(T*exchange, char*route, HttpsRequest_method method,
   WsHandler *ws = private->ws; 
   Https *https = ws->get_https_handler(ws); 
   HttpsRequest *request = __build_query(exchange,route,method);
-  return https->get(request);
+  return https->get(https,request);
 }
 
 // Account

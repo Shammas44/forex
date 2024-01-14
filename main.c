@@ -4,7 +4,7 @@
 #include "csv.h"
 #include "json.h"
 #include "server.h"
-#include "strategy.h"
+#include "Strategy.h"
 #include "ordersProcessor.h"
 #include "configparser.h"
 #include "ExchangeTest.h"

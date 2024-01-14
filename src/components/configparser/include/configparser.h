@@ -3,7 +3,7 @@
 #include "json.h"
 #include "file.h"
 #include "tsmetadata.h"
-#include "strategy.h"
+#include "Strategy.h"
 #include "mtqueue.h"
 
 void configparser_init(const char *path, Tsmetadata *metadata);

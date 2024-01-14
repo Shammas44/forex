@@ -89,7 +89,6 @@ Test(httpsResponse, content_type, .init = setup, .fini = teardown) {
 Test(httpsResponse, strinfigy, .init = setup, .fini = teardown) {
   T *response = httpsResponse_constructor(response_map);
   char*out = response->stringify(response);
-  printf("%s\n",out);
   cr_assert_eq(strcmp(out, res200), 0, "Stringify should return the same string");
 }
 
