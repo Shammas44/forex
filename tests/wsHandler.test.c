@@ -5,7 +5,9 @@ T *ws = NULL;
 // char path[] = "https://www.example.com/path/to/page";
 
 static void setup(void) {
-  Https *https = https_constructor();
+  Network *network = network_constructor();
+  SslWrapper *sslWrapper = sslWrapper_constructor();
+  Https *https = https_constructor(network,sslWrapper);
   ws = wsHandler_constructor(https);
 }
 

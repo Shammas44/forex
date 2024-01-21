@@ -1,4 +1,6 @@
 #include "https.h"
+#include "NetworkWrapperStub.h"
+#include "SslWrapper.stub.h"
 #include "httpsRequestBuilder.h"
 #include <criterion/criterion.h>
 #define T Https
@@ -9,7 +11,9 @@ HttpsRequestBuilder *builder = NULL;
 static void setup(void) { 
   builder = httpsRequestBuilder_constructor();
   builder->build(builder, "https://127.0.0.1");
-  https = https_constructor();
+  Network* network = networkWrapperStub_constructor();
+  SslWrapper *ssl = sslWrapperStub_constructor();
+  https = https_constructor(network,ssl);
 }
 
 static void teardown(void) {  }

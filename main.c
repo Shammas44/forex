@@ -1,6 +1,8 @@
 #include "Metadata.h"
 #include "candle.h"
 #include "candleprod.h"
+#include "network.h"
+#include "SslWrapper.h"
 #include "csv.h"
 #include "json.h"
 #include "server.h"
@@ -43,9 +45,12 @@ int main(int argc, char *argv[]) {
   if(config_map == NULL) return 1;
   ConfigWrapper *config = configWrapper_constructor(config_map);
 
+  printf("mode: %s\n",config->mode(config));
   bool isBacktest = strcmp(config->mode(config),"BACKTEST")==0 ? true:false;
 
-  Https *https = https_constructor();
+  Network *network = network_constructor();
+  SslWrapper *sslWrapper = sslWrapper_constructor();
+  Https *https = https_constructor(network,sslWrapper);
   WsHandler *ws = wsHandler_constructor(https);
   Exchange * exchange = NULL;
 
@@ -79,10 +84,10 @@ int main(int argc, char *argv[]) {
   state.metadata = metadata;
 
   pthread_create(&exchange_thread, NULL, exchangeThread, &state);
-  pthread_create(&strategy_thread, NULL, strategyThread, &state);
+  // pthread_create(&strategy_thread, NULL, strategyThread, &state);
 
   pthread_join(exchange_thread, NULL);
-  pthread_join(strategy_thread, NULL);
+  // pthread_join(strategy_thread, NULL);
 
   // pthread_create(&trade_logic, NULL, strategy_processor, &queues);
 

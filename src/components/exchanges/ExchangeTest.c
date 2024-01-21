@@ -29,7 +29,7 @@ typedef enum Candle_state {
 typedef struct {
   WsHandler *ws;
   HttpsRequestBuilder *req_builder;
-  Parser*parser;
+  Parser*response_parser;
   char*token;
   ConfigWrapper*config;
   Subject*subject;
@@ -60,7 +60,7 @@ T *exchangeTest_constructor(WsHandler *handler,ConfigWrapper*config, Parser *par
   self->attach_observer = __attach_observer;
   self->dettach_observer = __dettach_observer;
   private->ws = handler;
-  private->parser = parser;
+  private->response_parser = parser;
   private->req_builder = req_builder;
   private->config = config;
   private->subject = subject_constructor(NULL);
@@ -79,8 +79,8 @@ T *exchangeTest_constructor(WsHandler *handler,ConfigWrapper*config, Parser *par
 static int __connect(T*exchange){
   Private *private = exchange->__private;
   ConfigWrapper *config = private->config;
-  char*email = config->get(config,"email");
-  char*password = config->get(config,"password");
+  char*email = config->get(config,"email").value;
+  char*password = config->get(config,"password").value;
 
   char body_tmp[] = "{"
                     "\"email\":\"%s\","
@@ -109,7 +109,7 @@ static void __on_frame_receive(void*exchange,void*state){
   T *self = exchange;
   Private *private = self->__private;
   Subject *subject = private->subject;
-  Parser *parser = private->parser;
+  Parser *parser = private->response_parser;
   Hashmap*map = parser->parse(parser,state);
   WsHandler *ws = private->ws;
   SSL*ssl = private->ssl;

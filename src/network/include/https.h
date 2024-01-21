@@ -4,6 +4,8 @@
 #include "httpsRequestBuilder.h"
 #include "httpsResponseBuilder.h"
 #include "httpsResponse.h"
+#include "network.h"
+#include "SslWrapper.h"
 
 #define T Https
 
@@ -30,7 +32,7 @@ typedef struct T {
   void* __private;
 } T;
 
-T * https_constructor();
+T * https_constructor(Network*network,SslWrapper*ssl);
 
 #undef T
 #endif

@@ -1,4 +1,5 @@
 #include "https.h"
+#include "HttpsResponseParser.h"
 #include "json.h"
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -12,7 +13,9 @@
 #define T Https
 
 typedef struct {
-  JsonParser *json_parser;
+  Parser *response_parser;
+  Network*network;
+  SslWrapper*ssl;
 } Private;
 
 // =========================================================================="
@@ -28,9 +31,8 @@ static HttpsResponse* __patch(T*self,HttpsRequest *request);
 static HttpsResponse* __delete(T*self,HttpsRequest *request);
 static SSL* __ws_handshake(T*self,HttpsRequest *request);
 
-static int _$send_request(HttpsRequest *request, SSL **ssl, int* sockfd);
+static int _$send_request(T*self,HttpsRequest *request, SSL **ssl, int* sockfd);
 static void _$cleanup(SSL *ssl, int sockfd);
-static int _$read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity);
 static HttpsResponse *_$receive(T*self,SSL *ssl);
 static HttpsResponse * _$fetch_keep_open(T*self,HttpsRequest *request, SSL**ssl);
 
@@ -38,10 +40,14 @@ static HttpsResponse * _$fetch_keep_open(T*self,HttpsRequest *request, SSL**ssl)
 // Public functions
 // =========================================================================="
 
-T * https_constructor(){
+T * https_constructor(Network*network,SslWrapper*ssl){
+  if(network == NULL) return NULL;
+  if(ssl == NULL) return NULL;
   Https * https = (Https*)malloc(sizeof(Https));
   Private *private = malloc(sizeof(Private));
-  private->json_parser = jsonParser_constructor();
+  private->response_parser = httpsResponseParser_constructor();
+  private->network = network;
+  private->ssl = ssl;
   https->__private = private;
   https->destructor = __destructor;
   https->ws_handshake = __ws_handshake;
@@ -60,8 +66,8 @@ T * https_constructor(){
 
 static void __destructor(T *self){
   Private *private = self->__private;
-  JsonParser *json_parser = private->json_parser;
-  json_parser->destructor(json_parser);
+  JsonParser *parser = private->response_parser;
+  parser->destructor(parser);
   free(private);
   free(self);
   if(ctx!=NULL) SSL_CTX_free(ctx);
@@ -71,7 +77,7 @@ static HttpsResponse* __fetch(T*self,HttpsRequest *request){
   SSL *ssl = NULL;
   int *sockfd = malloc(sizeof(int));
 
-  int status = _$send_request(request, &ssl, sockfd);
+  int status = _$send_request(self,request, &ssl, sockfd);
   if(status >0) return NULL;
   HttpsResponse * response = _$receive(self,ssl);
   if(!response){
@@ -85,7 +91,7 @@ static HttpsResponse* __fetch(T*self,HttpsRequest *request){
 static HttpsResponse * _$fetch_keep_open(T*self,HttpsRequest *request, SSL**ssl){
   int *sockfd = malloc(sizeof(int));
 
-  int status = _$send_request(request, ssl, sockfd);
+  int status = _$send_request(self,request, ssl, sockfd);
   if(status>0) return NULL;
   HttpsResponse * response = _$receive(self,*ssl);
   if(!response){
@@ -99,14 +105,13 @@ static SSL* __ws_handshake(T*self,HttpsRequest *request){
   int *sockfd = malloc(sizeof(int));
 
   request->set_method(request,GET);
-  int status1 = _$send_request(request, &ssl, sockfd);
+  int status1 = _$send_request(self,request, &ssl, sockfd);
   if(status1 >0) return NULL;
   HttpsResponse * res = _$receive(self,ssl);
   if(!res){
     return NULL;
   }
   char *status = res->status(res);
-  // char *content_type = res->get_content_type(res);
 
   if(strcmp("101",status) != 0) _$cleanup(ssl, *sockfd);
   request->destructor(request);
@@ -138,147 +143,69 @@ static HttpsResponse* __delete(T*self,HttpsRequest *request){
   return __fetch(self,request);
 }
 
-static int _$send_request(HttpsRequest *request, SSL **ssl, int* sockfd){
+static int _$send_request(T*self, HttpsRequest *request, SSL **ssl, int* sockfd){
+  Private * private = self->__private;
+  SslWrapper *sslWrapper = private->ssl;
+  Network *network = private->network;
   struct addrinfo *add_info = NULL;
-  // Message *message = request->__private;
   Url * url = request->get_url(request);
   int status;
   char *host = url->host;
-  // char *path = url->path;
   char *port = url->port;
-  // int domain_len = strlen(url->host);
   int error = 0;
 
   while (error == 0) {
 
-    network_ini_openssl();
+    add_info = network->adresses(network,url);
+    if (ONERROR(add_info)) break;
 
-    status = set_ssl_context();
-    if (ONERROR(status)) {
-      error = RUNTIME_ERROR("SSL_CTX_new() failed.",1);
-    }
+    *sockfd = network->socket(network,add_info);
+    if (!ISVALIDSOCKET(*sockfd)) break;
 
-    //disble ssl certificate verification -- only for dev
-    // SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
+    status = network->connect(network,*sockfd, add_info);
+    if (status) break;
 
-    status = network_get_adresses(host, port, &add_info);
-    if (ONERROR(status)) {
-      error = RUNTIME_ERROR("getaddrinfo() failed.",1);
-    }
+    if (!ctx) break;
 
-    *sockfd = network_get_socket(add_info);
-    if (!ISVALIDSOCKET(*sockfd)) {
-      error = RUNTIME_ERROR("socket() failed.",1);
-    }
+    *ssl = sslWrapper->new(sslWrapper,ctx);
+    if (!ssl) break; 
 
-    status = connect(*sockfd, add_info->ai_addr, add_info->ai_addrlen);
-    if (status) {
-      error = RUNTIME_ERROR("connect() failed.",1);
-    }
+    if (!sslWrapper->set_host(sslWrapper,*ssl, host)) break; 
 
-    if (!ctx) {
-      error = RUNTIME_ERROR("SSL_CTX is NULL.",1);
-    } else {
-      *ssl = SSL_new(ctx);
-      if (!ssl) {
-        error = RUNTIME_ERROR("SSL_new() failed.",1);
-      }
-    }
+    status = sslWrapper->set_fd(sslWrapper,*ssl,*sockfd);
+    if(status<0) break;
 
-    if (!SSL_set_tlsext_host_name(*ssl, host)) {
-      error = RUNTIME_ERROR("SSL_set_tlsext_host_name() failed.",1);
-    }
-
-    SSL_set_fd(*ssl, *sockfd);
-    if (SSL_connect(*ssl) == -1) {
-      error = RUNTIME_ERROR("SSL_connect() failed.",1);
-    }
+    status = sslWrapper->connect(sslWrapper,*ssl);
+    if(status<0) break;
 
     char *str_request = NULL;
 
     int request_len = request->stringify(request, &str_request);
-    status = SSL_write(*ssl, str_request, request_len);
+    status = sslWrapper->write(sslWrapper,*ssl,str_request,request_len);
 
     free(str_request);
-    if (status == -1) {
-      error = RUNTIME_ERROR("ssl_write() failed.",1);
-    }
+    if (status == -1) break; 
     break;
   }
-  if (add_info != NULL)
-    freeaddrinfo(add_info);
-
+  if (add_info != NULL) freeaddrinfo(add_info);
   return error;
 }
 
 static HttpsResponse *_$receive(T*self,SSL *ssl) {
   Private *private = self->__private;
-  JsonParser *json_parser = private->json_parser;
+  SslWrapper *sslWrapper = private->ssl;
+  HttpsResponseParser *parser = private->response_parser;
   size_t response_size = 0;
   size_t response_capacity = 4096;
   char *raw_response = buffer_init(response_capacity);
-  int status = _$read_response_bytes(
-      ssl, &raw_response, &response_size, &response_capacity);
+  int status = sslWrapper->read(sslWrapper,ssl, &raw_response, &response_size);
   if (status)
     return NULL;
 
-  Hashmap* json = json_parser->parse(json_parser,raw_response);
-  HttpsResponse * response = httpsResponse_constructor(json);
+  Hashmap* map = parser->parse(parser,raw_response);
+  HttpsResponse * response = httpsResponse_constructor(map);
   free(raw_response);
   return response;
-}
-
-static int _$read_response_bytes(SSL *ssl, char **response_ptr, size_t *response_size, size_t *response_capacity) {
-    ssize_t bytes_received;
-    // int socket_fd = SSL_get_fd(ssl);
-
-    //TODO: invesiagte why does the following code interrupt data flow in ws listening
-    // Set socket to non-blocking mode
-    // if (setSocketNonBlocking(socket_fd) == -1) {
-    //     return -1;
-    // }
-
-    int total_wait_seconds = 0;
-
-    while (total_wait_seconds < MAX_TIMEOUT_SECONDS) {
-        bytes_received = SSL_read(ssl, *response_ptr + *response_size, *response_capacity - *response_size);
-        if (bytes_received > 0) {
-            *response_size += bytes_received;
-            if (*response_size == *response_capacity) {
-                *response_capacity *= 2; // Double the capacity
-                char *new_response = realloc(*response_ptr, *response_capacity);
-                if (!new_response) {
-                    free(*response_ptr);
-                    return -1; // Adjust this error handling according to your needs
-                }
-                *response_ptr = new_response;
-            }
-            return 0; // Successful read
-        } else if (bytes_received == 0) {
-            // No more data
-            break;
-        } else {
-            int err = SSL_get_error(ssl, bytes_received);
-            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
-                // Retry if more data is expected
-                sleep(1); // Adjust sleep time as needed
-                total_wait_seconds++;
-                continue;
-            } else if (err == SSL_ERROR_SYSCALL && errno == EAGAIN) {
-                // Timeout occurred
-                printf("SSL read timeout occurred after %d seconds.\n", MAX_TIMEOUT_SECONDS);
-                return -1; // Timeout error
-            } else {
-                // Other error occurred
-                fprintf(stderr, "SSL read error: %s\n", ERR_reason_error_string(ERR_get_error()));
-                return -1; // Adjust error handling as needed
-            }
-        }
-    }
-
-    // Timeout occurred
-    printf("SSL read timeout occurred after %d seconds.\n", MAX_TIMEOUT_SECONDS);
-    return -1; // Timeout error
 }
 
 static void _$cleanup(SSL *ssl, int sockfd){

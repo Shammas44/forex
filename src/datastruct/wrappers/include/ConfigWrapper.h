@@ -1,7 +1,7 @@
 #ifndef CONFIGWRAPPER_H
 #define CONFIGWRAPPER_H
 #include "hashmap.h"
-#include "Wrapper.h"
+#include "wrapper.h"
 #include <stdbool.h>
 
 #define T ConfigWrapper
@@ -9,7 +9,7 @@
 typedef struct T T;
 
 typedef void(ConfigWrapper_destructor)(T *self);
-typedef char* (ConfigWrapper_get)(T *self,char*key);
+typedef Item (ConfigWrapper_get)(T *self,char*key);
 
 typedef char *(ConfigWrapper_mode)(T *self);
 typedef char *(ConfigWrapper_symbol)(T *self);

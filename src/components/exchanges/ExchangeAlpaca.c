@@ -38,8 +38,8 @@ T *exchangeAlpaca_constructor(WsHandler *handler,ConfigWrapper*config, Parser *p
   if (req_builder == NULL) return NULL;
   private->ws = handler;
   private->req_builder = req_builder;
-  private->key_id = config->get(config,"key_id");
-  private->secret_key = config->get(config,"secret_key");
+  private->key_id = config->get(config,"key_id").value;
+  private->secret_key = config->get(config,"secret_key").value;
 
   bool paper = config->paper(config);
   if(paper == true) private->mode = Paper;

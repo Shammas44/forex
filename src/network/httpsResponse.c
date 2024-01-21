@@ -39,14 +39,18 @@ T *httpsResponse_constructor(Hashmap*map) {
     return NULL;
   }
   Hashmap *headers = map->get(map,KEY(Headers)).value;
-  if(headers->get(headers,KEY(Content_Length)).value == NULL){
-    RUNTIME_ERROR("Invalid Hashmap",1);
-    return NULL;
-  };
-  if(headers->get(headers,KEY(Content_Type)).value == NULL){
-    RUNTIME_ERROR("Invalid Hashmap",1);
-    return NULL;
-  };
+  char*status = map->get(map,KEY(Status_Code)).value;
+
+  if(strcmp(status,"101") != 0){
+    if(headers->get(headers,KEY(Content_Length)).value == NULL){
+      RUNTIME_ERROR("Invalid Hashmap",1);
+      return NULL;
+    };
+    if(headers->get(headers,KEY(Content_Type)).value == NULL){
+      RUNTIME_ERROR("Invalid Hashmap",1);
+      return NULL;
+    };
+  }
   Private *private = malloc(sizeof(Private));
   private->map = map;
 

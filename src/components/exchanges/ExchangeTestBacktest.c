@@ -11,7 +11,7 @@
 typedef struct {
 WsHandler *ws;
   HttpsRequestBuilder *req_builder;
-  Parser*parser;
+  Parser*response_parser;
   char*token;
   ConfigWrapper*config;
   Subject*subject;
@@ -35,7 +35,7 @@ T* exchangeTestBacktest_constructor(WsHandler*ws,ConfigWrapper*config,Parser*par
   self->attach_observer = __attach_observer;
   self->dettach_observer = __dettach_observer;
   private->ws = ws;
-  private->parser = parser;
+  private->response_parser = parser;
   private->req_builder = req_builder;
   private->config = config;
   private->subject = subject_constructor(NULL);
@@ -75,7 +75,7 @@ static void __notify(T* exchange) {
 static void __subscribe(T*exchange,char*backtest_path){
   Private *private = exchange->__private;
   ConfigWrapper *config = private->config;
-  Parser *parser = private->parser;
+  Parser *parser = private->response_parser;
   if(backtest_path == NULL) backtest_path = config->backtest_data(config); 
   parser->parse_stream(parser,backtest_path,exchange,__on_row_receive);
 }
