@@ -5,6 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 #define T Network
+#define CLOSESOCKET(s) close(s)
+#define ISVALIDSOCKET(s) ((s) >= 0)
 
 typedef struct {
 
@@ -13,8 +15,10 @@ typedef struct {
 static struct addrinfo* __adresses(T*self,Url*url);
 static int __socket(T*self,struct addrinfo *addresses);
 static void __free(T*self, int sockfd, struct addrinfo *addresses);
+static void __close_sockfd(T*self, int sockfd); 
 static int __connect(T*self,int sockfd, struct addrinfo *address);
 static int __address_to_human_format(T*self,struct addrinfo *addresse, char *ip, char *protocol);
+static void __close_sockfd(T*self, int sockfd);
 static void __destructor(T*self);
 
 T*network_constructor(){
@@ -27,6 +31,7 @@ T*network_constructor(){
   self->destructor = __destructor;
   self->free = __free;
   self->connect = __connect;
+  self->close_sockfd = __close_sockfd;
   self->socket = __socket;
   self->address_to_human_format = __address_to_human_format;
   return self;
@@ -36,6 +41,10 @@ static void __destructor(T*self){
   Private *private = self->__private;
   free(private);
   free(self);
+}
+
+static void __close_sockfd(T*self, int sockfd){
+  if(ISVALIDSOCKET(sockfd)) CLOSESOCKET(sockfd);
 }
 
 static struct addrinfo* __adresses(T*self,Url*url) {
@@ -88,44 +97,5 @@ static int __address_to_human_format(T*self,struct addrinfo *addresse, char *ip,
 }
 
 #undef T
-
-// int network_get_adresses(const char *url, const char *port, struct addrinfo **results) {
-//   int addressSize = strlen(url);
-//   char address[addressSize + 1];
-//   strcpy(address, strcmp(url, "") != 0 ? url : "127.0.0.1");
-
-//   struct addrinfo hints;
-//   memset(&hints, 0, sizeof(hints));
-//   hints.ai_family = AF_UNSPEC;     // ipv4/ipv6
-//   hints.ai_socktype = SOCK_STREAM; // TCP
-
-//   if (getaddrinfo(address, port, &hints, results))
-//     return EXIT_FAILURE;
-//   return 0;
-// }
-
-// int network_get_socket(struct addrinfo *addresses) {
-//   int sockfd = socket(addresses->ai_family, addresses->ai_socktype,
-//                       addresses->ai_protocol);
-//   return sockfd;
-// }
-
-// void network_free(const char *error_msg, int sockfd, struct addrinfo *addresses) {
-//   if (strcmp(error_msg, "") != 0){
-//     perror(error_msg);
-//   }
-//   close(sockfd);
-//   freeaddrinfo(addresses);
-// }
-
-// int network_socket_connect(int sockfd, struct addrinfo *address) {
-//   return connect(sockfd, address->ai_addr, address->ai_addrlen);
-// }
-
-// int network_address_to_human_format(struct addrinfo *addresse, char *ip, char *protocol) {
-//   int status = getnameinfo(addresse->ai_addr, addresse->ai_addrlen, ip, URL_LEN,
-//                            protocol, PROTOCOL_LEN, NI_NUMERICHOST);
-//   if (status != 0)
-//     return EXIT_FAILURE;
-//   return 0;
-// }
+#undef CLOSESOCKET
+#undef ISVALIDSOCKET

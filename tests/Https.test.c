@@ -16,18 +16,80 @@ static void setup(void) {
   https = https_constructor(network,ssl);
 }
 
-static void teardown(void) {  }
+static void teardown(void) { }
 
 Test(https_constructor, isValid_object, .init = setup, .fini = teardown) {
   cr_assert_not_null(https, "should not be NULL");
 }
 
-// Test(https_fetch, isValid_object, .init = setup, .fini = teardown) {
-//   HttpsRequest *request = builder->get(builder);
-//   HttpsResponse * response = https->fetch(https, request);
-//   char*string =response->stringify(response);
-//   printf("%s\n",string);
-//   cr_assert_not_null(https, "should not be NULL");
-// }
+Test(https_fetch, isValid_object, .init = setup, .fini = teardown){
+  HttpsRequest *request = builder->get(builder);
+  HttpsResponse * response = https->fetch(https, request);
+  char* status = response->status(response);
+  char* type = response->content_type(response);
+  cr_assert_eq(strcmp(status, "200"), 0, "Status should be '200'");
+  cr_assert_eq(strcmp(type, "text/plain"), 0, "Wrong Content-Type");
+}
+
+Test(https_get, isValid_object, .init = setup, .fini = teardown){
+  builder->set_method(builder,GET);
+  HttpsRequest *request = builder->get(builder);
+  HttpsResponse * response = https->fetch(https, request);
+  char* status = response->status(response);
+  char* type = response->content_type(response);
+  cr_assert_eq(strcmp(status, "200"), 0, "Status should be '200'");
+  cr_assert_eq(strcmp(type, "text/plain"), 0, "Wrong Content-Type");
+}
+
+Test(https_post, isValid_object, .init = setup, .fini = teardown){
+  builder->set_method(builder,POST);
+  HttpsRequest *request = builder->get(builder);
+  HttpsResponse * response = https->fetch(https, request);
+  char* status = response->status(response);
+  char* type = response->content_type(response);
+  cr_assert_eq(strcmp(status, "200"), 0, "Status should be '200'");
+  cr_assert_eq(strcmp(type, "text/plain"), 0, "Wrong Content-Type");
+}
+
+Test(https_patch, isValid_object, .init = setup, .fini = teardown){
+  builder->set_method(builder,PATCH);
+  HttpsRequest *request = builder->get(builder);
+  HttpsResponse * response = https->fetch(https, request);
+  char* status = response->status(response);
+  char* type = response->content_type(response);
+  cr_assert_eq(strcmp(status, "200"), 0, "Status should be '200'");
+  cr_assert_eq(strcmp(type, "text/plain"), 0, "Wrong Content-Type");
+}
+
+Test(https_put, isValid_object, .init = setup, .fini = teardown){
+  builder->set_method(builder,PUT);
+  HttpsRequest *request = builder->get(builder);
+  HttpsResponse * response = https->fetch(https, request);
+  char* status = response->status(response);
+  char* type = response->content_type(response);
+  cr_assert_eq(strcmp(status, "200"), 0, "Status should be '200'");
+  cr_assert_eq(strcmp(type, "text/plain"), 0, "Wrong Content-Type");
+}
+
+Test(https_delete, isValid_object, .init = setup, .fini = teardown){
+  builder->set_method(builder,DELETE);
+  HttpsRequest *request = builder->get(builder);
+  HttpsResponse * response = https->fetch(https, request);
+  char* status = response->status(response);
+  char* type = response->content_type(response);
+  cr_assert_eq(strcmp(status, "200"), 0, "Status should be '200'");
+  cr_assert_eq(strcmp(type, "text/plain"), 0, "Wrong Content-Type");
+}
+
+Test(https_ws_handshake, isValid_object, .init = setup, .fini = teardown){
+  builder->set_method(builder,GET);
+  builder->add_header(builder,"Connection: Upgrade");
+  builder->add_header(builder,"Upgrade: websocket");
+  builder->add_header(builder,"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==");
+  builder->add_header(builder,"Sec-WebSocket-Version: 13");
+  HttpsRequest *request = builder->get(builder);
+  SSL* ssl = https->ws_handshake(https, request);
+  cr_assert_not_null(ssl, "ssl should not be NULL");
+}
 
 #undef T

@@ -10,7 +10,14 @@ typedef enum {
   Body,
   Content_Type,
   Content_Length,
+  Method_Name,
+  Path,
+  Connection,
+  Upgrade,
+  Sec_WebSocket_Key,
+  Sec_WebSocket_Version,
 } HttpsResponseKey;
+
 
 static char *httpsresponsekeys[]={
 "protocol_name",
@@ -21,6 +28,12 @@ static char *httpsresponsekeys[]={
 "body",
 "Content-Type",
 "Content-Length",
+"method_name",
+"path",
+"Connection",
+"Upgrade",
+"Sec-WebSocket-Key",
+"Sec-WebSocket-Version",
 };
 
 #define KEY(index) \

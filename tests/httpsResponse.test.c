@@ -2,34 +2,37 @@
 #include "httpsResponse.keys.h"
 #include "RuntimeErrorImp.h"
 #include <criterion/criterion.h>
-#include "HttpsResponseParser.h"
+#include "HttpsParser.h"
 #define T HttpsResponse
 
-static char *res200 = "HTTP/1.1 200 OK\n"
-                           "Content-Type: text/plain\n"
-                           "Content-Length: 13\n"
+static char *res200 = "HTTP/1.1 200 OK\r\n"
+                           "Content-Type: text/plain\r\n"
+                           "Content-Length: 13\r\n"
                            "\r\n\r\n"
                            "Hello, World!";
 
 
-static char *noType = "HTTP/1.1 200 OK\n"
-                           "Content-Length: 13\n"
+static char *noType = "HTTP/1.1 200 OK\r\n"
+                           "Content-Length: 13\r\n"
                            "\r\n\r\n"
                            "Hello, World!";
 
-static char *noLength = "HTTP/1.1 200 OK\n"
-                           "Content-Type: text/plain\n"
+static char *noLength = "HTTP/1.1 200 OK\r\n"
+                           "Content-Type: text/plain\r\n"
                            "\r\n\r\n"
                            "Hello, World!";
 
 Hashmap *response_map = NULL;
 
-static HttpsResponseParser *parser = NULL;
+static HttpsParser *parser = NULL;
 
 static void setup(void) {
   runtimeError_reset();
   runtimeerrors_mode = RuntimeErrors_mode_silent;
-  parser = httpsResponseParser_constructor();
+  parser = httpsParser_constructor();
+  HttpsParser_config config = {.type = HttpsParser_response,.jsonBody=false};
+  Parser_config_obj *c = (Parser_config_obj *) &config;
+  parser->config(parser, c);
   response_map = parser->parse(parser,res200);
 }
 
@@ -41,7 +44,6 @@ Test(httpsResponse, build, .init = setup, .fini = teardown) {
 }
 
 Test(httpsResponse, build_param_check, .init=setup, .fini = teardown) {
-  parser = httpsResponseParser_constructor();
   Hashmap* map1 = parser->parse(parser,noType);
   T *res1 = httpsResponse_constructor(map1);
   cr_assert_null(res1, "Result should be NULL");

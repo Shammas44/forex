@@ -7,8 +7,6 @@
 
 #define T SslWrapper
 
-// extern SSL_CTX *ctx;
-// SSL_CTX *ctx = NULL;
 extern SSL_CTX*ctx;
 
 typedef struct T T;
@@ -16,16 +14,17 @@ typedef struct T T;
 struct T {
     IsDestroyable __destructor;
     void (*destructor)(T*self);
-    int (*connect)(T*self,SSL*ssl);
-    int (*write)(T*self,SSL*ssl,char*payload,int payload_length);
-    int (*read)(T*self,SSL*ssl,char**out,size_t*out_length);
+    SSL *(*get)(T*self);
+    int (*connect)(T*self);
+    int (*write)(T*self,char*payload,int payload_length);
+    int (*read)(T*self,char**out,size_t*out_length);
     int (*get_last_error)(T*self);
     int (*cleanup)(T*self);
-    SSL* (*new)(T*self,SSL_CTX*ctx);
+    SSL* (*new)(T*self);
     int (*set_context)(T*self);
-    long (*set_host)(T*self,SSL*ssl,char*host);
-    int (*set_fd)(T*self,SSL*ssl,int fd);
-    int (*shutdown)(T*self, SSL*ssl);
+    int (*set_host)(T*self,char*host);
+    int (*set_fd)(T*self,int fd);
+    int (*shutdown)(T*self);
     void*__private;
 };
 

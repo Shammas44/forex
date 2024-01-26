@@ -1,6 +1,8 @@
 #include "SslWrapper.stub.h"
-#include "tls.h"
+#include "httpsResponse.keys.h"
+#include "HttpsParser.h"
 #include "common.h"
+#include "tls.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -19,20 +21,22 @@
 #define MAX_TIMEOUT_SECONDS 5 // Change this according to your desired timeout
 
 typedef struct {
-
+  SSL *ssl;
+  Hashmap*last_request;
+  HttpsParser *parser;
 } Private;
 
-
 static void __destructor(T *self);
-static int __connect(T *self, SSL *ssl);
-static int __write(T *self, SSL *ssl, char *payload, int payload_length);
-static int __read(T *self, SSL *ssl, char **out, int *out_length);
+static int __connect(T *self);
+static int __write(T *self, char *payload, int payload_length);
+static int __read(T *self, char **out, size_t *out_length);
 static int __get_last_error(T *self);
 static int __cleanup(T *self);
-static SSL *__new(T *self, SSL_CTX *ctx);
-static long __set_host(T *self,SSL*ssl, char *host);
-static int __set_fd(T *self, SSL *ssl, int fd);
-static int __shutdown(T *self, SSL *ssl);
+static SSL *__new(T *self);
+static int __set_host(T *self, char *host);
+static int __set_fd(T *self, int fd);
+static int __shutdown(T *self);
+static SSL *__get(T *self);
 
 static void _$ini_openssl();
 static int _$set_ssl_context(void);
@@ -40,6 +44,13 @@ static int _$set_ssl_context(void);
 T *sslWrapperStub_constructor() {
   T *self = (T *)malloc(sizeof(T));
   Private *private = (Private *)malloc(sizeof(Private));
+  memset(private, 0, sizeof(Private));
+  HttpsParser *parser =  httpsParser_constructor();
+  parser = httpsParser_constructor();
+  HttpsParser_config config = {.type = HttpsParser_request,.jsonBody=false};
+  Parser_config_obj *c = (Parser_config_obj *) &config;
+  parser->config(parser,c);
+  private->parser = parser;
   self->__private = private;
   self->destructor = __destructor;
   self->connect = __connect;
@@ -49,6 +60,7 @@ T *sslWrapperStub_constructor() {
   self->set_host = __set_host;
   self->set_fd = __set_fd;
   self->shutdown = __shutdown;
+  self->get = __get;
   _$ini_openssl();
   _$set_ssl_context();
   return self;
@@ -56,47 +68,82 @@ T *sslWrapperStub_constructor() {
 
 void __destructor(T *self) {
   Private *private = self->__private;
+  HttpsParser *parser = private->parser;
+  parser->destructor(parser);
+  Hashmap *last_request = private->last_request;
+  last_request->destructor(last_request);
   free(private);
   free(self);
 }
 
-static SSL *__new(T *self, SSL_CTX *ctx) {
-  return SSL_new(ctx); 
+static SSL *__get(T *self) {
+  Private *private = self->__private;
+  return private->ssl;
 }
 
-static long __set_host(T *self, SSL *ssl, char *host) {
-  long status = SSL_set_tlsext_host_name(ssl, host);
-  return status;
+static SSL *__new(T *self) {
+  Private *private = self->__private;
+  SSL* ssl = SSL_new(ctx);
+  private->ssl = ssl;
+  return ssl;
 }
 
-static int __set_fd(T *self, SSL *ssl, int fd) {
-  return SSL_set_fd(ssl, fd); 
-}
-
-static int __connect(T *self, SSL *ssl) {
-  // return SSL_connect(ssl); 
+static int __set_host(T *self, char *host) {
   return 0;
 }
 
-static int __write(T *self, SSL *ssl, char *payload, int payload_length) {
-  // return SSL_write(ssl, payload, payload_length);
+static int __set_fd(T *self, int fd) {
   return 0;
 }
 
-static int __shutdown(T *self, SSL *ssl) {
+static int __connect(T *self) {
+  return 0;
+}
+
+static int __write(T *self, char *payload, int payload_length) {
+  Private *private = self->__private;
+  HttpsParser *parser = private->parser;
+  Hashmap * request = parser->parse(parser,payload);
+  private->last_request = request;
+  return 0;
+}
+
+static int __shutdown(T *self) {
   int status = 0;
+  SSL *ssl = __get(self);
   if (ssl != NULL)
     status = SSL_shutdown(ssl);
   return status;
 }
 
-static int __read(T *self, SSL *ssl, char **out, int *out_length) {
-  *out =  "HTTP/1.1 200 OK\n"
-          "Content-Type: text/plain\n"
-          "Content-Length: 13\n"
-          "\r\n\r\n"
-          "Hello, World!";
-  *out_length = strlen(*out);
+static int __read(T *self, char **out, size_t *out_length) {
+  Private *private = self->__private;
+  Hashmap * request = private->last_request;
+  Hashmap * headers = (Hashmap*)request->get(request,KEY(Headers)).value;
+  char*upgrade = (char*)headers->get(headers,KEY(Upgrade)).value;
+  upgrade = upgrade==NULL?"":upgrade;
+  char *res;
+
+  if(strcmp(upgrade,"websocket")==0){
+    res ="HTTPS/1.1 101 Switching Protocols\r\n"
+                "Upgrade: websocket\r\n"
+                "Connection: Upgrade\r\n"
+                "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n"
+                "\r\n\r\n"
+                "";
+  }else{
+    res = "HTTPS/1.1 200 OK\r\n"
+                "Content-Type: text/plain\r\n"
+                "Content-Length: 13\r\n"
+                "\r\n\r\n"
+                "Hello, World!";
+  }
+  size_t length = strlen(res) + 1;
+  size_t size = length * sizeof(char);
+  char *new_response = realloc(*out, size);
+  snprintf(new_response, size, "%s", res);
+  *out_length = length;
+  *out = new_response;
   return 0;
 }
 

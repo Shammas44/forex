@@ -10,11 +10,12 @@ typedef struct {
   Hashmap*sockfd;
 } Private;
 
-static struct addrinfo** __adresses(T*self,Url*url);
+static struct addrinfo* __adresses(T*self,Url*url);
 static int __socket(T*self,struct addrinfo *addresses);
 static void __free(T*self, int sockfd, struct addrinfo *addresses);
 static int __connect(T*self,int sockfd, struct addrinfo *address);
 static int __address_to_human_format(T*self,struct addrinfo *addresse, char *ip, char *protocol);
+static void __close_sockfd(T*self, int sockfd);
 static void __destructor(T*self);
 
 T*networkWrapperStub_constructor(){
@@ -23,6 +24,12 @@ T*networkWrapperStub_constructor(){
   Private *private = (Private *)malloc(sizeof(Private));
   private->sockfd = hashmap_constructor(10);
   self->__private = private;
+  self->adresses = __adresses;
+  self->socket = __socket;
+  self->close_sockfd = __close_sockfd;
+  self->destructor = __destructor;
+  self->connect = __connect;
+  self->free = __free;
   return self;
 }
 
@@ -34,17 +41,19 @@ static void __destructor(T*self){
   free(self);
 }
 
-static struct addrinfo** __adresses(T*self,Url*url) {
-    struct addrinfo **mock_addrinfo = malloc(sizeof(struct addrinfo));
-    struct addrinfo*addr1 = malloc(sizeof(struct addrinfo));
-    memset(addr1, 0, sizeof(struct addrinfo));
-    mock_addrinfo[0] = addr1;
+static void __close_sockfd(T*self, int sockfd){
+  return;
+}
 
-    addr1->ai_family = AF_UNSPEC;
-    addr1->ai_socktype = SOCK_STREAM;
-    addr1->ai_protocol = IPPROTO_TCP;
-    addr1->ai_next = NULL;
-    addr1->ai_canonname = NULL;
+static struct addrinfo* __adresses(T*self,Url*url) {
+    struct addrinfo *mock_addrinfo = malloc(sizeof(struct addrinfo));
+    memset(mock_addrinfo, 0, sizeof(struct addrinfo));
+
+    mock_addrinfo->ai_family = AF_UNSPEC;
+    mock_addrinfo->ai_socktype = SOCK_STREAM;
+    mock_addrinfo->ai_protocol = IPPROTO_TCP;
+    mock_addrinfo->ai_next = NULL;
+    mock_addrinfo->ai_canonname = NULL;
     return mock_addrinfo;
 }
 
@@ -68,7 +77,7 @@ static void __free(T*self, int sockfd, struct addrinfo *addresses) {
 }
 
 static int __connect(T*self,int sockfd, struct addrinfo *address) {
-  return connect(sockfd, address->ai_addr, address->ai_addrlen);
+  return 0;
 }
 
 static int __address_to_human_format(T*self,struct addrinfo *addresse, char *ip, char *protocol) {

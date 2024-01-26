@@ -18,19 +18,20 @@
 #define MAX_TIMEOUT_SECONDS 5 // Change this according to your desired timeout
 
 typedef struct {
-
+  SSL*ssl;
 } Private;
 
 static void __destructor(T *self);
-static int __connect(T *self, SSL *ssl);
-static int __write(T *self, SSL *ssl, char *payload, int payload_length);
-static int __read(T *self, SSL *ssl, char **out, size_t *out_length);
+static int __connect(T *self);
+static int __write(T *self, char *payload, int payload_length);
+static int __read(T *self, char **out, size_t *out_length);
 static int __get_last_error(T *self);
 static int __cleanup(T *self);
-static SSL *__new(T *self, SSL_CTX *ctx);
-static long __set_host(T *self,SSL*ssl, char *host);
-static int __set_fd(T *self, SSL *ssl, int fd);
-static int __shutdown(T *self, SSL *ssl);
+static SSL *__new(T *self);
+static int __set_host(T *self, char *host);
+static int __set_fd(T *self, int fd);
+static int __shutdown(T *self);
+static SSL* __get(T *self);
 
 static void _$ini_openssl();
 static int _$set_ssl_context(void);
@@ -38,6 +39,7 @@ static int _$set_ssl_context(void);
 T *sslWrapper_constructor() {
   T *self = (T *)malloc(sizeof(T));
   Private *private = (Private *)malloc(sizeof(Private));
+  private->ssl = NULL;
   self->__private = private;
   self->destructor = __destructor;
   self->connect = __connect;
@@ -47,40 +49,58 @@ T *sslWrapper_constructor() {
   self->set_host = __set_host;
   self->set_fd = __set_fd;
   self->shutdown = __shutdown;
+  self->get = __get;
   _$ini_openssl();
   _$set_ssl_context();
   return self;
 }
 
-void __destructor(T *self) {
+static void __destructor(T *self) {
   Private *private = self->__private;
+  if(ctx!=NULL) SSL_CTX_free(ctx);
   free(private);
   free(self);
 }
 
-static SSL *__new(T *self, SSL_CTX *ctx) { return SSL_new(ctx); }
-
-static long __set_host(T *self, SSL *ssl, char *host) {
-  long status = SSL_set_tlsext_host_name(ssl, host);
-  return status;
+static SSL *__get(T *self) {
+  Private *private = self->__private;
+  return private->ssl;
 }
 
-static int __set_fd(T *self, SSL *ssl, int fd) { return SSL_set_fd(ssl, fd); }
-
-static int __connect(T *self, SSL *ssl) { return SSL_connect(ssl); }
-
-static int __write(T *self, SSL *ssl, char *payload, int payload_length) {
-  return SSL_write(ssl, payload, payload_length);
+static SSL *__new(T *self) {
+  Private *private = self->__private;
+  private->ssl = SSL_new(ctx);
+  return private->ssl;
 }
 
-static int __shutdown(T *self, SSL *ssl) {
+static int __set_host(T *self, char *host) {
+  // A return code equal to 1 indicates that the function was successful.
+  long status = SSL_set_tlsext_host_name(__get(self), host);
+  return status == 1 ? 0 : 1;
+}
+
+static int __set_fd(T *self, int fd) {
+  return SSL_set_fd(__get(self), fd); 
+}
+
+static int __connect(T *self) {
+  return SSL_connect(__get(self)); 
+}
+
+static int __write(T *self, char *payload, int payload_length) {
+  return SSL_write(__get(self), payload, payload_length);
+}
+
+static int __shutdown(T *self) {
   int status = 0;
+  SSL*ssl = __get(self);
   if (ssl != NULL)
     status = SSL_shutdown(ssl);
   return status;
 }
 
-static int __read(T *self, SSL *ssl, char **out, size_t *out_length) {
+static int __read(T *self, char **out, size_t *out_length) {
+  SSL*ssl = __get(self);
   ssize_t bytes_received;
   int response_capacity = 4096;
 

@@ -135,7 +135,7 @@ int __httpsRequest_stringify(T *request, char **out) {
     return -1;
   }
   // Construct the request line
-  int offset = sprintf(*out, "%s %s HTTP/1.1\r\nHost: %s\r\n", message->method,
+  int offset = sprintf(*out, "%s %s HTTPS/1.1\r\nHost: %s\r\n", message->method,
                        path, host);
   // Append the headers
   for (size_t i = 0; i < message->header_count; i++) {

@@ -3,7 +3,7 @@
 #include "httpsResponse.h"
 #include "httpsResponse.keys.h"
 #include "common.h"
-#include "HttpsResponseParser.h"
+#include "HttpsParser.h"
 #include "hashmap.h"
 #define T HttpsResponse
 
@@ -27,6 +27,8 @@ static Hashmap * __headers(T *self);
 static Item __header(T *self, char*key);
 static char * __body(T *self);
 static char *__content_type(T *self);
+
+static void _$cleanup(int headers_count, char **keys, Item **values);
 
 // =========================================================================="
 // Public functions
@@ -78,6 +80,80 @@ static void __destructor(T *self) {
   free(self);
 }
 
+// static char* __stringify(T *self) {
+//   Private *private = self->__private;
+//   Hashmap*map = private->map;
+//   Hashmap*headers = map->get(map,KEY(Headers)).value;
+//   char**keys = headers->keys(headers);
+//   Item**values = headers->values(headers);
+//   char *out = NULL;
+
+//   char*protocol_name = map->get(map,KEY(Protocol_Name)).value;
+//   char*protocol_version = map->get(map,KEY(Protocol_Version)).value;
+//   char*status_code = map->get(map,KEY(Status_Code)).value;
+//   char*status_message = map->get(map,KEY(Status_Message)).value;
+//   size_t headers_count = headers->length(headers);
+
+//     // + 4 for '/', ' ', ' ', '\n'
+//     size_t status_length = 
+//       + strlen(protocol_name)
+//       + strlen(protocol_version)
+//       + strlen(status_code)
+//       + strlen(status_message)+ 4;
+
+//   char * status = malloc(status_length * sizeof(char));
+//   snprintf(status, status_length, "%s/%s %s %s", protocol_name, protocol_version,status_code, status_message);
+
+//     size_t headers_length = 0;
+
+//     for (int i = 0; i < headers_count; i++) {
+//         // +3 for '\n', ' ', ':'
+//         headers_length += strlen(keys[i]) + strlen(values[i]->value) + 3; 
+//     }
+//     // Allocate memory for headers with newlines and null terminator
+//     char *raw_headers = malloc(headers_length + 1);
+//     if (raw_headers == NULL) {
+//         free(status);
+//         goto clean;
+//     }
+
+//     char *p = raw_headers;
+
+//     for (int i = 0; i < headers_count; i++) {
+//         // +4 for ': ', '\n', ' ', null terminator
+//         size_t header_length = strlen(keys[i]) + strlen(values[i]->value) +4;
+//         snprintf(p, header_length, "%s: %s\n", keys[i],(char*)values[i]->value); 
+//         p += header_length -1; // Move the pointer forward to the null terminator
+//     }
+//     *p = '\0'; // Null-terminate the string
+
+//     // Calculate total length including headers, body, and extra newline characters
+//     char *body = __body(self);
+//     size_t body_length = body != NULL ? strlen(body) : 0;
+//     size_t total_length = status_length + headers_length + body_length +4 ; // 2 newlines + 2 carriage returns
+
+//     // Allocate memory for the final output string
+//     out = malloc(total_length + 1); // +1 for null terminator
+//     if (out == NULL) {
+//       free(status); 
+//       free(raw_headers); 
+//       goto clean;
+//     }
+
+//     // Construct the final output string
+//     snprintf(out, total_length + 1, "%s\n%s\r\n\r\n%s", status, raw_headers, (body != NULL) ? body : "");
+
+//     // Free allocated memory and cleanup
+//     free(raw_headers);
+//     free(status);
+// clean:for (int i = 0; i < headers_count; i++) {
+//         free(values[i]);
+//         free(keys[i]);
+//     }
+//     return out;
+// }
+
+
 static char* __stringify(T *self) {
   Private *private = self->__private;
   Hashmap*map = private->map;
@@ -92,21 +168,21 @@ static char* __stringify(T *self) {
   char*status_message = map->get(map,KEY(Status_Message)).value;
   size_t headers_count = headers->length(headers);
 
-    // + 4 for '/', ' ', ' ', '\n'
+    // + 5 for '/', ' ', ' ', '\r', '\n'
     size_t status_length = 
       + strlen(protocol_name)
       + strlen(protocol_version)
       + strlen(status_code)
-      + strlen(status_message)+ 4;
+      + strlen(status_message)+ 5;
 
   char * status = malloc(status_length * sizeof(char));
-  snprintf(status, status_length, "%s/%s %s %s", protocol_name, protocol_version,status_code, status_message);
+  snprintf(status, status_length, "%s/%s %s %s\r", protocol_name, protocol_version,status_code, status_message);
 
     size_t headers_length = 0;
 
     for (int i = 0; i < headers_count; i++) {
-        // +3 for '\n', ' ', ':'
-        headers_length += strlen(keys[i]) + strlen(values[i]->value) + 3; 
+        // +4 for '\n', ' ', ':', '\r,
+        headers_length += strlen(keys[i]) + strlen(values[i]->value) + 4; 
     }
     // Allocate memory for headers with newlines and null terminator
     char *raw_headers = malloc(headers_length + 1);
@@ -118,9 +194,9 @@ static char* __stringify(T *self) {
     char *p = raw_headers;
 
     for (int i = 0; i < headers_count; i++) {
-        // +4 for ': ', '\n', ' ', null terminator
-        size_t header_length = strlen(keys[i]) + strlen(values[i]->value) +4;
-        snprintf(p, header_length, "%s: %s\n", keys[i],(char*)values[i]->value); 
+        // +5 for ': ', '\r', '\n', ' ', null terminator
+        size_t header_length = strlen(keys[i]) + strlen(values[i]->value) +5;
+        snprintf(p, header_length, "%s: %s\r\n", keys[i],(char*)values[i]->value); 
         p += header_length -1; // Move the pointer forward to the null terminator
     }
     *p = '\0'; // Null-terminate the string
@@ -133,22 +209,32 @@ static char* __stringify(T *self) {
     // Allocate memory for the final output string
     out = malloc(total_length + 1); // +1 for null terminator
     if (out == NULL) {
-      free(status); 
-      free(raw_headers); 
-      goto clean;
+        goto clean;
     }
 
     // Construct the final output string
     snprintf(out, total_length + 1, "%s\n%s\r\n\r\n%s", status, raw_headers, (body != NULL) ? body : "");
 
-    // Free allocated memory and cleanup
+    // Free allocated memory
     free(raw_headers);
     free(status);
-clean:for (int i = 0; i < headers_count; i++) {
+
+    // Clean up
+    _$cleanup(headers_count, keys, values);
+
+    return out;
+
+clean:
+    _$cleanup(headers_count, keys, values);
+    free(out);
+    return NULL;
+}
+
+static void _$cleanup(int headers_count, char **keys, Item **values) {
+    for (int i = 0; i < headers_count; i++) {
         free(values[i]);
         free(keys[i]);
     }
-    return out;
 }
 
 static Item __header(T *self, char*key){
