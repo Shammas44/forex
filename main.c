@@ -83,11 +83,12 @@ int main(int argc, char *argv[]) {
   state.sync = sync;
   state.metadata = metadata;
 
+  puts("");
   pthread_create(&exchange_thread, NULL, exchangeThread, &state);
-  // pthread_create(&strategy_thread, NULL, strategyThread, &state);
+  pthread_create(&strategy_thread, NULL, strategyThread, &state);
 
   pthread_join(exchange_thread, NULL);
-  // pthread_join(strategy_thread, NULL);
+  pthread_join(strategy_thread, NULL);
 
   // pthread_create(&trade_logic, NULL, strategy_processor, &queues);
 

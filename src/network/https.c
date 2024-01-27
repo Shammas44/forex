@@ -103,7 +103,6 @@ static SSL* __ws_handshake(T*self,HttpsRequest *request){
   if(!res) return NULL;
   
   char *status = res->status(res);
-  printf("status: %s\n",status);
 
   if(strcmp("101",status) != 0) _$cleanup(self, *sockfd);
   request->destructor(request);

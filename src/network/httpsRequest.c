@@ -14,14 +14,14 @@
 // Data structures
 // =========================================================================="
 
-struct Message {
+typedef struct {
     Url* url;
     char method[8]; 
     char* body;
     size_t body_length;
     char** headers;
     size_t header_count;
-};
+} Message;
 
 // =========================================================================="
 // Prototypes functions
@@ -30,7 +30,6 @@ struct Message {
 void __httpsRequest_destructor(T * request);
 int __httpsRequest_stringify(T * request, char **out);
 void __httpsRequest_print(T *request);
-int __httpsRequest_parse(char* raw_request, Message *request);
 char *__httpsRequest_method_to_string(HttpsRequest_method method);
 T *__httpsRequest_set_method(T *req, HttpsRequest_method method);
 T *__httpsRequest_set_body(T *req, char* body);

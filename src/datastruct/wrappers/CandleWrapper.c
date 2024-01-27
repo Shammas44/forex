@@ -31,8 +31,8 @@ static int  __total_ticks(T *self);
 static time_t  __timestamp(T *self);
 static double  __volume(T *self);
 
-static void __set_timestamp(T*self);
-static void __set_volume(T*self);
+static void _$set_timestamp(T*self);
+static void _$set_volume(T*self);
 
 T * candleWrapper_constructor(Hashmap *map){
   T *self = malloc(sizeof(T));
@@ -54,8 +54,8 @@ T * candleWrapper_constructor(Hashmap *map){
   self->total_ticks = __total_ticks;
   self->timestamp = __timestamp;
   self->volume = __volume;
-  __set_timestamp(self);
-  __set_volume(self);
+  _$set_timestamp(self);
+  _$set_volume(self);
   return self;
 }
 
@@ -65,66 +65,87 @@ static void __destructor(T*self){
 }
 
 static char* __get(T*self,char*key){
-  return (void*)hashmap_get_string(MAP(self),key);
+  Hashmap*map = self->__private;
+  return map->get(map,key).value;
 }
 static char* __date(T*self){
   if(self == NULL) return NULL;
-  return (void*)hashmap_get_string(MAP(self),"Date");
+  return __get(self,"Date");
 }
 
 static char* __time(T*self){
   if(self == NULL) return NULL;
-  return hashmap_get_string(MAP(self),"Time");
+  return __get(self,"Time");
 }
 
 static double __open(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"Open");
+  char* value = __get(self,"Open");
+  if(!value) return -1;
+  return atoi(value);
 }
 
 static double __high(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"High");
+  char* value = __get(self,"High");
+  if(!value) return -1;
+  return atof(value);
 }
 
 static double __low(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"Low");
+  char* value = __get(self,"Low");
+  if(!value) return -1;
+  return atof(value);
 }
 
 static double __close(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"Close");
+  char* value = __get(self,"Close");
+  if(!value) return -1;
+  return atof(value);
 }
 
 static double __up_volume(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"UpVolume");
+  char* value = __get(self,"UpVolume");
+  if(!value) return -1;
+  return atof(value);
 }
 
 static double __down_volume(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"DownVolume");
+  char* value = __get(self,"DownVolume");
+  if(!value) return -1;
+  return atof(value);
 }
 
 static double __total_volume(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"TotalVolume");
+  char* value = __get(self,"TotalVolume");
+  if(!value) return -1;
+  return atof(value);
 }
 
 static double __up_ticks(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"UpTicks");
+  char* value = __get(self,"UpTicks");
+  if(!value) return -1;
+  return atof(value);
 }
 
 static double __down_ticks(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"DownTicks");
+  char* value = __get(self,"DownTicks");
+  if(!value) return -1;
+  return atof(value);
 }
 
 static int __total_ticks(T*self){
   if(self == NULL) return -1;
-  return hashmap_get_double(MAP(self),"Total_ticks");
+  char* value = __get(self,"Total_ticks");
+  if(!value) return -1;
+  return atoi(value);
 }
 
 static time_t __timestamp(T*self){
@@ -134,9 +155,9 @@ static time_t __timestamp(T*self){
   return *time;
 }
 
-static void __set_timestamp(T*self){
-  char*date =  hashmap_get_string(MAP(self),"Date");
-  char*time =  hashmap_get_string(MAP(self),"Time");
+static void _$set_timestamp(T*self){
+  char*date =  __date(self);
+  char*time =  __time(self);
   if(date==NULL || time == NULL) return;
   char datetime_str[20];
   snprintf(datetime_str, sizeof(datetime_str), "%s %s", date, time);
@@ -179,7 +200,7 @@ static void __set_timestamp(T*self){
   map->push(map,"Timestamp",(Item){.type=Item_default,.value=out});
 }
 
-static void __set_volume(T*self){
+static void _$set_volume(T*self){
   Hashmap* map = self->__private; 
   double up_volume =  hashmap_get_double(map,"DownVolume");
   double down_volume =  hashmap_get_double(map,"UpVolume");

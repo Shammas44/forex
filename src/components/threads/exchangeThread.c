@@ -1,10 +1,12 @@
 #include "exchangeThread.h"
+#include "Message.h"
 #include "CsvParser.h"
 #include "ExchangeTest.h"
 #include "ExchangeTestBacktest.h"
 #include "globalState.h"
 #include "CandleWrapper.h"
 #include "MtsQueue.h"
+#include "json.h"
 
 static void __live_callback(void* newState);
 static void __backtest_callback(void* newState);
@@ -40,13 +42,21 @@ static void __live_callback(void* newState){
 }
 
 static void __backtest_callback(void* newState){
-  Hashmap*map = (Hashmap*)newState;
-  Sync *sync = state->sync;
-  CandleWrapper * candle = candleWrapper_constructor(map);
-  Wrapper *wrapper = wrapper_constructor("Candle",candle);
+  static int id = 0;
+  Message*message = (Message*)newState;
   MtsQueue *candle_queue = state->candles;
-  puts("enqueue");
+  Msg_type type = message->code(message,READ,0);
+  Sync *sync = state->sync;
   sync_wait_on_state(sync, SYNC_STATE_EXCHANGE);
-  candle_queue->enqueue(candle_queue,wrapper);
+
+  if(type == Msg_candle){
+    Hashmap*map = message->value(message,READ,(Item){}).value;
+    CandleWrapper * candle = candleWrapper_constructor(map);
+    Item item = {.value = candle, .type = Item_map};
+    message->value(message,WRITE,item);
+  }
+  candle_queue->enqueue(candle_queue,message);
+  printf("enqueue: %d\n",id);
   sync_set_state(sync, SYNC_STATE_BARS);
+  id++;
 }

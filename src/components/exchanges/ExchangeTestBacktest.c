@@ -1,4 +1,5 @@
 #include "ExchangeTestBacktest.h"
+#include "Message.h"
 #define T ExchangeTestBacktest
 
 #define SUBJECT(exchange) \
@@ -58,8 +59,13 @@ static void __on_row_receive(void*exchange,void*state){
   T *self = exchange;
   Private *private = self->__private;
   Subject *subject = private->subject;
-  Hashmap*map = (Hashmap*) state;
-  subject->set_state(subject,map);
+  Message *message = state;
+  Msg_type type = message->code(message,READ,0);
+  if(type == Msg_unknown){
+    message->code(message,WRITE,Msg_candle);
+    Hashmap*map = message->value(message,READ,(Item){}).value;
+  }
+  subject->set_state(subject,message);
 }
 
 static void __dettach_observer(T*exchange,Observer*observer){

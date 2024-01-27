@@ -1,5 +1,6 @@
 #include "CsvParser.h"
 #include "array.h"
+#include "Message.h"
 #include "hashmap.h"
 #include <stdio.h>
 #include <string.h>
@@ -74,7 +75,9 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
       if ('\n' == token[strlen(token) - 1]) {
         strncpy(value, token, strlen(token) - 2);
         map->push(map,key, (Item){.type=Item_default,.value=value});
-        on_data(caller,map);
+        Item item = {.value = map, .type = Item_map};
+        Message *message = message_constructor((Msg_args){.item=item, .code=Msg_unknown});
+        on_data(caller,message);
         map = hashmap_constructor(columns*2);
         break;
       }
@@ -85,6 +88,9 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
     }
   }
 
+  Item item = {.value = NULL, .type = Item_null};
+  Message *message = message_constructor((Msg_args){.item=NULL, .code=Msg_stop});
+  on_data(caller,message);
   array->destructor(array);
   fclose(fp);
   return 0;

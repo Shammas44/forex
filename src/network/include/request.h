@@ -1,6 +1,5 @@
 #ifndef REQUEST_H
 #define REQUEST_H
-#include "message.h"
 #include <openssl/err.h>
 #define T Request
 

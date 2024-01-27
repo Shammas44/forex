@@ -3,11 +3,9 @@
 #include "buffer.h"
 #include "error.h"
 #include "hashmap.h"
-#include "message.h"
 #include "network.h"
 #include "response.h"
 #include "tls.h"
-#include "wsframe.h"
 #include "common.h"
 #include <openssl/err.h>
 #include <openssl/rand.h>

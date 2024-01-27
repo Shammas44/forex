@@ -1,21 +1,26 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
+#include "isDestroyable.h"
+#include "item.h"
+#include "common.h"
 #define T Message
 typedef struct T T;
 
-typedef struct Message_prefill Message_prefill;
+typedef enum { Msg_empty,Msg_candle,Msg_stop,Msg_unknown } Msg_type;
 
-typedef T * (Message_constructor)(Message_prefill prefill);
-typedef int (Message_destructor)(T * msg);
-typedef int (Message_stringify)(T * msg, char **res);
-typedef void (Message_print)(T *msg);
+typedef struct {
+  Item item;
+  Msg_type code;
+} Msg_args;
 
-T * message_constructor(Message_prefill prefill);
+struct T {
+  IsDestroyable __destructor;
+  void (*destructor)(T *self);
+  Item (*value)(T *self,Access_mode mode, Item new);
+  Msg_type (*code)(T *self,Access_mode mode,Msg_type code);
+  void *__private;
+};
 
-int message_destructor(T * msg);
-
-int message_stringify(T * msg, char **res);
-
-void message_print(T *msg);
+T *message_constructor(Msg_args args);
 #undef T
-#endif 
+#endif
