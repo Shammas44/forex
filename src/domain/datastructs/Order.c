@@ -30,6 +30,9 @@ static int __ttl(T *self, Access_mode mode, int new);
 
 static void _$set_double(Hashmap*map, char* key, double value);
 static void _$set_int(Hashmap*map, char* key, int value);
+static char* _$get(T*self,char*key);
+static double _$get_double(T*self,char*key);
+static int _$get_int(T*self,char*key);
 
 typedef struct {
   Hashmap*map;
@@ -96,7 +99,7 @@ static int __id(T *self, Access_mode mode, int new){
   if(mode == WRITE){
     _$set_int(map,key,new);
   }
-  return hashmap_get_int(map,key);
+  return _$get_int(self,key);
 }
 
 static char*  __type(T *self, Access_mode mode, char* new){
@@ -106,7 +109,7 @@ static char*  __type(T *self, Access_mode mode, char* new){
   if(mode == WRITE){
     map->push(map,key,(Item){.type=Item_default,.value=new});
   }
-  return map->get(map,key).value;
+  return _$get(self,key);
 }
 
 static OrderStatus __status(T *self, Access_mode mode, OrderStatus new){
@@ -116,7 +119,7 @@ static OrderStatus __status(T *self, Access_mode mode, OrderStatus new){
   if(mode == WRITE){
     _$set_int(map,key,new);
   }
-  return hashmap_get_int(map,key);
+  return _$get_int(self,key);
 }
 
 static double __limit(T *self, Access_mode mode, double new){
@@ -126,7 +129,7 @@ static double __limit(T *self, Access_mode mode, double new){
   if(mode == WRITE){
     _$set_double(map,key,new);
   }
-  return hashmap_get_double(map,key);
+  return _$get_double(self,key);
 }
 
 static double __price(T *self, Access_mode mode, double new){
@@ -136,7 +139,7 @@ static double __price(T *self, Access_mode mode, double new){
   if(mode == WRITE){
     _$set_double(map,key,new);
   }
-  return hashmap_get_double(map,key);
+  return _$get_double(self,key);
 }
 
 static Side __side(T *self, Access_mode mode, Side new){
@@ -146,7 +149,7 @@ static Side __side(T *self, Access_mode mode, Side new){
   if(mode == WRITE){
     _$set_int(map,key,new);
   }
-  return hashmap_get_int(map,key);
+  return _$get_int(self,key);
 }
 
 static double __size(T *self, Access_mode mode, double new){
@@ -156,7 +159,7 @@ static double __size(T *self, Access_mode mode, double new){
   if(mode == WRITE){
     _$set_double(map,key,new);
   }
-  return hashmap_get_double(map,key);
+  return _$get_double(self,key);
 }
 
 static double __executed_price(T *self, Access_mode mode, double new){
@@ -166,7 +169,7 @@ static double __executed_price(T *self, Access_mode mode, double new){
   if(mode == WRITE){
     _$set_double(map,key,new);
   }
-  return hashmap_get_double(map,key);
+  return _$get_double(self,key);
 }
 
 static int __ttl(T *self, Access_mode mode, int new){
@@ -176,7 +179,7 @@ static int __ttl(T *self, Access_mode mode, int new){
   if(mode == WRITE){
     _$set_int(map,key,new);
   }
-  return hashmap_get_int(map,key);
+  return _$get_int(self,key);
 }
 
 static void _$set_double(Hashmap* map, char* key, double value) {
@@ -199,6 +202,24 @@ static void _$set_int(Hashmap* map, char* key, int value) {
       RUNTIME_ERROR("memory allocation failed",1);
       // Handle memory allocation failure
     }
+}
+
+static char* _$get(T*self,char*key){
+  Private *private = PRIVATE(self,NULL);
+  Hashmap*map = private->map;
+  return map->get(map,key).value;
+}
+
+static double _$get_double(T*self,char*key){
+  char* value = _$get(self,key);
+  if(!value) return -1;
+  return atof(value);
+}
+
+static int _$get_int(T*self,char*key){
+  char* value = _$get(self,key);
+  if(!value) return -1;
+  return atoi(value);
 }
 #undef T
 #undef PRIVATE

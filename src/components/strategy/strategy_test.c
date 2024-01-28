@@ -50,37 +50,32 @@ static Order* __execute(T*self, CandleWrapper*candle){
   double close = candle->close(candle);
   double open = candle->open(candle);
   int market_position = metadata->get_market_position(metadata);
-  puts("-------");
-  Order *order = NULL;
-  // Order * order = order_constructor(-1);
-  puts("-------");
-  // order->price(order,WRITE,close);
-  // order->status(order,WRITE,ORDER_CANCELLED);
-  // order->type(order,WRITE,"Market");
+  Order * order = order_constructor(-1);
+  order->price(order,WRITE,close);
+  order->status(order,WRITE,ORDER_CANCELLED);
+  order->type(order,WRITE,"Market");
 
-  // printf("price: %f\n", order->price(order,READ,0));
+  if (close > open && market_position >= 0) {
+    order->side(order,WRITE,SELL);
+    order->status(order,WRITE,ORDER_PENDING);
+    if (market_position == 0) {
+    order->size(order,WRITE,10000);
+    } else {
+    order->size(order,WRITE,20000);
+    }
+  }
 
-  // if (close > open && market_position >= 0) {
-  //   order->side(order,WRITE,SELL);
-  //   order->status(order,WRITE,ORDER_PENDING);
-  //   if (market_position == 0) {
-  //   order->size(order,WRITE,10000);
-  //   } else {
-  //   order->size(order,WRITE,20000);
-  //   }
-  // }
-
-  // if (close < open && market_position <= 0) {
-  //   order->side(order,WRITE,BUY); 
-  //   order->status(order,WRITE,ORDER_PENDING);
-  //   if (market_position == 0) {
-  //     order->size(order,WRITE, 10000);
-  //   } else {
-  //     order->size(order,WRITE, 20000);
-  //   }
-  // }
-  // Report_entry entry = {.timestamp=candle->timestamp(candle)};
-  // report->add_entry(report,&entry);
+  if (close < open && market_position <= 0) {
+    order->side(order,WRITE,BUY); 
+    order->status(order,WRITE,ORDER_PENDING);
+    if (market_position == 0) {
+      order->size(order,WRITE, 10000);
+    } else {
+      order->size(order,WRITE, 20000);
+    }
+  }
+  Report_entry entry = {.timestamp=candle->timestamp(candle)};
+  report->add_entry(report,&entry);
   return order;
 }
 

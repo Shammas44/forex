@@ -33,6 +33,8 @@ static double  __volume(T *self);
 
 static void _$set_timestamp(T*self);
 static void _$set_volume(T*self);
+static double _$get_double(T*self,char*key);
+static int _$get_int(T*self,char*key);
 
 T * candleWrapper_constructor(Hashmap *map){
   T *self = malloc(sizeof(T));
@@ -80,72 +82,52 @@ static char* __time(T*self){
 
 static double __open(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"Open");
-  if(!value) return -1;
-  return atoi(value);
+  return _$get_double(self,"Open");
 }
 
 static double __high(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"High");
-  if(!value) return -1;
-  return atof(value);
+  return _$get_double(self,"High");
 }
 
 static double __low(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"Low");
-  if(!value) return -1;
-  return atof(value);
+  return _$get_double(self,"Low");
 }
 
 static double __close(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"Close");
-  if(!value) return -1;
-  return atof(value);
+  return _$get_double(self,"Close");
 }
 
 static double __up_volume(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"UpVolume");
-  if(!value) return -1;
-  return atof(value);
+  return _$get_double(self,"UpVolume");
 }
 
 static double __down_volume(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"DownVolume");
-  if(!value) return -1;
-  return atof(value);
+  return _$get_double(self,"DownVolume");
 }
 
 static double __total_volume(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"TotalVolume");
-  if(!value) return -1;
-  return atof(value);
+  return _$get_double(self,"TotalVolume");
 }
 
 static double __up_ticks(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"UpTicks");
-  if(!value) return -1;
-  return atof(value);
+  return _$get_double(self,"UpTicks");
 }
 
 static double __down_ticks(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"DownTicks");
-  if(!value) return -1;
-  return atof(value);
+  return _$get_double(self,"DownTicks");
 }
 
 static int __total_ticks(T*self){
   if(self == NULL) return -1;
-  char* value = __get(self,"Total_ticks");
-  if(!value) return -1;
-  return atoi(value);
+  return _$get_int(self,"Total_ticks");
 }
 
 static time_t __timestamp(T*self){
@@ -153,6 +135,25 @@ static time_t __timestamp(T*self){
   Hashmap*map = self->__private; 
   time_t *time = map->get(map,"Timestamp").value;
   return *time;
+}
+
+static double __volume(T*self){
+  if(self == NULL) return -1;
+  Hashmap* map = self->__private; 
+  double* volume = map->get(MAP(self),"Volume").value;
+  return *volume;
+}
+
+static double _$get_double(T*self,char*key){
+  char* value = __get(self,key);
+  if(!value) return -1;
+  return atof(value);
+}
+
+static int _$get_int(T*self,char*key){
+  char* value = __get(self,key);
+  if(!value) return -1;
+  return atoi(value);
 }
 
 static void _$set_timestamp(T*self){
@@ -207,13 +208,6 @@ static void _$set_volume(T*self){
   double *volume = malloc(sizeof(double));
   *volume = up_volume + down_volume;
   map->push(map,"Volume",(Item){.type=Item_default,.value=volume});
-}
-
-static double __volume(T*self){
-  if(self == NULL) return -1;
-  Hashmap* map = self->__private; 
-  double* volume = map->get(MAP(self),"Volume").value;
-  return *volume;
 }
 
 #undef T

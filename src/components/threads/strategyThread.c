@@ -28,18 +28,16 @@ void *strategyThread(void *arg) {
       break;
     }
     if(type ==Msg_candle){
-    CandleWrapper *candle = message->value(message,READ,(Item){}).value;
-    message->destructor(message);
-    // puts("-------");
-    // printf("Time: %s\n", candle->time(candle));
-    // printf("Date: %s\n", candle->date(candle));
-    // printf("Timestamp: %ld\n", candle->timestamp(candle));
-    // printf("Volume: %f\n", candle->volume(candle));
-    // printf("Close: %f\n", candle->close(candle));
-    // printf("order: %d\n", id);
-    Order * order = strategy->run(strategy, candle);
-    // candle->destructor(candle);
-    printf("order processed: %d\n",id);
+      CandleWrapper *candle = message->value(message,READ,(Item){}).value;
+      message->destructor(message);
+      Order * order = strategy->run(strategy, candle);
+      OrderStatus status = order->status(order,READ,NULL);
+      if(status == ORDER_PENDING) {
+        printf("order pending: %d\n",id);
+        // perform risk management check here 
+        // send order to broker
+      }
+      printf("order processed: %d\n",id);
     }
     id++;
     sync_set_state(sync, SYNC_STATE_EXCHANGE);
