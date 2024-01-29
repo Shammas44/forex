@@ -1,6 +1,5 @@
 #include "Metadata.h"
 #include "candle.h"
-#include "candleprod.h"
 #include "network.h"
 #include "SslWrapper.h"
 #include "csv.h"
