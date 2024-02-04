@@ -6,6 +6,6 @@
 
 typedef SslWrapper T;
 
-T* sslWrapperStub_constructor();
+T* sslWrapperStub_constructor(char*response_body);
 #undef T
 #endif

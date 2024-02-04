@@ -24,6 +24,7 @@ typedef struct {
   SSL *ssl;
   Hashmap*last_request;
   HttpsParser *parser;
+  char*response_body;
 } Private;
 
 static void __destructor(T *self);
@@ -41,10 +42,13 @@ static SSL *__get(T *self);
 static void _$ini_openssl();
 static int _$set_ssl_context(void);
 
-T *sslWrapperStub_constructor() {
+T *sslWrapperStub_constructor(char*response_body) {
   T *self = (T *)malloc(sizeof(T));
   Private *private = (Private *)malloc(sizeof(Private));
   memset(private, 0, sizeof(Private));
+  if(response_body){
+    private->response_body = response_body;
+  }
   HttpsParser *parser =  httpsParser_constructor();
   parser = httpsParser_constructor();
   HttpsParser_config config = {.type = HttpsParser_request,.jsonBody=false};
@@ -123,27 +127,34 @@ static int __read(T *self, char **out, size_t *out_length) {
   char*upgrade = (char*)headers->get(headers,KEY(Upgrade)).value;
   upgrade = upgrade==NULL?"":upgrade;
   char *res;
+  char*body = "";
 
   if(strcmp(upgrade,"websocket")==0){
     res ="HTTPS/1.1 101 Switching Protocols\r\n"
                 "Upgrade: websocket\r\n"
                 "Connection: Upgrade\r\n"
+                "Content-Length: %d\r\n"
                 "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n"
                 "\r\n\r\n"
-                "";
+                "%s";
   }else{
+    body = private->response_body ? private->response_body : "Hello, World!";
     res = "HTTPS/1.1 200 OK\r\n"
                 "Content-Type: text/plain\r\n"
-                "Content-Length: 13\r\n"
+                "Content-Length: %d\r\n"
                 "\r\n\r\n"
-                "Hello, World!";
+                "%s";
   }
-  size_t length = strlen(res) + 1;
+  size_t body_length = strlen(body);
+  char* content_str_length = malloc(sizeof(char)*body_length);
+  sprintf(content_str_length,"%zu",body_length);
+  size_t length = strlen(res) + 1 + strlen(content_str_length) + 1 + body_length;
   size_t size = length * sizeof(char);
   char *new_response = realloc(*out, size);
-  snprintf(new_response, size, "%s", res);
+  snprintf(new_response, size, res, length, body);
   *out_length = length;
   *out = new_response;
+  free(content_str_length);
   return 0;
 }
 

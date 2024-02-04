@@ -12,7 +12,15 @@ static void setup(void) {
   builder = httpsRequestBuilder_constructor();
   builder->build(builder, "https://127.0.0.1");
   Network* network = networkWrapperStub_constructor();
-  SslWrapper *ssl = sslWrapperStub_constructor();
+  SslWrapper *ssl = sslWrapperStub_constructor(NULL);
+  https = https_constructor(network,ssl);
+}
+
+static void setup_custom(void) { 
+  builder = httpsRequestBuilder_constructor();
+  builder->build(builder, "https://127.0.0.1");
+  Network* network = networkWrapperStub_constructor();
+  SslWrapper *ssl = sslWrapperStub_constructor("Hello");
   https = https_constructor(network,ssl);
 }
 
@@ -29,6 +37,17 @@ Test(https_fetch, isValid_object, .init = setup, .fini = teardown){
   char* type = response->content_type(response);
   cr_assert_eq(strcmp(status, "200"), 0, "Status should be '200'");
   cr_assert_eq(strcmp(type, "text/plain"), 0, "Wrong Content-Type");
+}
+
+Test(https_fetch, custom_constructor, .init = setup_custom, .fini = teardown){
+  HttpsRequest *request = builder->get(builder);
+  HttpsResponse * response = https->fetch(https, request);
+  char* status = response->status(response);
+  char* type = response->content_type(response);
+  char* body = response->body(response);
+  cr_assert_eq(strcmp(status, "200"), 0, "Status should be '200'");
+  cr_assert_eq(strcmp(type, "text/plain"), 0, "Wrong Content-Type");
+  cr_assert_eq(strcmp(body, "Hello"), 0, "Wrong body");
 }
 
 Test(https_get, isValid_object, .init = setup, .fini = teardown){
