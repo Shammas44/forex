@@ -117,48 +117,74 @@ T *alpacaOrderEntity_constructor(AlpacaOrderArgs args) {
   private->map = map;
 
   map->push(map, "symbol", (Item){.type = Item_string, .value = args.symbol});
-  map->push(map, "client_order_id", (Item){.type = Item_string, .value = args.client_order_id});
-  map->push(map, "trail_percent", (Item){.type = Item_string, .value = args.trail_percent});
-  map->push(map, "notional", (Item){.type = Item_string, .value = args.notional});
+  if(args.client_order_id != NULL){
+    map->push(map, "client_order_id", (Item){.type = Item_string, .value = args.client_order_id});
+  }
+  if(args.notional != NULL){
+    map->push(map, "notional", (Item){.type = Item_string, .value = args.notional});
+  }
+  if(args.trail_percent != NULL){
+    map->push(map, "trail_percent", (Item){.type = Item_string, .value = args.trail_percent});
+  }
+  if(args.stop_loss != NULL){
+    map->push(map, "stop_loss", (Item){.type = Item_string, .value = args.stop_loss});
+  }
+  if(args.take_profit != NULL){
+    map->push(map, "take_profit", (Item){.type = Item_string, .value = args.take_profit});
+  }
 
-  map->push(map, "stop_loss", (Item){.type = Item_string, .value = args.stop_loss});
-  map->push(map, "take_profit", (Item){.type = Item_string, .value = args.take_profit});
+  if(args.qty != 0){
+    double *qty = malloc(sizeof(double));
+    *qty = args.qty;
+    map->push(map, "qty", (Item){.type = Item_double, .value = qty});
+  }
 
-  double *qty = malloc(sizeof(double));
-  *qty = args.qty;
-  map->push(map, "qty", (Item){.type = Item_double, .value = qty});
+  if(args.limit_price != 0){
+    double *limit_price = malloc(sizeof(double));
+    *limit_price = args.limit_price;
+    map->push(map, "limit_price", (Item){.type = Item_double, .value = limit_price});
+  }
 
-  double *limit_price = malloc(sizeof(double));
-  *limit_price = args.qty;
-  map->push(map, "limit_price", (Item){.type = Item_double, .value = limit_price});
+  if(args.stop_price != 0){
+    double *stop_price = malloc(sizeof(double));
+    *stop_price = args.stop_price;
+    map->push(map, "stop_price", (Item){.type = Item_double, .value = stop_price});
+  }
 
-  double *stop_price = malloc(sizeof(double));
-  *stop_price = args.qty;
-  map->push(map, "stop_price", (Item){.type = Item_double, .value = stop_price});
+  if(args.trail_price != 0){
+    double *trail_price = malloc(sizeof(double));
+    *trail_price = args.trail_price;
+    map->push(map, "trail_price", (Item){.type = Item_double, .value = trail_price});
+  }
 
-  double *trail_price = malloc(sizeof(double));
-  *trail_price = args.qty;
-  map->push(map, "trail_price", (Item){.type = Item_double, .value = trail_price});
-
+  // TODO: replace bool type by an enum
   bool * extended_hours = malloc(sizeof(bool));
   *extended_hours = args.extended_hours;
   map->push(map, "extended_hours", (Item){.type = Item_bool, .value = extended_hours});
 
-  sprintf(key, "%d", args.type);
-  AlpacaOrderItem *type = (AlpacaOrderItem *)types->get(types, key).value;
-  map->push(map, "type", (Item){.type = Item_string, .value = type->value});
+  if(args.type != 0){
+    sprintf(key, "%d", args.type);
+    AlpacaOrderItem *type = (AlpacaOrderItem *)types->get(types, key).value;
+    map->push(map, "type", (Item){.type = Item_string, .value = type->value});
+  }
 
-  sprintf(key, "%d", args.side);
-  AlpacaOrderItem *side = (AlpacaOrderItem *)sides->get(sides, key).value;
-  map->push(map, "side", (Item){.type = Item_string, .value = side->value});
+  if(args.side != 0){
+    sprintf(key, "%d", args.side);
+    AlpacaOrderItem *side = (AlpacaOrderItem *)sides->get(sides, key).value;
+    map->push(map, "side", (Item){.type = Item_string, .value = side->value});
+  }
 
-  sprintf(key, "%d", args.time_in_force);
-  AlpacaOrderItem *time_in_force = (AlpacaOrderItem *)time_in_forces->get(time_in_forces, key).value;
-  map->push(map, "time_in_force", (Item){.type = Item_string, .value = time_in_force->value});
+  if(args.time_in_force != 0){
+    sprintf(key, "%d", args.time_in_force);
+    AlpacaOrderItem *time_in_force = (AlpacaOrderItem *)time_in_forces->get(time_in_forces, key).value;
+    map->push(map, "time_in_force", (Item){.type = Item_string, .value = time_in_force->value});
+  }
 
-  sprintf(key, "%d", args.order_class);
-  AlpacaOrderItem *order_class = (AlpacaOrderItem *)order_classes->get(order_classes, key).value;
-  map->push(map, "order_class", (Item){.type = Item_string, .value = order_class->value});
+  if(args.order_class != 0){
+    sprintf(key, "%d", args.order_class);
+    AlpacaOrderItem *order_class = (AlpacaOrderItem *)order_classes->get(order_classes, key).value;
+    map->push(map, "order_class", (Item){.type = Item_string, .value = order_class->value});
+  }
 
   self->__private = private;
   self->destructor = __destructor;
