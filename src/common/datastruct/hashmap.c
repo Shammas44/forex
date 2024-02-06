@@ -28,6 +28,9 @@ static void __push(T *self, const char *key, Item item);
 static char *__to_json(T *self);
 static char **__keys(T *self);
 static Item **__values(T *self);
+static IsIterable_Entry **__entries(T *self);
+
+static int _$compareStrings(const void *a, const void *b);
 
 T *hashmap_constructor(size_t initial_capacity) {
   if (initial_capacity > MAX_CAPACITY)
@@ -50,6 +53,7 @@ T *hashmap_constructor(size_t initial_capacity) {
   self->to_json = __to_json;
   self->keys = __keys;
   self->values = __values;
+  self->entries = __entries;
   self->__destructor = (IsDestroyable){.destructor = hashmap_destructor};
   initial_capacity =
       initial_capacity + (initial_capacity * LOAD_FACTOR_THRESHOLD);
@@ -136,6 +140,7 @@ static char **__keys(T *self) {
     }
   }
 
+  qsort(output, length, sizeof(char*), _$compareStrings);
   return output;
 }
 
@@ -144,72 +149,73 @@ static Item **__values(T *self) {
   Entry *entries = p->entries;
   size_t length = p->length;
   size_t capacity = p->capacity;
+  if(length == 0) return NULL;
   Item **output = malloc(sizeof(Item *) * length);
-  size_t j = 0;
-  if (output == NULL)
-    return NULL;
+  if (output == NULL) return NULL;
 
-  for (int i = 0; i < capacity; i++) {
-    if (entries[i].key != NULL) {
-      output[j] = malloc(sizeof(Item));
-      if (output[j] != NULL) {
-        output[j]->type = entries[i].type;
-        output[j]->value = entries[i].value;
-        j++;
-      } else {
-        // Handle memory allocation failure
-        // Free previously allocated memory before returning NULL
-        for (int k = 0; k < j; k++) {
-          free(output[k]);
-        }
-        free(output);
-        return NULL;
-      }
-    }
+  char**keys = __keys(self);
+  for (int i=0; i < length; i++) {
+    Item item = __get(self, keys[i]); 
+    output[i] = malloc(sizeof(Item));
+    output[i]->value = item.value;
+    output[i]->type = item.type;
+  }
+  return output;
+}
+
+static IsIterable_Entry **__entries(T *self){
+  Private *p = self->__private;
+  Entry *entries = p->entries;
+  size_t length = p->length;
+  size_t capacity = p->capacity;
+  if(length == 0) return NULL;
+  IsIterable_Entry **output = malloc(sizeof(IsIterable_Entry *) * length);
+  if (output == NULL) return NULL;
+
+  char**keys = __keys(self);
+  for (int i=0; i < length; i++) {
+    char*key = keys[i];
+    Item item = __get(self, key); 
+    output[i] = malloc(sizeof(IsIterable_Entry));
+    output[i]->key = key;
+    output[i]->value = item.value;
+    output[i]->type = item.type;
   }
   return output;
 }
 
 static char *__to_json(Hashmap *map) {
-  //   if(map == NULL) return NULL;
-  //   char*json = malloc(sizeof(char)*100000);
-  //   strcpy(json,"{");
-  //   for (int i = 0; i < map->capacity; i++) {
-  //     char*key = map->entries[i].key;
-  //     if(key != NULL) {
-  //       char*value = NULL;
-  //       Hashmap_types type = map->entries[i].type;
-  //       if(type == Hashmap_types_array){
-  //         Array*array = map->entries[i].value;
-  //         value = array->to_json(array);
-  //       }else if(type == Hashmap_types_hashmap){
-  //         T*map_tmp = map->entries[i].value;
-  //         value = map_tmp->to_json(map_tmp);
-  //       }else{
-  //         value = map->entries[i].value;
-  //       }
-  //       char*comma = ",";
-  //       if(i == map->size-1) comma = "";
-  //       strcat(json,"\"");
-  //       strcat(json,key);
-  //       strcat(json,"\":");
-  //       strcat(json,value);
-  //       strcat(json,comma);
-  //       free(value);
-  //     }
-  //   }
-  //   strcat(json,"}");
-  //   return json;
+    if(map == NULL) return NULL;
+    // char*json = malloc(sizeof(char)*100000);
+    // strcpy(json,"{");
+    // for (int i = 0; i < map->capacity; i++) {
+    //   char*key = map->entries[i].key;
+    //   if(key != NULL) {
+    //     char*value = NULL;
+    //     Hashmap_types type = map->entries[i].type;
+    //     if(type == Hashmap_types_array){
+    //       Array*array = map->entries[i].value;
+    //       value = array->to_json(array);
+    //     }else if(type == Hashmap_types_hashmap){
+    //       T*map_tmp = map->entries[i].value;
+    //       value = map_tmp->to_json(map_tmp);
+    //     }else{
+    //       value = map->entries[i].value;
+    //     }
+    //     char*comma = ",";
+    //     if(i == map->size-1) comma = "";
+    //     strcat(json,"\"");
+    //     strcat(json,key);
+    //     strcat(json,"\":");
+    //     strcat(json,value);
+    //     strcat(json,comma);
+    //     free(value);
+    //   }
+    // }
+    // strcat(json,"}");
+    // return json;
   return NULL;
 }
-
-char *hashmap_get_string(Hashmap *map, const char *key) { return NULL; }
-
-int hashmap_get_int(Hashmap *map, const char *key) { return 0; }
-
-bool hashmap_get_bool(Hashmap *map, const char *key) { return 0; }
-
-double hashmap_get_double(Hashmap *map, const char *key) { return 0; }
 
 // //function to clone deeply a hashmap
 // T* __clone(T*map){
@@ -335,6 +341,10 @@ static Item __get(T *self, void *key) {
     index = (index + 1) % private->capacity;
   }
   return (Item){.type = Item_null, .value = NULL};
+}
+
+static int _$compareStrings(const void *a, const void *b) {
+    return strcmp(*(const char**)a, *(const char**)b);
 }
 
 #undef LOAD_FACTOR_THRESHOLD

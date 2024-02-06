@@ -118,5 +118,25 @@ Test(hashmap_values, correct_values, .init=setup, .fini = teardown) {
   cr_assert_eq(result,sum, "Should be equal");
 }
 
+Test(hashmap_entries, empty_map, .init=setup, .fini = teardown) {
+  IsIterable_Entry**entries = map->entries(map);
+  cr_assert_null(entries,"Should be null");
+}
+
+Test(hashmap_entries, simple, .init=setup, .fini = teardown) {
+  map->push(map, "DOLLAR",(Item){.type=Item_string,.value="$"});
+  map->push(map, "EURO",(Item){.type=Item_string,.value="€"});
+  IsIterable_Entry**entries = map->entries(map);
+  cr_assert_eq(strcmp(entries[0]->value,"$"),0, "Should be equal");
+  cr_assert_eq(strcmp(entries[1]->value,"€"),0, "Should be equal");
+}
+
+// Test(hashmap_to_json, correct_values, .fini = teardown) {
+//   map = hashmap_constructor(10);
+//   map->push(map, "DOLLAR",(Item){.type=Item_string,.value="$"});
+//   char *json = map->to_json(map);
+//   cr_assert_eq(strcmp(json,"{\"DOLLAR\":\"$\"}"),0, "Should be equal");
+// }
+
 #undef MAX_CAPACITY
 #undef T
