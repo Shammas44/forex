@@ -92,7 +92,7 @@ static int __connect(T*exchange){
   HttpsResponse * response = __send(exchange,"auth",POST, body);
   if(strcmp(response->status(response),"200") ==0 ){
     Hashmap*map = NULL;
-    json_to_map(response->body(response),&map,NULL,NULL);
+    json_to_map(response->body(response),&map,NULL,0);
     private->token = map->get(map,"token").value;
     return 0;
   }

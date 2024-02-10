@@ -91,7 +91,7 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
   }
 
   Item item = {.value = NULL, .type = Item_null};
-  Message *message = message_constructor((Msg_args){.item=NULL, .code=Msg_stop});
+  Message *message = message_constructor((Msg_args){.item={}, .code=Msg_stop});
   on_data(caller,message);
   array->destructor(array);
   fclose(fp);

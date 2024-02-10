@@ -233,7 +233,17 @@ Test(hashmap_to_json, hashmap, .fini = teardown) {
   Hashmap_Entry item4 ={.key="amount",.type=Item_map,.value=amount};
   map->push(map ,item4);
   char *json = map->to_json(map);
-  printf("%s\n",json);
+  cr_assert_eq(strcmp(json,res),0, "Should be equal");
+}
+
+Test(hashmap_to_json, array, .fini = teardown) {
+  map = hashmap_constructor(10);
+  char *res = "{\"price\":[\"$\",\"£\"]}";
+  Array *array = array_constructor(2);
+  array->push(array,(Item){.type=Item_string,.value="$"});
+  array->push(array,(Item){.type=Item_string,.value="£"});
+  map->push(map,(Hashmap_Entry){.key="price",.type=Item_array,.value=array});
+  char *json = map->to_json(map);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
 }
 

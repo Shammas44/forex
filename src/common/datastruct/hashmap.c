@@ -207,6 +207,7 @@ static char* __to_json(T* self) {
         char* value = NULL;
         char* tick = "\"";
         char* comma = (i == length - 1) ? "" : ",";
+        Array*array;
 
         switch (entries[i]->type) {
             case Item_string:
@@ -242,6 +243,11 @@ static char* __to_json(T* self) {
 
             case Item_map:
                 value = __to_json(entries[i]->value);
+                tick = "";
+                break;
+            case Item_array:
+                array = entries[i]->value;
+                value = array->to_json(array);
                 tick = "";
                 break;
 

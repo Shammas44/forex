@@ -21,6 +21,8 @@ static Item** __values(T *self);
 static char** __keys(T *self);
 static Array_Entry** __entries(T *self);
 
+static char* _$convertToTrimmedString(double num);
+
 T *array_constructor(size_t size) {
   T *self = malloc(sizeof(T));
   if(size <= 0){
@@ -98,91 +100,113 @@ static size_t __capacity(T *self){
   return p->capacity;
 }
 
-char *__to_json(T *self) {
-    return NULL;
-    // if (self == NULL) {
-    //     return NULL;
-    // }
+static char* __to_json(T* self) {
+    if (self == NULL) {
+        return NULL;
+    }
 
-    // const size_t initialCapacity = 100000;
-    // char* json = malloc(sizeof(char) * initialCapacity);
-    // if (json == NULL) {
-    //     return NULL;  // Memory allocation failure
-    // }
+    const size_t initialCapacity = 100000;
+    char* json = malloc(sizeof(char) * initialCapacity);
+    if (json == NULL) {
+        return NULL;  // Memory allocation failure
+    }
 
-    // strcpy(json, "[");
+    strcpy(json, "[");
 
-    // Private* p = self->__private;
-    // size_t length = p->length;
-    // IsIterable_Entry** entries = __entries(self);
+    Private* p = self->__private;
+    size_t length = p->length;
+    Item** values = __values(self);
 
-    // for (size_t i = 0; i < length; i++) {
-    //     char* key = entries[i]->key;
-    //     char* value = NULL;
-    //     char* tick = "\"";
-    //     char* comma = (i == length - 1) ? "" : ",";
+    for (size_t i = 0; i < length; i++) {
+        char* value = NULL;
+        char* tick = "\"";
+        char* comma = (i == length - 1) ? "" : ",";
+        Hashmap*map;
 
-    //     switch (entries[i]->type) {
-    //         case Item_string:
-    //         case Item_default:
-    //             value = entries[i]->value;
-    //             break;
+        switch (values[i]->type) {
+            case Item_string:
+            case Item_default:
+                value = values[i]->value;
+                break;
 
-    //         case Item_double:
-    //             value = _$convertToTrimmedString(*(double*)entries[i]->value);
-    //             tick = "";
-    //             break;
+            case Item_double:
+                value = _$convertToTrimmedString(*(double*)values[i]->value);
+                tick = "";
+                break;
 
-    //         case Item_int:
-    //             value = malloc(sizeof(char) * 100);
-    //             if (value != NULL) {
-    //                 sprintf(value, "%d", *(int*)entries[i]->value);
-    //                 tick = "";
-    //             } else {
-    //                 free(json);
-    //                 return NULL;  // Memory allocation failure
-    //             }
-    //             break;
+            case Item_int:
+                value = malloc(sizeof(char) * 100);
+                if (value != NULL) {
+                    sprintf(value, "%d", *(int*)values[i]->value);
+                    tick = "";
+                } else {
+                    free(json);
+                    return NULL;  // Memory allocation failure
+                }
+                break;
 
-    //         case Item_bool:
-    //             value = *(bool*)entries[i]->value ? "true" : "false";
-    //             tick = "";
-    //             break;
+            case Item_bool:
+                value = *(bool*)values[i]->value ? "true" : "false";
+                tick = "";
+                break;
 
-    //         case Item_null:
-    //             value = "null";
-    //             tick = "";
-    //             break;
+            case Item_null:
+                value = "null";
+                tick = "";
+                break;
 
-    //         case Item_map:
-    //             value = __to_json(entries[i]->value);
-    //             tick = "";
-    //             break;
+            case Item_array:
+                value = __to_json(values[i]->value);
+                tick = "";
+                break;
+            case Item_map:
+                map = values[i]->value;
+                value = map->to_json(map);
+                tick = "";
+                break;
 
-    //         default:
-    //             // Handle unsupported type or error
-    //             free(json);
-    //             return NULL;
-    //     }
+            default:
+                // Handle unsupported type or error
+                free(json);
+                return NULL;
+        }
 
-    //     strcat(json, "\"");
-    //     strcat(json, key);
-    //     strcat(json, "\":");
-    //     strcat(json, tick);
-    //     strcat(json, value);
-    //     strcat(json, tick);
-    //     strcat(json, comma);
+        strcat(json, tick);
+        strcat(json, value);
+        strcat(json, tick);
+        strcat(json, comma);
 
-    //     // Free dynamically allocated memory for value (if any)
-    //     if (entries[i]->type == Item_int) {
-    //         free(value);
-    //     } else if (entries[i]->type == Item_double || entries[i]->type == Item_map) {
-    //         free(value);
-    //     }
-    // }
+        // Free dynamically allocated memory for value (if any)
+        if (values[i]->type == Item_int) {
+            free(value);
+        } else if (values[i]->type == Item_double || values[i]->type == Item_map) {
+            free(value);
+        }
+    }
 
-    // strcat(json, "]");
-    // return json;
+    strcat(json, "]");
+    return json;
+}
+
+static char* _$convertToTrimmedString(double num) {
+    char buffer[50];  // Adjust the size based on your needs
+    sprintf(buffer, "%.15f", num);  // Use a precision that fits your requirements
+
+    // Remove trailing zeroes
+    int len = strlen(buffer);
+    while (len > 1 && buffer[len - 1] == '0') {
+        buffer[--len] = '\0';
+    }
+
+    // Remove trailing decimal point, if present
+    if (buffer[len - 1] == '.') {
+        buffer[--len] = '\0';
+    }
+
+    // Allocate memory for the final string and copy the result
+    char *result = strdup(buffer);
+
+    return result;
 }
 
 static Item __get(T *self, size_t index) {
@@ -277,16 +301,5 @@ static Array_Entry** __entries(T *self){
   }
   return output;
 }
-
-// T* __array_clone(T* darray){
-//   T* clone = array_constructor(darray->length);
-//   for (int i = 0; i < darray->length; i++) {
-//     void*value = darray->get(darray,i);
-//     void*copy = malloc(sizeof(*value));
-//     *copy = value;
-//     clone->push(clone,darray->get(darray,i));
-//   }
-//   return clone;
-// }
 
 #undef T
