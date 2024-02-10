@@ -1,6 +1,6 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
-#include "isDestroyable.h"
+#include "IsDestroyable.h"
 #include "item.h"
 #include "common.h"
 #define T Message

@@ -1,8 +1,7 @@
 #include "json.h"
 #include "item.h"
-#include "array.h"
-#include "hashmap.h"
-#include "array.h"
+#include "Array.h"
+#include "Hashmap.h"
 #define T JsonParser
 
 enum { KEY = 1, VALUE = 0 };

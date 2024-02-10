@@ -4,7 +4,7 @@
 #include "httpsResponse.keys.h"
 #include "common.h"
 #include "HttpsParser.h"
-#include "hashmap.h"
+#include "Hashmap.h"
 #define T HttpsResponse
 
 // =========================================================================="

@@ -1,7 +1,7 @@
 #include "CsvParser.h"
-#include "array.h"
+#include "Array.h"
 #include "Message.h"
-#include "hashmap.h"
+#include "Hashmap.h"
 #include <stdio.h>
 #include <string.h>
 #define T CsvParser

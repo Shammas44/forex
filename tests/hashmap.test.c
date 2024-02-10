@@ -1,4 +1,4 @@
-#include "hashmap.h"
+#include "Hashmap.h"
 #include <criterion/criterion.h>
 #define T Hashmap
 

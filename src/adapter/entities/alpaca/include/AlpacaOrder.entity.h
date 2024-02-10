@@ -1,7 +1,6 @@
 #ifndef ALPACAORDERENTITY_H
 #define ALPACAORDERENTITY_H
-#include "hashmap.h"
-#include "isIterable.h"
+#include "Hashmap.h"
 #include <stdbool.h>
 #define T AlpacaOrderEntity
 

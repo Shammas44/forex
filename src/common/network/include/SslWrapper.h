@@ -1,6 +1,6 @@
 #include <netdb.h>
 #include "url.h"
-#include "isDestroyable.h"
+#include "IsDestroyable.h"
 #include <openssl/rand.h>
 #ifndef SSLWRAPPER_H
 #define SSLWRAPPER_H

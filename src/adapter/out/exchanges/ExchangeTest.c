@@ -1,7 +1,7 @@
 // "tests/hashmap.test.c"
 #include "ExchangeTest.h"
 #include "common.h"
-#include "hashmap.h"
+#include "Hashmap.h"
 #include "CandleWrapper.h"
 #include "json.h"
 #define T ExchangeTest

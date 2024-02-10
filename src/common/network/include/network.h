@@ -1,6 +1,6 @@
 #include <netdb.h>
 #include "url.h"
-#include "isDestroyable.h"
+#include "IsDestroyable.h"
 #ifndef NETWORK_H
 #define NETWORK_H
 

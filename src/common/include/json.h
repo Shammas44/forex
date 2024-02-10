@@ -1,9 +1,9 @@
 #ifndef JSON_H
 #define JSON_H
 #include "jsmn.h"
-#include "array.h"
+#include "Array.h"
 #include "Parser.h"
-#include "hashmap.h"
+#include "Hashmap.h"
 #include "date.h"
 #include "error.h"
 #include <stdio.h>

@@ -2,7 +2,7 @@
 #define HTTPSRESPONSE_H
 #include "buffer.h"
 #include "error.h"
-#include "hashmap.h"
+#include "Hashmap.h"
 #include "network.h"
 #include "response.h"
 #include "tls.h"

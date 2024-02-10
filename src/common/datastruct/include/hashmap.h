@@ -1,7 +1,7 @@
 #ifndef MAP_H
 #define MAP_H
-#include "array.h"
-#include "isDestroyable.h"
+#include "Array.h"
+#include "IsDestroyable.h"
 #include "item.h"
 #include <stdbool.h>
 #include <stddef.h>

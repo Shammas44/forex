@@ -1,7 +1,7 @@
 #include "HttpsParser.h"
 #include "httpsRequestBuilder.h"
 #include "httpsResponse.keys.h"
-#include "hashmap.h"
+#include "Hashmap.h"
 #include <criterion/criterion.h>
 #define T HttpsParser
 

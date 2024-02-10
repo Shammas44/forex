@@ -1,6 +1,6 @@
 #ifndef CONFIGWRAPPER_H
 #define CONFIGWRAPPER_H
-#include "hashmap.h"
+#include "Hashmap.h"
 #include "wrapper.h"
 #include <stdbool.h>
 

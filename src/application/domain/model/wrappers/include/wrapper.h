@@ -1,6 +1,6 @@
 #ifndef WRAPPER_H
 #define WRAPPER_H
-#include "hashmap.h"
+#include "Hashmap.h"
 
 #define T Wrapper
 

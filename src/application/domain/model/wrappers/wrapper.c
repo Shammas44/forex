@@ -1,5 +1,5 @@
 #include "Wrapper.h"
-#include "hashmap.h"
+#include "Hashmap.h"
 #include <string.h>
 #define T Wrapper
 

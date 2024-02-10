@@ -1,5 +1,5 @@
-#include "array.h"
-#include "hashmap.h"
+#include "Array.h"
+#include "Hashmap.h"
 #include "RuntimeErrorImp.h"
 #include <criterion/criterion.h>
 #define T Array

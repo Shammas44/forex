@@ -1,6 +1,6 @@
 #ifndef CANDLEWRAPPER_H
 #define CANDLEWRAPPER_H
-#include "hashmap.h"
+#include "Hashmap.h"
 #include "wrapper.h"
 #include <time.h>
 

@@ -1,7 +1,8 @@
-#include "array.h"
+#include "Array.h"
 #include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #define T Array
 
 typedef struct {
@@ -90,32 +91,91 @@ static size_t __capacity(T *self){
   return p->capacity;
 }
 
-char *__to_json(T *array) {
-//   Private *p = array->__private;
-//   char *json = malloc(sizeof(char) * 100);
-//   sprintf(json, "[");
-//   for (int i = 0; i < p->length; i++) {
-//     Array_types *type = NULL;
-//     void *value = array->get(array, i, type);
-//     char *value_json = NULL;
-//     switch (*type) {
-//     case Array_types_default:
-//       value_json = value;
-//       break;
-//     case Array_types_hashmap:
-//       value_json = ((Hashmap *)value)->to_json(value);
-//       break;
-//     case Array_types_array:
-//       value_json = ((Array *)value)->to_json(value);
-//       break;
-//     }
-//     sprintf(json, "%s%s", json, value_json);
-//     if (i < p->length - 1)
-//       sprintf(json, "%s,", json);
-//   }
-//   sprintf(json, "%s]", json);
-//   return json;
-  return NULL;
+char *__to_json(T *self) {
+    return NULL;
+    // if (self == NULL) {
+    //     return NULL;
+    // }
+
+    // const size_t initialCapacity = 100000;
+    // char* json = malloc(sizeof(char) * initialCapacity);
+    // if (json == NULL) {
+    //     return NULL;  // Memory allocation failure
+    // }
+
+    // strcpy(json, "[");
+
+    // Private* p = self->__private;
+    // size_t length = p->length;
+    // IsIterable_Entry** entries = __entries(self);
+
+    // for (size_t i = 0; i < length; i++) {
+    //     char* key = entries[i]->key;
+    //     char* value = NULL;
+    //     char* tick = "\"";
+    //     char* comma = (i == length - 1) ? "" : ",";
+
+    //     switch (entries[i]->type) {
+    //         case Item_string:
+    //         case Item_default:
+    //             value = entries[i]->value;
+    //             break;
+
+    //         case Item_double:
+    //             value = _$convertToTrimmedString(*(double*)entries[i]->value);
+    //             tick = "";
+    //             break;
+
+    //         case Item_int:
+    //             value = malloc(sizeof(char) * 100);
+    //             if (value != NULL) {
+    //                 sprintf(value, "%d", *(int*)entries[i]->value);
+    //                 tick = "";
+    //             } else {
+    //                 free(json);
+    //                 return NULL;  // Memory allocation failure
+    //             }
+    //             break;
+
+    //         case Item_bool:
+    //             value = *(bool*)entries[i]->value ? "true" : "false";
+    //             tick = "";
+    //             break;
+
+    //         case Item_null:
+    //             value = "null";
+    //             tick = "";
+    //             break;
+
+    //         case Item_map:
+    //             value = __to_json(entries[i]->value);
+    //             tick = "";
+    //             break;
+
+    //         default:
+    //             // Handle unsupported type or error
+    //             free(json);
+    //             return NULL;
+    //     }
+
+    //     strcat(json, "\"");
+    //     strcat(json, key);
+    //     strcat(json, "\":");
+    //     strcat(json, tick);
+    //     strcat(json, value);
+    //     strcat(json, tick);
+    //     strcat(json, comma);
+
+    //     // Free dynamically allocated memory for value (if any)
+    //     if (entries[i]->type == Item_int) {
+    //         free(value);
+    //     } else if (entries[i]->type == Item_double || entries[i]->type == Item_map) {
+    //         free(value);
+    //     }
+    // }
+
+    // strcat(json, "]");
+    // return json;
 }
 
 static Item __get(T *self, size_t index) {
