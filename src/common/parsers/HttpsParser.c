@@ -101,7 +101,8 @@ static Hashmap* _$extract_headers(const char *rawResponse) {
     if (colon != NULL) {
       char *header = _$copy_str(token, ':');
       char *value = _$copy_str(colon + 2, '\r');
-      headers->push(headers, header,(Item){.type=Item_default,.value=value});
+      Hashmap_Entry item ={.key=header,.type=Item_default,.value=value};
+      headers->push(headers, item);
       index++;
       free(header);
     }
@@ -202,13 +203,19 @@ static void* _$parse_response(T *self, char*response){
   Hashmap *map = hashmap_constructor(25);
   Hashmap *headers = _$extract_headers(response);
   Response_firstLine firstLine = _$extract_response_status(response);
-  map->push(map, KEY(Protocol_Name),(Item){.type=Item_default,.value=strdup(firstLine.protocol_name)});
-  map->push(map, KEY(Protocol_Version),(Item){.type=Item_default,.value=strdup(firstLine.protocol_version)});
-  map->push(map, KEY(Status_Code),(Item){.type=Item_default,.value=strdup(firstLine.status_code)});
-  map->push(map, KEY(Status_Message),(Item){.type=Item_default,.value=strdup(firstLine.status_message)});
-  map->push(map, KEY(Headers),(Item){.type=Item_map,.value=headers});
+  Hashmap_Entry protocol_Name ={.key=KEY(Protocol_Name),.type=Item_default,.value=strdup(firstLine.protocol_name)};
+  map->push(map, protocol_Name);
+  Hashmap_Entry version = {.key=KEY(Protocol_Version),.type=Item_default,.value=strdup(firstLine.protocol_version)};
+  map->push(map, version);
+  Hashmap_Entry code = {.key=KEY(Status_Code),.type=Item_default,.value=strdup(firstLine.status_code)};
+  map->push(map, code);
+  Hashmap_Entry message = {.key=KEY(Status_Message),.type=Item_default,.value=strdup(firstLine.status_message)};
+  map->push(map, message);
+  Hashmap_Entry head = {.key=KEY(Headers),.type=Item_map,.value=headers};
+  map->push(map, head);
   //TODO: parse body
-  map->push(map, KEY(Body),(Item){.type=Item_default,.value=strdup(separator + 6)});
+  Hashmap_Entry body = {.key=KEY(Body),.type=Item_default,.value=strdup(separator + 6)};
+  map->push(map, body);
   return map;
 }
 
@@ -224,13 +231,19 @@ static void* _$parse_request(T *self, char*request){
   Hashmap *map = hashmap_constructor(25);
   Hashmap *headers = _$extract_headers(request);
   Request_firstLine firstLine = _$extract_request_status(request);
-  map->push(map, KEY(Protocol_Name),(Item){.type=Item_default,.value=strdup(firstLine.protocol_name)});
-  map->push(map, KEY(Protocol_Version),(Item){.type=Item_default,.value=strdup(firstLine.protocol_version)});
-  map->push(map, KEY(Method_Name),(Item){.type=Item_default,.value=strdup(firstLine.method)});
-  map->push(map, KEY(Path),(Item){.type=Item_default,.value=strdup(firstLine.path)});
-  map->push(map, KEY(Headers),(Item){.type=Item_map,.value=headers});
+  Hashmap_Entry name ={.key=KEY(Protocol_Name),.type=Item_default,.value=strdup(firstLine.protocol_name)};
+  map->push(map, name);
+  Hashmap_Entry version ={.key=KEY(Protocol_Version),.type=Item_default,.value=strdup(firstLine.protocol_version)};
+  map->push(map, version);
+  Hashmap_Entry method = {.key=KEY(Method_Name),.type=Item_default,.value=strdup(firstLine.method)};
+  map->push(map, method);
+  Hashmap_Entry path ={.key=KEY(Path),.type=Item_default,.value=strdup(firstLine.path)};
+  map->push(map, path);
+  Hashmap_Entry head={.key=KEY(Headers),.type=Item_map,.value=headers};
+  map->push(map, head);
   //TODO: parse body
-  map->push(map, KEY(Body),(Item){.type=Item_default,.value=strdup(separator + 4)});
+  Hashmap_Entry body = {.key=KEY(Body),.type=Item_default,.value=strdup(separator + 4)};
+  map->push(map, body);
   return map;
 }
 

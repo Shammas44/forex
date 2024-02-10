@@ -198,16 +198,18 @@ static void _$set_timestamp(T*self){
   time_t* out = malloc(sizeof(time_t));
   *out = epoch_time;
   Hashmap*map = self->__private; 
-  map->push(map,"Timestamp",(Item){.type=Item_default,.value=out});
+  Hashmap_Entry item ={.key="Timestamp",.type=Item_default,.value=out};
+  map->push(map,item);
 }
 
 static void _$set_volume(T*self){
   Hashmap* map = self->__private; 
-  double up_volume =  hashmap_get_double(map,"DownVolume");
-  double down_volume =  hashmap_get_double(map,"UpVolume");
+  char* up_volume =  map->get(map,"DownVolume").value;
+  char* down_volume =  map->get(map,"UpVolume").value;
   double *volume = malloc(sizeof(double));
-  *volume = up_volume + down_volume;
-  map->push(map,"Volume",(Item){.type=Item_default,.value=volume});
+  *volume = atof(up_volume) + atof(down_volume);
+  Hashmap_Entry item ={.key="Volume",.type=Item_default,.value=volume};
+  map->push(map,item);
 }
 
 #undef T

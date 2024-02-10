@@ -74,7 +74,8 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
 
       if ('\n' == token[strlen(token) - 1]) {
         strncpy(value, token, strlen(token) - 2);
-        map->push(map,key, (Item){.type=Item_default,.value=value});
+        Hashmap_Entry item_value ={.key=key,.type=Item_default,.value=value};
+        map->push(map,item_value);
         Item item = {.value = map, .type = Item_map};
         Message *message = message_constructor((Msg_args){.item=item, .code=Msg_unknown});
         on_data(caller,message);
@@ -82,7 +83,8 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
         break;
       }
       strcpy(value, token);
-        map->push(map,key, (Item){.type=Item_default,.value=value});
+      Hashmap_Entry item2 ={.key=key,.type=Item_default,.value=value};
+      map->push(map,item2);
       i++;
       token = strtok(NULL, separator);
     }

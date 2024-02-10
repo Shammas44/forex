@@ -235,22 +235,23 @@ Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num) {
       i++;
       char *value = __json_extract_string(json,&tokens[i]);
       // printf("%s: %s\n", key, value);
+      Item item;
       switch (tokens[i].type) {
         case JSMN_STRING:
-          map->push(map,key,(Item){.type=Item_default,.value=value});
+          map->push(map,(Hashmap_Entry){.key=key,.type=Item_string,.value=value});
           break;
         case JSMN_PRIMITIVE:
-          map->push(map,key,(Item){.type=Item_default,.value=value});
+          map->push(map,(Hashmap_Entry){.key=key,.type=Item_default,.value=value});
           break;
         case JSMN_OBJECT:
           inner_token_num = json_to_map(value, &inner_map,NULL,0);
           inner_token_num--;
-          map->push(map,key,(Item){.type=Item_map,.value=inner_map});
+          map->push(map,(Hashmap_Entry){.key=key,.type=Item_map,.value=inner_map});
           break;
         case JSMN_ARRAY:
           inner_token_num = json_to_array(value,&inner_array,NULL,0);
           inner_token_num--;
-          map->push(map,key,(Item){.type=Item_array,.value=inner_array});
+          map->push(map,(Hashmap_Entry){.key=key,.type=Item_array,.value=inner_array});
           break;
         default:
           printf("Value: Unhandled type\n");

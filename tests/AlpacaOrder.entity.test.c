@@ -11,19 +11,14 @@ static void setup(void) {
   double * value1 = malloc(sizeof(double));
   *value1 = 1.5;
   Hashmap *take_profit = hashmap_constructor(1);
-    take_profit->push(take_profit, "limit_price", (Item){
-    .type = Item_double,
-    .value = value1
-  });
-
+  Hashmap_Entry take_profit_item ={.key="limit_price", .type = Item_double, .value = value1 };
+  take_profit->push(take_profit, take_profit_item);
 
   double * value2 = malloc(sizeof(double));
   *value2 = 1.5;
   Hashmap *stop_loss = hashmap_constructor(1);
-  stop_loss->push(stop_loss, "stop_price", (Item){
-    .type = Item_double,
-    .value = value2
-  });
+  Hashmap_Entry stop_loss_item ={.key="stop_price", .type = Item_double, .value = value2 };
+  stop_loss->push(stop_loss, stop_loss_item);
 
   args = (AlpacaOrderArgs){
       .symbol = "AAPL",

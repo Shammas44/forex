@@ -65,7 +65,8 @@ static int __socket(T*self,struct addrinfo *addresses) {
   *index = length +10;
   char*key = malloc(sizeof(char)*12);
   sprintf(key, "%d", *index);
-  sockets->push(sockets, key, (Item){.type=Item_int, .value=index});
+  Hashmap_Entry item ={.key=key,.type=Item_int, .value=index};
+  sockets->push(sockets, item);
   return *index;
 }
 

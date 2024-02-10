@@ -116,74 +116,89 @@ T *alpacaOrderEntity_constructor(AlpacaOrderArgs args) {
   char key[2];
   private->map = map;
 
-  map->push(map, "symbol", (Item){.type = Item_string, .value = args.symbol});
+  Hashmap_Entry symbol ={.key="symbol",.type = Item_string, .value = args.symbol};
+  map->push(map, symbol );
   if(args.client_order_id != NULL){
-    map->push(map, "client_order_id", (Item){.type = Item_string, .value = args.client_order_id});
+    Hashmap_Entry client_order_id ={.key="client_order_id",.type = Item_string, .value = args.client_order_id};
+    map->push(map, client_order_id );
   }
   if(args.notional != NULL){
-    map->push(map, "notional", (Item){.type = Item_string, .value = args.notional});
+    Hashmap_Entry notional ={.key="notional",.type = Item_string, .value = args.notional};
+    map->push(map, notional );
   }
   if(args.trail_percent != NULL){
-    map->push(map, "trail_percent", (Item){.type = Item_string, .value = args.trail_percent});
+    Hashmap_Entry trail_percent ={.key="trail_percent",.type = Item_string, .value = args.trail_percent};
+    map->push(map, trail_percent );
   }
   if(args.stop_loss != NULL){
-    map->push(map, "stop_loss", (Item){.type = Item_string, .value = args.stop_loss});
+    Hashmap_Entry stop_loss ={.key="stop_loss",.type = Item_string, .value = args.stop_loss};
+    map->push(map, stop_loss );
   }
   if(args.take_profit != NULL){
-    map->push(map, "take_profit", (Item){.type = Item_string, .value = args.take_profit});
+    Hashmap_Entry take_profit ={.key="take_profit",.type = Item_string, .value = args.take_profit};
+    map->push(map, take_profit );
   }
 
   if(args.qty != 0){
     double *qty = malloc(sizeof(double));
     *qty = args.qty;
-    map->push(map, "qty", (Item){.type = Item_double, .value = qty});
+    Hashmap_Entry q ={.key="qty",.type = Item_double, .value = qty};
+    map->push(map, q );
   }
 
   if(args.limit_price != 0){
     double *limit_price = malloc(sizeof(double));
     *limit_price = args.limit_price;
-    map->push(map, "limit_price", (Item){.type = Item_double, .value = limit_price});
+    Hashmap_Entry limit ={.key="limit_price",.type = Item_double, .value = limit_price};
+    map->push(map, limit );
   }
 
   if(args.stop_price != 0){
     double *stop_price = malloc(sizeof(double));
     *stop_price = args.stop_price;
-    map->push(map, "stop_price", (Item){.type = Item_double, .value = stop_price});
+    Hashmap_Entry stop ={.key="stop_price",.type = Item_double, .value = stop_price};
+    map->push(map, stop );
   }
 
   if(args.trail_price != 0){
     double *trail_price = malloc(sizeof(double));
     *trail_price = args.trail_price;
-    map->push(map, "trail_price", (Item){.type = Item_double, .value = trail_price});
+    Hashmap_Entry trail ={.key="trail_price",.type = Item_double, .value = trail_price};
+    map->push(map, trail );
   }
 
   // TODO: replace bool type by an enum
   bool * extended_hours = malloc(sizeof(bool));
   *extended_hours = args.extended_hours;
-  map->push(map, "extended_hours", (Item){.type = Item_bool, .value = extended_hours});
+  Hashmap_Entry hours ={.key="extended_hours",.type = Item_bool, .value = extended_hours};
+  map->push(map, hours );
 
   if(args.type != 0){
     sprintf(key, "%d", args.type);
     AlpacaOrderItem *type = (AlpacaOrderItem *)types->get(types, key).value;
-    map->push(map, "type", (Item){.type = Item_string, .value = type->value});
+    Hashmap_Entry item = {.key="type",.type = Item_string, .value = type->value};
+    map->push(map, item);
   }
 
   if(args.side != 0){
     sprintf(key, "%d", args.side);
     AlpacaOrderItem *side = (AlpacaOrderItem *)sides->get(sides, key).value;
-    map->push(map, "side", (Item){.type = Item_string, .value = side->value});
+    Hashmap_Entry item ={.key="side",.type = Item_string, .value = side->value};
+    map->push(map, item);
   }
 
   if(args.time_in_force != 0){
     sprintf(key, "%d", args.time_in_force);
     AlpacaOrderItem *time_in_force = (AlpacaOrderItem *)time_in_forces->get(time_in_forces, key).value;
-    map->push(map, "time_in_force", (Item){.type = Item_string, .value = time_in_force->value});
+    Hashmap_Entry item ={.key="time_in_force",.type = Item_string, .value = time_in_force->value};
+    map->push(map, item);
   }
 
   if(args.order_class != 0){
     sprintf(key, "%d", args.order_class);
     AlpacaOrderItem *order_class = (AlpacaOrderItem *)order_classes->get(order_classes, key).value;
-    map->push(map, "order_class", (Item){.type = Item_string, .value = order_class->value});
+    Hashmap_Entry item ={.key="order_class",.type = Item_string, .value = order_class->value};
+    map->push(map, item);
   }
 
   self->__private = private;
@@ -292,11 +307,12 @@ static char *_$set_key(int code) {
 static Hashmap* _$set_items(AlpacaOrderItem items[],size_t array_length){
   Hashmap *map = hashmap_constructor(array_length);
   for (int i = 0; i < array_length; i++) {
-    map->push(map, _$set_key(items[i].code),
-              (Item){
-                  .type = Item_string,
-                  .value = _$create_item(items[i].value, items[i].code),
-              });
+    Hashmap_Entry item = {
+      .key=_$set_key(items[i].code),
+      .type = Item_string,
+      .value = _$create_item(items[i].value, items[i].code)
+    };
+    map->push(map, item);
   }
   return map;
 }
@@ -312,31 +328,31 @@ static int _$get(AlpacaOrderItem items[], size_t array_length, char *key) {
 
 static double _$get_double(T *self, char*key){
   Hashmap *map = MAP(self);
-  double *value = map->get(map, key).value;
+  double *value = map->get(map,key ).value;
   return *value;
 }
 
 static AlpacaOrderItem _$get_item(T *self, char*key, AlpacaOrderItem items[], size_t array_length){
   Hashmap *map = MAP(self);
-  char *value = map->get(map, key).value;
+  char *value = map->get(map,key ).value;
   int code =_$get(items, array_length, value);
   return (AlpacaOrderItem){.value = value, .code = code};
 }
 
 static char *_$get_string(T *self, char*key) {
   Hashmap *map = MAP(self);
-  return map->get(map, key).value;
+  return map->get(map,key ).value;
 }
 
 static bool _$get_bool(T *self, char*key) {
   Hashmap *map = MAP(self);
-  bool* value = map->get(map, key).value;
+  bool* value = map->get(map,key ).value;
   return *value;
 }
 
 static Hashmap* _$get_map(T *self, char*key){
   Hashmap *map = MAP(self);
-  return map->get(map, key).value;
+  return map->get(map,key ).value;
 }
 
 #undef TYPE_LENGTH
