@@ -184,6 +184,7 @@ static Hashmap_Entry **__entries(T *self){
   }
   return output;
 }
+
 static char* __to_json(T* self) {
     if (self == NULL) {
         return NULL;

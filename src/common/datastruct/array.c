@@ -17,6 +17,9 @@ static char *__to_json(T *self);
 static size_t __length(T *self);
 static size_t __capacity(T *self);
 static void __destructor(T *self);
+static Item** __values(T *self);
+static char** __keys(T *self);
+static Array_Entry** __entries(T *self);
 
 T *array_constructor(size_t size) {
   T *self = malloc(sizeof(T));
@@ -36,12 +39,16 @@ T *array_constructor(size_t size) {
   p->array = array;
   p->length = 0;
   p->capacity = size;
+  self->__destructor = (IsDestroyable){.destructor=__destructor};
+  self->destructor = __destructor;
   self->get = __get;
   self->length = __length;
   self->capacity = __capacity;
   self->push = __push;
   self->to_json = __to_json;
-  self->destructor = __destructor;
+  self->keys = __keys;
+  self->entries = __entries;
+  self->values = __values;
   return self;
 }
 
@@ -203,6 +210,72 @@ static void __push(T *self, Item item) {
      p->capacity = p->capacity * 2;
      p->array = realloc(p->array, sizeof(Item *) * p->capacity);
   }
+}
+
+static Item** __values(T *self){
+  Private *p = self->__private;
+  Item **array = p->array;
+  size_t length = p->length;
+  size_t capacity = p->capacity;
+  if(length == 0) return NULL;
+  Item **output = malloc(sizeof(Item *) * length);
+  if (output == NULL) return NULL;
+
+  for (int i=0; i < length; i++) {
+    Item item = __get(self, i); 
+    output[i] = malloc(sizeof(Item));
+    output[i]->value = item.value;
+    output[i]->type = item.type;
+  }
+  return output;
+}
+
+static char** __keys(T *self){
+  Private *p = self->__private;
+  Item **array = p->array;
+  size_t length = p->length;
+  size_t capacity = p->capacity;
+  char **output = malloc(sizeof(char *) * length);
+  size_t j = 0;
+  if (output == NULL) return NULL;
+
+  for (int i = 0; i < capacity; i++) {
+      output[j] = malloc(sizeof(char*) * 16); 
+      if (output[j] != NULL) {
+        sprintf(output[j],"%d",i);
+        j++;
+      } else {
+        // Handle memory allocation failure
+        // Free previously allocated memory before returning NULL
+        for (int k = 0; k < j; k++) {
+          free(output[k]);
+        }
+        free(output);
+        return NULL;
+      }
+  }
+  return output;
+}
+
+static Array_Entry** __entries(T *self){
+  Private *p = self->__private;
+  Item **array = p->array;
+  size_t length = p->length;
+  size_t capacity = p->capacity;
+  Array_Entry **output = malloc(sizeof(Array_Entry *) * length);
+  size_t j = 0;
+  if (output == NULL) return NULL;
+
+  for (int i=0; i < length; i++) {
+    char*key = malloc(sizeof(char*) * 16);
+    sprintf(key,"%d",i);
+    Item item = __get(self, i); 
+    output[i] = malloc(sizeof(Hashmap_Entry));
+    output[i]->key = key;
+    output[i]->value = item.value;
+    output[i]->type = item.type;
+  }
+  return output;
 }
 
 // T* __array_clone(T* darray){

@@ -143,3 +143,61 @@ Test(array, retrieve_array, .fini = teardown, .init = setup) {
   cr_expect_eq(strcmp(item1.value,"test1"),0, "values are not equal");
 }
 
+Test(array_keys, correct_keys, .init=setup, .fini = teardown) {
+  T*a = array_constructor(5);
+  int sum = 0;
+  int result = 0;
+  for (int i = 0; i < 5; i++) {
+    sum+=i;
+    a->push(a,(Item){.type=Item_int,.value=&i});
+  }
+  char**keys = a->keys(a);
+  for (int i = 0; i < 5; i++) {
+    result+= atoi(keys[i]);
+  }
+  cr_assert_eq(result,sum, "Should be equal");
+}
+
+Test(array_values, correct_values, .init=setup, .fini = teardown) {
+  T*a = array_constructor(5);
+  int sumValues = 0;
+  int sum = 0;
+  for (int i = 0; i < 5; i++) {
+    sum+=i;
+    int* value = malloc(sizeof(int));
+    *value =i;
+    a->push(a,(Item){.type=Item_int,.value=value});
+  }
+  Item**values = a->values(a);
+  for (int i = 0; i < 5; i++) {
+    int *value = values[i]->value;
+    sumValues+= *value;
+    free(value);
+  }
+  cr_assert_eq(sumValues,sum, "Should be equal");
+}
+
+Test(array_entries, correct_values, .init=setup, .fini = teardown) {
+  T*a = array_constructor(5);
+  int sumValues = 0;
+  int sumKeys = 0;
+  int sum = 0;
+  for (int i = 0; i < 5; i++) {
+    sum+=i;
+    int* value = malloc(sizeof(int));
+    *value =i;
+    a->push(a,(Item){.type=Item_int,.value=value});
+  }
+  Array_Entry**values = a->entries(a);
+  for (int i = 0; i < 5; i++) {
+    int *value = values[i]->value;
+    char* key = values[i]->key;
+    sumValues+= *value;
+    sumKeys+= atoi(key);
+    free(value);
+    free(key);
+  }
+  cr_assert_eq(sumValues,sum, "Should be equal");
+  cr_assert_eq(sumKeys,sum, "Should be equal");
+}
+
