@@ -8,31 +8,23 @@
 
 typedef struct T T;
 
-typedef void(ConfigWrapper_destructor)(T *self);
-typedef Item (ConfigWrapper_get)(T *self,char*key);
-
-typedef char *(ConfigWrapper_mode)(T *self);
-typedef char *(ConfigWrapper_symbol)(T *self);
-typedef char *(ConfigWrapper_strategy)(T *self);
-typedef char *(ConfigWrapper_backtest_data)(T *self);
-typedef double(ConfigWrapper_spread)(T *self);
-typedef bool (ConfigWrapper_paper)(T *self);
-typedef double(ConfigWrapper_capital)(T *self);
-typedef int(ConfigWrapper_leverage)(T *self);
-typedef double(ConfigWrapper_broker_commision_dpm)(T *self);
+typedef enum {
+  Metadata_mode_backtest,
+  Metadata_mode_real,
+} Metadata_mode;
 
 typedef struct T {
-  ConfigWrapper_destructor *destructor;
-  ConfigWrapper_get *get;
-  ConfigWrapper_mode *mode;
-  ConfigWrapper_symbol *symbol;
-  ConfigWrapper_strategy *strategy;
-  ConfigWrapper_paper *paper;
-  ConfigWrapper_backtest_data *backtest_data;
-  ConfigWrapper_spread *spread;
-  ConfigWrapper_capital *capital;
-  ConfigWrapper_leverage *leverage;
-  ConfigWrapper_broker_commision_dpm *broker_commision_dpm;
+  void (*destructor)(T *self);
+  Item (*get)(T *self, char *key);
+  Metadata_mode (*mode)(T *self);
+  char *(*symbol)(T *self);
+  int (*strategy)(T *self);
+  char *(*backtest_data)(T *self);
+  double (*spread)(T *self);
+  bool (*paper)(T *self);
+  double (*capital)(T *self);
+  int (*leverage)(T *self);
+  double (*broker_commision_dpm)(T *self);
   void *__private;
 } T;
 

@@ -52,11 +52,11 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
       char *key = malloc(sizeof(char) * strlen(token));
       if ('\n' == token[strlen(token) - 1]) {
         strncpy(key, token, strlen(token) - 2);
-        array->push(array, (Item){.type=Item_default,.value=key});
+        array->push(array, (Item){.type=Item_string,.value=key});
         break;
       }
       strcpy(key, token);
-        array->push(array, (Item){.type=Item_default,.value=key});
+        array->push(array, (Item){.type=Item_string,.value=key});
       token = strtok(NULL, separator);
     }
   }
@@ -74,7 +74,7 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
 
       if ('\n' == token[strlen(token) - 1]) {
         strncpy(value, token, strlen(token) - 2);
-        Hashmap_Entry item_value ={.key=key,.type=Item_default,.value=value};
+        Hashmap_Entry item_value ={.key=key,.type=Item_string,.value=value};
         map->push(map,item_value);
         Item item = {.value = map, .type = Item_map};
         Message *message = message_constructor((Msg_args){.item=item, .code=Msg_unknown});
@@ -83,7 +83,7 @@ static int __parse_stream(T *parser, void *file_path,void*caller, Parser_on_data
         break;
       }
       strcpy(value, token);
-      Hashmap_Entry item2 ={.key=key,.type=Item_default,.value=value};
+      Hashmap_Entry item2 ={.key=key,.type=Item_string,.value=value};
       map->push(map,item2);
       i++;
       token = strtok(NULL, separator);

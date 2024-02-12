@@ -34,8 +34,10 @@ static void __set_spread(T *self, double spread);
 static double __get_spread(T *self);
 static void __set_broker_commision_dpm(T *self, double dpm);
 static double __get_broker_commision_dpm(T *self);
+static void __set_strategy(T *self, int strategy);
+static int __get_strategy(T *self);
 
-T* metadata_constructor(){
+T* metadata_constructor(ConfigWrapper *config){
   T* self = malloc(sizeof(T));
   self->destructor = __destructor;
   self->set_equity = __set_equity;
@@ -55,8 +57,15 @@ T* metadata_constructor(){
   self->get_spread = __get_spread;
   self->set_broker_commision_dpm = __set_broker_commision_dpm;
   self->get_broker_commision_dpm = __get_broker_commision_dpm;
+  self->set_strategy = __set_strategy;
+  self->get_strategy = __get_strategy;
   Private *private = malloc(sizeof(Private));
   memset(private,0,sizeof(Private));
+  private->capital = config->capital(config);
+  private->leverage = config->leverage(config);
+  private->spread = config->spread(config);
+  private->broker_commision_dpm = config->broker_commision_dpm(config);
+  private->strategy = config->strategy(config);
   pthread_mutex_init(&private->mutex, NULL);
   self->__private = private;
   return self;
@@ -204,6 +213,21 @@ static double __get_broker_commision_dpm(T *self){
   Private *private = self->__private;
   pthread_mutex_lock(&private->mutex);
   double value = private->broker_commision_dpm;
+  pthread_mutex_unlock(&private->mutex);
+  return value;
+}
+
+static void __set_strategy(T *self, int strategy){
+  Private *private = self->__private;
+  pthread_mutex_lock(&private->mutex);
+  private->strategy = strategy; 
+  pthread_mutex_unlock(&private->mutex);
+}
+
+static int __get_strategy(T *self){
+  Private *private = self->__private;
+  pthread_mutex_lock(&private->mutex);
+  int value = private->strategy;
   pthread_mutex_unlock(&private->mutex);
   return value;
 }

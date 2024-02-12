@@ -93,7 +93,9 @@ void hashmap_destructor(T *self) {
         Hashmap_destructor *destructor = (Hashmap_destructor *)callback;
         destructor(value);
       } else {
-        free(value);
+        if(type != Item_string_noaloc){
+          free(value);
+        }
       }
     }
     free(entries);
@@ -298,30 +300,6 @@ static char* _$convertToTrimmedString(double num) {
     return result;
 }
 
-// //function to clone deeply a hashmap
-// T* __clone(T*map){
-//   T*clone = hashmap_constructor(map->capacity);
-//   if(clone == NULL) return NULL;
-//   for (int i = 0; i < map->capacity; i++) {
-//     char* key = map->entries[i].key;
-//     if(key != NULL) {
-//       Hashmap_types type = map->entries[i].type;
-//       if(type == Hashmap_types_array){
-//         // Array*array = map->entries[i].value;
-//         // Array*clone_array = array->clone(array);
-//         // clone->push(clone,array->key,clone_array,Hashmap_types_array);
-//       }else if(type == Hashmap_types_hashmap){
-//         T*map_tmp = map->entries[i].value;
-//         T*clone_map = __clone(map_tmp);
-//         clone->push(clone,key,clone_map,Hashmap_types_hashmap);
-//       }else{
-//         clone->push(clone,key,map->entries[i].value,type);
-//       }
-//     }
-//   }
-//   return clone;
-// }
-
 static unsigned int __hash(const char *key, size_t capacity) {
   unsigned int hash = 0;
   for (int i = 0; key[i] != '\0'; i++) {
@@ -399,7 +377,10 @@ static void __push(T *self, Hashmap_Entry entry) {
   entries[index].key = strdup(key);
   entries[index].value = value;
   entries[index].type = type;
-  entries[index].is_destroyable = (type != Item_default) ? true : false;
+  entries[index].is_destroyable = false;
+  if(type == Item_map || type == Item_array) {
+  entries[index].is_destroyable = true;
+  }
 
   if (!isReplacement) {
     *length += 1;

@@ -44,8 +44,8 @@ int main(int argc, char *argv[]) {
   if(config_map == NULL) return 1;
   ConfigWrapper *config = configWrapper_constructor(config_map);
 
-  printf("mode: %s\n",config->mode(config));
-  bool isBacktest = strcmp(config->mode(config),"BACKTEST")==0 ? true:false;
+  printf("mode: %u\n",config->mode(config));
+  bool isBacktest = config->mode(config) == Metadata_mode_backtest ? true:false;
 
   Network *network = network_constructor();
   SslWrapper *sslWrapper = sslWrapper_constructor();
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 
   SSL *ssl = NULL;
   Sync *sync = sync_init(SYNC_STATE_EXCHANGE);
-  Metadata*metadata = metadata_constructor();
+  Metadata*metadata = metadata_constructor(config);
   if(metadata == NULL){
     exit(RUNTIME_ERROR("Metadata is null",1));
   }

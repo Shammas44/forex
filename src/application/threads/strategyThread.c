@@ -20,8 +20,9 @@ void *strategyThread(void *arg) {
   MtsQueue *candle_queue = (MtsQueue *)state->candles;
   Metadata *metadata = state->metadata;
   risk = riskProcessor_constructor(metadata);
+  int strategy_num = metadata->get_strategy(metadata);
   StrategyProcessor *strategy = strategyProcessor_constructor(metadata);
-  strategy->set_strategy(strategy, STRATEGY_TEST);
+  strategy->set_strategy(strategy, strategy_num);
   Sync *sync = state->sync;
 
   while (1) {
@@ -36,18 +37,21 @@ void *strategyThread(void *arg) {
       CandleWrapper *candle = message->value(message, READ, (Item){}).value;
       message->destructor(message);
       Order *order = strategy->run(strategy, candle);
-      OrderStatus status = order->status(order, READ, NULL);
+      // OrderStatus status = order->status(order, READ, NULL);
+      printf("order pending: %d\n", id);
+      order->destructor(order);
 
-      while (status == ORDER_PENDING) {
-        printf("order pending: %d\n", id);
-        order = risk->process(risk, order);
-        printf("order processed: %d\n", id);
-        // send order to exchange
-        break;
-      }
-      if (status == ORDER_CANCELLED) {
-        order->destructor(order);
-      }
+      // while (status == ORDER_PENDING) {
+      //   // printf("order pending: %d\n", id);
+      //   order = risk->process(risk, order);
+      //   // printf("order processed: %d\n", id);
+      //   // send order to exchange
+      //   break;
+      // }
+      // if (status == ORDER_CANCELLED) {
+      //   printf("order cancelled: %d\n", id);
+      //   order->destructor(order);
+      // }
     }
     id++;
     sync_set_state(sync, SYNC_STATE_EXCHANGE);

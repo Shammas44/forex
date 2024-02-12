@@ -1,6 +1,5 @@
 #ifndef STRATEGIES_H
 #define STRATEGIES_H
-#include "Strategy.h"
 // strategies
 #include "Strategy_test.h"
 #include "Strategy_trend_following.h"

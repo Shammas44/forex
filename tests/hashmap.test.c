@@ -25,23 +25,23 @@ Test(hashmap_constructor, param_check, .fini = teardown) {
 
 Test(hashmap_push, insertion, .init = setup, .fini = teardown) {
   char key0[10] = "DOLLAR", value0[10] = "$";
-  Hashmap_Entry item ={.key=key0,.type=Item_default,.value=value0};
+  Hashmap_Entry item ={.key=key0,.type=Item_string,.value=value0};
   map->push(map ,item);
   cr_assert_eq(map->length(map), 1, "Wrong length");
   char key1[10] = "Euro", value1[10] = "€";
-  Hashmap_Entry item2 ={.key=key1,.type=Item_default,.value=value1};
+  Hashmap_Entry item2 ={.key=key1,.type=Item_string,.value=value1};
   map->push(map ,item2);
   cr_assert_eq(map->length(map), 2, "Wrong length");
 }
 
 Test(hashmap_get, retrieve, .init = setup, .fini = teardown) {
   char key0[10] = "DOLLAR", value0[10] = "$";
-  Hashmap_Entry item = {.key=key0,.type=Item_default,.value=value0};
+  Hashmap_Entry item = {.key=key0,.type=Item_string,.value=value0};
   map->push(map, item);
   char* v0 = map->get(map,key0 ).value;
   cr_assert_eq(strcmp(v0,value0),0, "Should be equal");
   char key1[10] = "Euro", value1[10] = "€";
-  Hashmap_Entry item2 = {.key=key1,.type=Item_default,.value=value1};
+  Hashmap_Entry item2 = {.key=key1,.type=Item_string,.value=value1};
   map->push(map, item2);
   char* v1 = map->get(map, key1).value;
   cr_assert_eq(strcmp(v1,value1),0, "Should be equal");
@@ -49,7 +49,7 @@ Test(hashmap_get, retrieve, .init = setup, .fini = teardown) {
 
 Test(hashmap_get, case_sensitive, .init = setup, .fini = teardown) {
   char key[10] = "DOLLAR", value[10] = "$";
-  Hashmap_Entry item ={.key=key,.type=Item_default,.value=value};
+  Hashmap_Entry item ={.key=key,.type=Item_string,.value=value};
   map->push(map, item);
   char *result = map->get(map, "dollar").value;
   cr_assert_null(result, "Result should be NULL");
@@ -67,7 +67,7 @@ Test(hashmap_push, is_resized, .init=setup, .fini = teardown) {
 
 Test(hashmap_push, nested_hashmap, .init = setup, .fini = teardown) {
   T*map2 = hashmap_constructor(10);
-  Hashmap_Entry item ={.key="DOLLAR",.type=Item_default,.value="$"};
+  Hashmap_Entry item ={.key="DOLLAR",.type=Item_string,.value="$"};
   map2->push(map2,item);
   Hashmap_Entry item2 ={.key="Symbols",.type=Item_array,.value=map2};
   map->push(map, item2);
@@ -90,7 +90,7 @@ Test(hashmap_destructor, is_truly_destroyed, .fini = teardown) {
   T*map2 = hashmap_constructor(10);
   char* value = malloc(sizeof(char)*2);
   sprintf(value,"$");
-  Hashmap_Entry item = {.key="DOLLAR",.type=Item_default,.value=value};
+  Hashmap_Entry item = {.key="DOLLAR",.type=Item_string,.value=value};
   map2->push(map2,item);
   Hashmap_Entry item2 = {.key="Symbols",.type=Item_array,.value=map2};
   map->push(map, item2);

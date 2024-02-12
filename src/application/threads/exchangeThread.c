@@ -19,7 +19,7 @@ void* exchangeThread(void *args){
   Parser*parser = jsonParser_constructor();
   Observer *observer;
 
-  bool isBacktest = strcmp(config->mode(config),"BACKTEST")==0 ? true:false;
+  bool isBacktest = config->mode(config) == Metadata_mode_backtest  ? true:false;
   if(isBacktest){
     observer = observer_constructor(__backtest_callback);
   }else {
@@ -56,7 +56,7 @@ static void __backtest_callback(void* newState){
     message->value(message,WRITE,item);
   }
   candle_queue->enqueue(candle_queue,message);
-  printf("enqueue: %d\n",id);
+  // printf("enqueue: %d\n",id);
   sync_set_state(sync, SYNC_STATE_BARS);
   id++;
 }

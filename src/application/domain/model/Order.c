@@ -56,23 +56,23 @@ T* order_constructor(int id){
   self->ttl = __ttl;
   Private *private = malloc(sizeof(Private));
   Hashmap*map = hashmap_constructor(10);
-  Hashmap_Entry identifiant = {.key="id",.type=Item_default,.value="-1"};
+  Hashmap_Entry identifiant = {.key="id",.type=Item_string_noaloc,.value="-1"};
   map->push(map,identifiant);
-  Hashmap_Entry type = {.key="type",.type=Item_default,.value="Market"};
+  Hashmap_Entry type = {.key="type",.type=Item_string_noaloc,.value="Market"};
   map->push(map,type);
-  Hashmap_Entry status = {.key="status",.type=Item_default,.value="0"};
+  Hashmap_Entry status = {.key="status",.type=Item_string_noaloc,.value="0"};
   map->push(map,status);
-  Hashmap_Entry limit = {.key="limit",.type=Item_default,.value="0"};
+  Hashmap_Entry limit = {.key="limit",.type=Item_string_noaloc,.value="0"};
   map->push(map,limit);
-  Hashmap_Entry price = {.key="price",.type=Item_default,.value="0"};
+  Hashmap_Entry price = {.key="price",.type=Item_string_noaloc,.value="0"};
   map->push(map,price);
-  Hashmap_Entry side = {.key="side",.type=Item_default,.value="0"};
+  Hashmap_Entry side = {.key="side",.type=Item_string_noaloc,.value="0"};
   map->push(map,side);
-  Hashmap_Entry size = {.key="size",.type=Item_default,.value="0"};
+  Hashmap_Entry size = {.key="size",.type=Item_string_noaloc,.value="0"};
   map->push(map,size);
-  Hashmap_Entry executed_price = {.key="executed_price",.type=Item_default,.value="0"};
+  Hashmap_Entry executed_price = {.key="executed_price",.type=Item_string_noaloc,.value="0"};
   map->push(map,executed_price);
-  Hashmap_Entry ttl = {.key="ttl",.type=Item_default,.value="0"};
+  Hashmap_Entry ttl = {.key="ttl",.type=Item_string_noaloc,.value="0"};
   map->push(map,ttl);
   private->map = map;
   self->__private = private;
@@ -80,19 +80,22 @@ T* order_constructor(int id){
 }
 
 static void __destructor(T *self){
+  static int count = -1;
+  count++;
+  printf("destructor count: %d\n",count);
   if(self == NULL){
     RUNTIME_ERROR("self is NULL",1);
     return;
   }
   Private *private = self->__private;
-  if(private != NULL){
+  if(private == NULL){
     RUNTIME_ERROR("private is NULL",1);
     free(self);
     return;
   }
   Hashmap *map = private->map;
   free(private);
-  if(map != NULL){
+  if(map == NULL){
     RUNTIME_ERROR("map is NULL",1);
     free(self);
     return;
@@ -116,7 +119,7 @@ static char*  __type(T *self, Access_mode mode, char* new){
   Private *private = PRIVATE(self,NULL);
   Hashmap *map = private->map;
   if(mode == WRITE){
-    Hashmap_Entry item ={.key=key,.type=Item_default,.value=new};
+    Hashmap_Entry item ={.key=key,.type=Item_string,.value=new};
     map->push(map,item);
   }
   return _$get(self,key);
@@ -196,7 +199,7 @@ static void _$set_double(Hashmap* map, char* key, double value) {
     char* buffer = malloc(MAX_STR_LENGTH * sizeof(char));
     if (buffer != NULL) {
       snprintf(buffer, MAX_STR_LENGTH, "%f", value);
-      Hashmap_Entry item ={.key=key,.type=Item_default,.value=buffer};
+      Hashmap_Entry item ={.key=key,.type=Item_string,.value=buffer};
       map->push(map, item);
     } else {
       RUNTIME_ERROR("memory allocation failed",1);
@@ -208,7 +211,7 @@ static void _$set_int(Hashmap* map, char* key, int value) {
     char* buffer = malloc(MAX_STR_LENGTH * sizeof(char)); 
     if (buffer != NULL) {
       snprintf(buffer, MAX_STR_LENGTH, "%d", value); // Safely write formatted string
-      Hashmap_Entry item = {.key=key,.type=Item_default,.value=buffer};
+      Hashmap_Entry item = {.key=key,.type=Item_string,.value=buffer};
       map->push(map, item);
     } else {
       RUNTIME_ERROR("memory allocation failed",1);

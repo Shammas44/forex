@@ -49,13 +49,15 @@ static bool _$check_available_funds(T*self,Order*order){
   if (order_size < available_funds && order_size > 0) {
     status = true;
   }
-  if(!status) RUNTIME_ERROR("Not enough available funds",1);
+  if(!status){
+    RUNTIME_ERROR("Not enough available funds",1);
+  }   
   return status;
 }
 
 static bool _$check_size_limit(T*self,Order*order){
   double percentage_limit = 2;
-  bool status = false;
+  bool status = true;
   Private *private = self->__private;
   Metadata *metadata = private->metadata;
   double available_funds = metadata->get_available_funds(metadata);
@@ -63,8 +65,8 @@ static bool _$check_size_limit(T*self,Order*order){
   if(side == BUY){
     double order_size = order->size(order,READ,0);
     double limit = available_funds * percentage_limit / 100;
-    if(order_size <= limit && order_size > 0){
-      status = true;
+    if(order_size >= limit || order_size <= 0){
+      status = false;
     }
   }
   if(!status) RUNTIME_ERROR("order size limit outbound",1);

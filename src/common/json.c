@@ -1,4 +1,6 @@
 #include "json.h"
+#include "RuntimeError.h"
+#include "common.h"
 #include "item.h"
 #include "Array.h"
 #include "Hashmap.h"
@@ -137,7 +139,8 @@ int json_parse(char *json, jsmntok_t **tokens) {
 
   *tokens = malloc(sizeof(jsmntok_t) * required_tokens);
   if (!*tokens) {
-    return get_error("Memory allocation failed");
+    RUNTIME_ERROR("Memory allocation failed",1);
+    return 1;
   }
 
   jsmn_init(&parser);
@@ -146,13 +149,15 @@ int json_parse(char *json, jsmntok_t **tokens) {
   if (token_num < 0) {
     free(*tokens);
     *tokens = NULL;
-    return get_error("Failed to parse JSON");
+    RUNTIME_ERROR("Failed to parse JSON",1);
+    return 1;
   }
 
   if (token_num < 1 ) {
     free(*tokens);
     *tokens = NULL;
-    return get_error("Nothing to parse");
+    RUNTIME_ERROR("Nothing to parse",1);
+    return 1;
   }
 
   return token_num;
@@ -197,7 +202,7 @@ int json_to_array(char *json, Array**array,jsmntok_t *tokens, int token_num){
     }else {
       value = string;
     }
-    (*array)->push(*array,(Item){.type=Item_default,.value=value});
+    (*array)->push(*array,(Item){.type=Item_string,.value=value});
     i+=inner_token_num;
   }
   return token_num;
@@ -253,7 +258,7 @@ Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num) {
           map->push(map,(Hashmap_Entry){.key=key,.type=Item_array,.value=inner_array});
           break;
         default:
-          printf("Value: Unhandled type\n");
+          RUNTIME_ERROR("Unhandled type",1);
           break;
       }
       i+=inner_token_num;

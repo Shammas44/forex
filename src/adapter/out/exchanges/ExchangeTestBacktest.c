@@ -40,8 +40,11 @@ T* exchangeTestBacktest_constructor(WsHandler*ws,ConfigWrapper*config,Parser*par
   private->req_builder = req_builder;
   private->config = config;
   private->subject = subject_constructor(NULL);
-  char*mode = config->mode(config);
-  if(strcmp(mode,"BACKTEST") != 0) return NULL;
+  Metadata_mode mode = config->mode(config);
+  if(mode != Metadata_mode_backtest ){
+    RUNTIME_ERROR("ExchangeTestBacktest mode should be set to backtest",1);
+    return NULL;
+  }    
   self->__private = private;
   return self;
 }
