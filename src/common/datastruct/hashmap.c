@@ -32,6 +32,7 @@ static Hashmap_Entry **__entries(T *self);
 
 static int _$compareStrings(const void *a, const void *b);
 static char* _$convertToTrimmedString(double num);
+static void _$free_entry(Entry entry);
 
 T *hashmap_constructor(size_t initial_capacity) {
   if (initial_capacity > MAX_CAPACITY)
@@ -83,20 +84,7 @@ void hashmap_destructor(T *self) {
       if (entries[i].key == NULL) {
         continue;
       }
-      Entry entry = entries[i];
-      Item_type type = entry.type;
-      bool is_destroyable = entry.is_destroyable;
-      void *value = entry.value;
-      if (is_destroyable) {
-        IsDestroyable *element = (IsDestroyable *)value;
-        void *callback = element->destructor;
-        Hashmap_destructor *destructor = (Hashmap_destructor *)callback;
-        destructor(value);
-      } else {
-        if(type != Item_string_noaloc){
-          free(value);
-        }
-      }
+      _$free_entry(entries[i]);
     }
     free(entries);
     free(private);
@@ -356,6 +344,7 @@ static void __push(T *self, Hashmap_Entry entry) {
     if (strcmp(entries[index % *capacity].key, key) == 0) {
       isReplacement = true;
       index = index % *capacity;
+      _$free_entry(entries[index % *capacity]);
     } else {
       while (entries[index].key != NULL) {
         index = (index + 1) % *capacity;
@@ -408,6 +397,21 @@ static Item __get(T *self, char*key) {
 
 static int _$compareStrings(const void *a, const void *b) {
     return strcmp(*(const char**)a, *(const char**)b);
+}
+
+static void _$free_entry(Entry entry){
+  Item_type type = entry.type;
+  bool is_destroyable = entry.is_destroyable;
+  void *value = entry.value;
+  free(entry.key);
+  if (is_destroyable) {
+    IsDestroyable *element = (IsDestroyable *)value;
+    void *callback = element->destructor;
+    Hashmap_destructor *destructor = (Hashmap_destructor *)callback;
+    destructor(value);
+  } else {
+    free(value);
+  }
 }
 
 #undef LOAD_FACTOR_THRESHOLD

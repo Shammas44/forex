@@ -1,5 +1,6 @@
 #include "ConfigWrapper.h"
 #include "RuntimeErrorImp.h"
+#include <string.h>
 #ifndef COMMON_H
 #define COMMON_H
 
@@ -15,5 +16,6 @@ typedef enum {
   REMOVE,
 } Edition_mode;
 
-#endif
 
+
+#endif

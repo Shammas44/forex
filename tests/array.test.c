@@ -149,7 +149,9 @@ Test(array_keys, correct_keys, .init=setup, .fini = teardown) {
   int result = 0;
   for (int i = 0; i < 5; i++) {
     sum+=i;
-    a->push(a,(Item){.type=Item_int,.value=&i});
+    int * value = malloc(sizeof(int));
+    *value = i;
+    a->push(a,(Item){.type=Item_int,.value=value});
   }
   char**keys = a->keys(a);
   for (int i = 0; i < 5; i++) {
@@ -204,7 +206,7 @@ Test(array_entries, correct_values, .init=setup, .fini = teardown) {
 Test(array_to_json, correct_values, .fini = teardown) {
   a = array_constructor(10);
   char *res = "[\"$\"]";
-  Item item ={.type=Item_string,.value="$"};
+  Item item ={.type=Item_string,.value=strdup("$")};
   a->push(a, item);
   char *json = a->to_json(a);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -213,9 +215,9 @@ Test(array_to_json, correct_values, .fini = teardown) {
 Test(array_to_json, double_keys, .fini = teardown) {
   a = array_constructor(10);
   char *res = "[\"$\",\"€\"]";
-  Item item ={.type=Item_string,.value="$"};
+  Item item ={.type=Item_string,.value=strdup("$")};
   a->push(a ,item);
-  Item item2 ={.type=Item_string,.value="€"};
+  Item item2 ={.type=Item_string,.value=strdup("€")};
   a->push(a ,item2);
   char *json = a->to_json(a);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -224,11 +226,13 @@ Test(array_to_json, double_keys, .fini = teardown) {
 Test(array_to_json, double, .fini = teardown) {
   a = array_constructor(10);
   char *res = "[2.5,2]";
-  double price = 2.5;
-  double amount = 2;
-  Item item ={.type=Item_double,.value=&price};
+  double *price = malloc(sizeof(double));
+  *price = 2.5;
+  double *amount = malloc(sizeof(double));
+  *amount = 2;
+  Item item ={.type=Item_double,.value=price};
   a->push(a ,item);
-  Item item2 ={.type=Item_double,.value=&amount};
+  Item item2 ={.type=Item_double,.value=amount};
   a->push(a ,item2);
   char *json = a->to_json(a);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -237,11 +241,13 @@ Test(array_to_json, double, .fini = teardown) {
 Test(array_to_json, int, .fini = teardown) {
   a = array_constructor(10);
   char *res = "[3,2]";
-  int price = 3;
-  int amount = 2;
-  Item item ={.type=Item_int,.value=&price};
+  int * price = malloc(sizeof(int));
+  int * amount = malloc(sizeof(int));
+  *price = 3;
+  *amount = 2;
+  Item item ={.type=Item_int,.value=price};
   a->push(a ,item);
-  Item item2 ={.type=Item_int,.value=&amount};
+  Item item2 ={.type=Item_int,.value=amount};
   a->push(a ,item2);
   char *json = a->to_json(a);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -251,11 +257,13 @@ Test(array_to_json, int, .fini = teardown) {
 Test(array_to_json, boolean, .fini = teardown) {
   a = array_constructor(10);
   char *res = "[false,true]";
-  bool price = false;
-  bool amount = true;
-  Item item ={.type=Item_bool,.value=&price};
+  bool *price = malloc(sizeof(bool));
+  bool *amount = malloc(sizeof(bool));
+  *price = false;
+  *amount = true;
+  Item item ={.type=Item_bool,.value=price};
   a->push(a ,item);
-  Item item2 ={.type=Item_bool,.value=&amount};
+  Item item2 ={.type=Item_bool,.value=amount};
   a->push(a ,item2);
   char *json = a->to_json(a);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -266,9 +274,9 @@ Test(array_to_json, null, .fini = teardown) {
   char *res = "[null,null]";
   char* price = NULL;
   char* amount = NULL;
-  Item item ={.type=Item_null,.value=&price};
+  Item item ={.type=Item_null,.value=price};
   a->push(a ,item);
-  Item item2 ={.type=Item_null,.value=&amount};
+  Item item2 ={.type=Item_null,.value=amount};
   a->push(a ,item2);
   char *json = a->to_json(a);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -278,10 +286,10 @@ Test(array_to_json, hashmap, .fini = teardown) {
   a = array_constructor(10);
   char *res = "[{\"value\":\"£\"},{\"value\":\"$\"}]";
   Hashmap* price = hashmap_constructor(1);
-  Hashmap_Entry item ={.key="value",.type=Item_string,.value="£"};
+  Hashmap_Entry item ={.key="value",.type=Item_string,.value=strdup("£")};
   price->push(price ,item);
   Hashmap* amount = hashmap_constructor(1);
-  Hashmap_Entry item2 ={.key="value",.type=Item_string,.value="$"};
+  Hashmap_Entry item2 ={.key="value",.type=Item_string,.value=strdup("$")};
   amount->push(amount ,item2);
   Item item3 ={.type=Item_map,.value=price};
   a->push(a ,item3);
@@ -296,8 +304,8 @@ Test(array_to_json, array, .fini = teardown) {
   char *res = "[[\"£\",\"$\"],[\"£\",\"$\"]]";
   T*b = array_constructor(2);
   T*c = array_constructor(2);
-  Item item1 ={.type=Item_string,.value="£"};
-  Item item2 ={.type=Item_string,.value="$"};
+  Item item1 ={.type=Item_string,.value=strdup("£")};
+  Item item2 ={.type=Item_string,.value=strdup("$")};
   b->push(b ,item1);
   b->push(b ,item2);
   c->push(c ,item1);

@@ -7,7 +7,6 @@ typedef struct T T;
 typedef enum {
 Item_default,
 Item_string,
-Item_string_noaloc,
 Item_float,
 Item_double,
 Item_bool,

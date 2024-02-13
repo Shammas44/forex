@@ -53,7 +53,7 @@ static Order* __execute(T*self, CandleWrapper*candle){
   Order * order = order_constructor(-1);
   order->price(order,WRITE,close);
   order->status(order,WRITE,ORDER_CANCELLED);
-  order->type(order,WRITE,"Market");
+  order->type(order,WRITE,strdup("Market"));
 
   if (close > open && market_position >= 0) {
     order->side(order,WRITE,SELL);

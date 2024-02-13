@@ -25,23 +25,23 @@ Test(hashmap_constructor, param_check, .fini = teardown) {
 
 Test(hashmap_push, insertion, .init = setup, .fini = teardown) {
   char key0[10] = "DOLLAR", value0[10] = "$";
-  Hashmap_Entry item ={.key=key0,.type=Item_string,.value=value0};
+  Hashmap_Entry item ={.key=key0,.type=Item_string,.value=strdup(value0)};
   map->push(map ,item);
   cr_assert_eq(map->length(map), 1, "Wrong length");
   char key1[10] = "Euro", value1[10] = "€";
-  Hashmap_Entry item2 ={.key=key1,.type=Item_string,.value=value1};
+  Hashmap_Entry item2 ={.key=key1,.type=Item_string,.value=strdup(value1)};
   map->push(map ,item2);
   cr_assert_eq(map->length(map), 2, "Wrong length");
 }
 
 Test(hashmap_get, retrieve, .init = setup, .fini = teardown) {
   char key0[10] = "DOLLAR", value0[10] = "$";
-  Hashmap_Entry item = {.key=key0,.type=Item_string,.value=value0};
+  Hashmap_Entry item = {.key=key0,.type=Item_string,.value=strdup(value0)};
   map->push(map, item);
   char* v0 = map->get(map,key0 ).value;
   cr_assert_eq(strcmp(v0,value0),0, "Should be equal");
   char key1[10] = "Euro", value1[10] = "€";
-  Hashmap_Entry item2 = {.key=key1,.type=Item_string,.value=value1};
+  Hashmap_Entry item2 = {.key=key1,.type=Item_string,.value=strdup(value1)};
   map->push(map, item2);
   char* v1 = map->get(map, key1).value;
   cr_assert_eq(strcmp(v1,value1),0, "Should be equal");
@@ -49,7 +49,7 @@ Test(hashmap_get, retrieve, .init = setup, .fini = teardown) {
 
 Test(hashmap_get, case_sensitive, .init = setup, .fini = teardown) {
   char key[10] = "DOLLAR", value[10] = "$";
-  Hashmap_Entry item ={.key=key,.type=Item_string,.value=value};
+  Hashmap_Entry item ={.key=key,.type=Item_string,.value=strdup(value)};
   map->push(map, item);
   char *result = map->get(map, "dollar").value;
   cr_assert_null(result, "Result should be NULL");
@@ -67,7 +67,7 @@ Test(hashmap_push, is_resized, .init=setup, .fini = teardown) {
 
 Test(hashmap_push, nested_hashmap, .init = setup, .fini = teardown) {
   T*map2 = hashmap_constructor(10);
-  Hashmap_Entry item ={.key="DOLLAR",.type=Item_string,.value="$"};
+  Hashmap_Entry item ={.key="DOLLAR",.type=Item_string,.value=strdup("$")};
   map2->push(map2,item);
   Hashmap_Entry item2 ={.key="Symbols",.type=Item_array,.value=map2};
   map->push(map, item2);
@@ -77,9 +77,9 @@ Test(hashmap_push, nested_hashmap, .init = setup, .fini = teardown) {
 }
 
 Test(hashmap_push, replacement, .init = setup, .fini = teardown) {
-  Hashmap_Entry item = {.key="Symbols",.type=Item_array,.value="$"};
+  Hashmap_Entry item = {.key="Symbols",.type=Item_string,.value=strdup("$")};
   map->push(map, item);
-  Hashmap_Entry item2 = {.key="Symbols",.type=Item_array,.value="€"};
+  Hashmap_Entry item2 = {.key="Symbols",.type=Item_string,.value=strdup("€")};
   map->push(map, item2);
   char* result = map->get(map,"Symbols").value;
   cr_assert_eq(strcmp(result,"€"),0, "Should be equal");
@@ -138,9 +138,9 @@ Test(hashmap_entries, empty_map, .init=setup, .fini = teardown) {
 }
 
 Test(hashmap_entries, simple, .init=setup, .fini = teardown) {
-  Hashmap_Entry item ={.key="DOLLAR",.type=Item_string,.value="$"};
+  Hashmap_Entry item ={.key="DOLLAR",.type=Item_string,.value=strdup("$")};
   map->push(map, item);
-  Hashmap_Entry item2 = {.key="EURO",.type=Item_string,.value="€"};
+  Hashmap_Entry item2 = {.key="EURO",.type=Item_string,.value=strdup("€")};
   map->push(map, item2);
   Hashmap_Entry**entries = map->entries(map);
   cr_assert_eq(strcmp(entries[0]->value,"$"),0, "Should be equal");
@@ -150,7 +150,7 @@ Test(hashmap_entries, simple, .init=setup, .fini = teardown) {
 Test(hashmap_to_json, correct_values, .fini = teardown) {
   map = hashmap_constructor(10);
   char *res = "{\"DOLLAR\":\"$\"}";
-  Hashmap_Entry item ={.key="DOLLAR",.type=Item_string,.value="$"};
+  Hashmap_Entry item ={.key="DOLLAR",.type=Item_string,.value=strdup("$")};
   map->push(map, item);
   char *json = map->to_json(map);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -159,9 +159,9 @@ Test(hashmap_to_json, correct_values, .fini = teardown) {
 Test(hashmap_to_json, double_keys, .fini = teardown) {
   map = hashmap_constructor(10);
   char *res = "{\"DOLLAR\":\"$\",\"EURO\":\"€\"}";
-  Hashmap_Entry item ={.key="DOLLAR",.type=Item_string,.value="$"};
+  Hashmap_Entry item ={.key="DOLLAR",.type=Item_string,.value=strdup("$")};
   map->push(map ,item);
-  Hashmap_Entry item2 ={.key="EURO",.type=Item_string,.value="€"};
+  Hashmap_Entry item2 ={.key="EURO",.type=Item_string,.value=strdup("€")};
   map->push(map ,item2);
   char *json = map->to_json(map);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -170,11 +170,13 @@ Test(hashmap_to_json, double_keys, .fini = teardown) {
 Test(hashmap_to_json, double, .fini = teardown) {
   map = hashmap_constructor(10);
   char *res = "{\"amount\":2,\"price\":2.5}";
-  double price = 2.5;
-  double amount = 2;
-  Hashmap_Entry item ={.key="price",.type=Item_double,.value=&price};
+  double *price = malloc(sizeof(double));
+  double *amount = malloc(sizeof(double));
+  *price = 2.5;
+  *amount = 2;
+  Hashmap_Entry item ={.key="price",.type=Item_double,.value=price};
   map->push(map ,item);
-  Hashmap_Entry item2 ={.key="amount",.type=Item_double,.value=&amount};
+  Hashmap_Entry item2 ={.key="amount",.type=Item_double,.value=amount};
   map->push(map ,item2);
   char *json = map->to_json(map);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -183,11 +185,13 @@ Test(hashmap_to_json, double, .fini = teardown) {
 Test(hashmap_to_json, int, .fini = teardown) {
   map = hashmap_constructor(10);
   char *res = "{\"amount\":2,\"price\":2}";
-  int price = 2;
-  int amount = 2;
-  Hashmap_Entry item ={.key="price",.type=Item_int,.value=&price};
+  int *price = malloc(sizeof(int));
+  int *amount = malloc(sizeof(int));
+  *price = 2;
+  *amount = 2;
+  Hashmap_Entry item ={.key="price",.type=Item_int,.value=price};
   map->push(map ,item);
-  Hashmap_Entry item2 ={.key="amount",.type=Item_int,.value=&amount};
+  Hashmap_Entry item2 ={.key="amount",.type=Item_int,.value=amount};
   map->push(map ,item2);
   char *json = map->to_json(map);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -196,11 +200,13 @@ Test(hashmap_to_json, int, .fini = teardown) {
 Test(hashmap_to_json, boolean, .fini = teardown) {
   map = hashmap_constructor(10);
   char *res = "{\"amount\":true,\"price\":false}";
-  bool price = false;
-  bool amount = true;
-  Hashmap_Entry item ={.key="price",.type=Item_bool,.value=&price};
+  bool *price = malloc(sizeof(bool));
+  bool *amount = malloc(sizeof(bool));
+  *price = false;
+  *amount = true;
+  Hashmap_Entry item ={.key="price",.type=Item_bool,.value=price};
   map->push(map ,item);
-  Hashmap_Entry item2 ={.key="amount",.type=Item_bool,.value=&amount};
+  Hashmap_Entry item2 ={.key="amount",.type=Item_bool,.value=amount};
   map->push(map ,item2);
   char *json = map->to_json(map);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -211,9 +217,9 @@ Test(hashmap_to_json, null, .fini = teardown) {
   char *res = "{\"amount\":null,\"price\":null}";
   char* price = NULL;
   char* amount = NULL;
-  Hashmap_Entry item ={.key="price",.type=Item_null,.value=&price};
+  Hashmap_Entry item ={.key="price",.type=Item_null,.value=price};
   map->push(map ,item);
-  Hashmap_Entry item2 ={.key="amount",.type=Item_null,.value=&amount};
+  Hashmap_Entry item2 ={.key="amount",.type=Item_null,.value=amount};
   map->push(map ,item2);
   char *json = map->to_json(map);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");
@@ -223,10 +229,10 @@ Test(hashmap_to_json, hashmap, .fini = teardown) {
   map = hashmap_constructor(10);
   char *res = "{\"amount\":{\"value\":\"$\"},\"price\":{\"value\":\"£\"}}";
   Hashmap* price = hashmap_constructor(1);
-  Hashmap_Entry item ={.key="value",.type=Item_string,.value="£"};
+  Hashmap_Entry item ={.key="value",.type=Item_string,.value=strdup("£")};
   price->push(price ,item);
   Hashmap* amount = hashmap_constructor(1);
-  Hashmap_Entry item2 ={.key="value",.type=Item_string,.value="$"};
+  Hashmap_Entry item2 ={.key="value",.type=Item_string,.value=strdup("$")};
   amount->push(amount ,item2);
   Hashmap_Entry item3 ={.key="price",.type=Item_map,.value=price};
   map->push(map ,item3);
@@ -240,8 +246,8 @@ Test(hashmap_to_json, array, .fini = teardown) {
   map = hashmap_constructor(10);
   char *res = "{\"price\":[\"$\",\"£\"]}";
   Array *array = array_constructor(2);
-  array->push(array,(Item){.type=Item_string,.value="$"});
-  array->push(array,(Item){.type=Item_string,.value="£"});
+  array->push(array,(Item){.type=Item_string,.value=strdup("$")});
+  array->push(array,(Item){.type=Item_string,.value=strdup("£")});
   map->push(map,(Hashmap_Entry){.key="price",.type=Item_array,.value=array});
   char *json = map->to_json(map);
   cr_assert_eq(strcmp(json,res),0, "Should be equal");

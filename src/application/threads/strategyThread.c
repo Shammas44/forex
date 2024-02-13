@@ -37,21 +37,19 @@ void *strategyThread(void *arg) {
       CandleWrapper *candle = message->value(message, READ, (Item){}).value;
       message->destructor(message);
       Order *order = strategy->run(strategy, candle);
-      // OrderStatus status = order->status(order, READ, NULL);
-      printf("order pending: %d\n", id);
-      order->destructor(order);
+      OrderStatus status = order->status(order, READ, NULL);
 
-      // while (status == ORDER_PENDING) {
-      //   // printf("order pending: %d\n", id);
-      //   order = risk->process(risk, order);
-      //   // printf("order processed: %d\n", id);
-      //   // send order to exchange
-      //   break;
-      // }
-      // if (status == ORDER_CANCELLED) {
-      //   printf("order cancelled: %d\n", id);
-      //   order->destructor(order);
-      // }
+      while (status == ORDER_PENDING) {
+        printf("order pending: %d\n", id);
+        order = risk->process(risk, order);
+        printf("order processed: %d\n", id);
+        // send order to exchange
+        break;
+      }
+      if (status == ORDER_CANCELLED) {
+        printf("order cancelled: %d\n", id);
+        order->destructor(order);
+      }
     }
     id++;
     sync_set_state(sync, SYNC_STATE_EXCHANGE);
