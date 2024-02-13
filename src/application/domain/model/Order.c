@@ -27,6 +27,7 @@ static Side __side(T *self, Access_mode mode, Side new);
 static double __size(T *self, Access_mode mode, double new);
 static double __executed_price(T *self, Access_mode mode, double new);
 static int __ttl(T *self, Access_mode mode, int new);
+static char* __to_json(T *self);
 
 static void _$set_double(Hashmap*map, char* key, double value);
 static void _$set_int(Hashmap*map, char* key, int value);
@@ -54,6 +55,7 @@ T* order_constructor(int id){
   self->size = __size;
   self->executed_price = __executed_price;
   self->ttl = __ttl;
+  self->to_json = __to_json;
   Private *private = malloc(sizeof(Private));
   Hashmap*map = hashmap_constructor(10);
   Hashmap_Entry identifiant = {.key="id",.type=Item_string,.value=strdup("-1")};
@@ -102,6 +104,12 @@ static void __destructor(T *self){
   }
   map->destructor(map);
   free(self);
+}
+
+static char* __to_json(T *self){
+  Private *private = self->__private;
+  Hashmap *map = private->map;
+  return map->to_json(map);
 }
 
 static int __id(T *self, Access_mode mode, int new){

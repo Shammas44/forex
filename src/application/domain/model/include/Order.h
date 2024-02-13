@@ -1,8 +1,8 @@
 #ifndef ORDER_H
 #define ORDER_H
+#include "common.h"
 #include "jsmn.h"
 #include "json.h"
-#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -26,28 +26,18 @@ typedef enum Side {
   SELL,
 } Side;
 
-typedef void(Order_destructor)(T *self);
-typedef int(Order_id)(T *self, Access_mode mode, int new);
-typedef char* (Order_type)(T *self, Access_mode mode, char* new);
-typedef OrderStatus(Order_status)(T *self, Access_mode mode, OrderStatus new);
-typedef double(Order_limit)(T *self, Access_mode mode, double new);
-typedef double(Order_price)(T *self, Access_mode mode, double new);
-typedef Side(Order_side)(T *self, Access_mode mode, Side new);
-typedef double(Order_size)(T *self, Access_mode mode, double new);
-typedef double(Order_executed_price)(T *self, Access_mode mode, double new);
-typedef int(Order_ttl)(T *self, Access_mode mode, int new);
-
 typedef struct T {
-  Order_destructor *destructor;
-  Order_id *id;
-  Order_type *type;
-  Order_status *status;
-  Order_limit *limit;
-  Order_price *price;
-  Order_side *side;
-  Order_size *size;
-  Order_executed_price *executed_price;
-  Order_ttl *ttl;
+  void (*destructor)(T *self);
+  int (*id)(T *self, Access_mode mode, int new);
+  char *(*type)(T *self, Access_mode mode, char *new);
+  OrderStatus (*status)(T *self, Access_mode mode, OrderStatus new);
+  double (*limit)(T *self, Access_mode mode, double new);
+  double (*price)(T *self, Access_mode mode, double new);
+  Side (*side)(T *self, Access_mode mode, Side new);
+  double (*size)(T *self, Access_mode mode, double new);
+  double (*executed_price)(T *self, Access_mode mode, double new);
+  int (*ttl)(T *self, Access_mode mode, int new);
+  char *(*to_json)(T *self);
   void *__private;
 } T;
 
