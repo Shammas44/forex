@@ -58,7 +58,9 @@ T* order_constructor(int id){
   self->to_json = __to_json;
   Private *private = malloc(sizeof(Private));
   Hashmap*map = hashmap_constructor(10);
-  Hashmap_Entry identifiant = {.key="id",.type=Item_string,.value=strdup("-1")};
+  char *key = malloc(sizeof(char)*10);
+  sprintf(key,"%d",id);
+  Hashmap_Entry identifiant = {.key="id",.type=Item_string,.value=key};
   map->push(map,identifiant);
   Hashmap_Entry type = {.key="type",.type=Item_string,.value=strdup("Market")};
   map->push(map,type);
@@ -84,7 +86,6 @@ T* order_constructor(int id){
 static void __destructor(T *self){
   static int count = -1;
   count++;
-  printf("destructor count: %d\n",count);
   if(self == NULL){
     RUNTIME_ERROR("self is NULL",1);
     return;
