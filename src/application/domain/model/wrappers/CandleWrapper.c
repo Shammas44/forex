@@ -1,7 +1,10 @@
 #include "CandleWrapper.h"
-#include "json.h"
+#include "common.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
+
+#define T CandleWrapper
 
 #define MAP(wrapper) \
 ({ \
@@ -9,13 +12,62 @@
   _map; \
 })
 
-#define T CandleWrapper
+#define KEY(index) \
+({ \
+  char* _key = keys[index]; \
+  _key; \
+})
+
+#define GENERATE_ACCESSOR_FUNCTION(name, type) \
+static type __##name(T* self) { \
+  return *(type*)__get(self, KEY(_##name)); \
+}
+
+#define GENERATE_STRING_ACCESSOR_FUNCTION(name) \
+static char* __##name(T* self) { \
+  return __get(self, KEY(_##name)); \
+}
+
+typedef enum {
+  _date,
+  _time,
+  _open,
+  _high,
+  _low,
+  _close,
+  _up_volume,
+  _down_volume,
+  _total_volume,
+  _up_ticks,
+  _down_ticks,
+  _total_ticks,
+  _timestamp,
+  _volume,
+} Keys;
+
+static char *keys[]={
+  "Date",
+  "Time",
+  "Open",
+  "High",
+  "Low",
+  "Close",
+  "UpVolume",
+  "DownVolume",
+  "TotalVolume",
+  "UpTicks",
+  "DownTicks",
+  "TotalTicks",
+  "Timestamp",
+  "Volume",
+};
+
 typedef struct {
   Hashmap *map;
 } Private;
 
 static void __destructor(T *self);
-static char*  __get(T *self,char*key);
+static void*  __get(T *self,char*key);
 static char*  __date(T *self);
 static char*  __time(T *self);
 static double  __open(T *self);
@@ -27,14 +79,12 @@ static double  __down_volume(T *self);
 static double  __total_volume(T *self);
 static double  __up_ticks(T *self);
 static double  __down_ticks(T *self);
-static int  __total_ticks(T *self);
+static double  __total_ticks(T *self);
 static time_t  __timestamp(T *self);
 static double  __volume(T *self);
 
 static void _$set_timestamp(T*self);
 static void _$set_volume(T*self);
-static double _$get_double(T*self,char*key);
-static int _$get_int(T*self,char*key);
 
 T * candleWrapper_constructor(Hashmap *map){
   T *self = malloc(sizeof(T));
@@ -66,94 +116,37 @@ static void __destructor(T*self){
   map->destructor(map);
 }
 
-static char* __get(T*self,char*key){
+static void* __get(T*self,char*key){
+  if(self == NULL) return NULL;
   Hashmap*map = self->__private;
   return map->get(map,key).value;
 }
-static char* __date(T*self){
-  if(self == NULL) return NULL;
-  return __get(self,"Date");
-}
 
-static char* __time(T*self){
-  if(self == NULL) return NULL;
-  return __get(self,"Time");
-}
-
-static double __open(T*self){
-  if(self == NULL) return -1;
-  return _$get_double(self,"Open");
-}
-
-static double __high(T*self){
-  if(self == NULL) return -1;
-  return _$get_double(self,"High");
-}
-
-static double __low(T*self){
-  if(self == NULL) return -1;
-  return _$get_double(self,"Low");
-}
-
-static double __close(T*self){
-  if(self == NULL) return -1;
-  return _$get_double(self,"Close");
-}
-
-static double __up_volume(T*self){
-  if(self == NULL) return -1;
-  return _$get_double(self,"UpVolume");
-}
-
-static double __down_volume(T*self){
-  if(self == NULL) return -1;
-  return _$get_double(self,"DownVolume");
-}
-
-static double __total_volume(T*self){
-  if(self == NULL) return -1;
-  return _$get_double(self,"TotalVolume");
-}
-
-static double __up_ticks(T*self){
-  if(self == NULL) return -1;
-  return _$get_double(self,"UpTicks");
-}
-
-static double __down_ticks(T*self){
-  if(self == NULL) return -1;
-  return _$get_double(self,"DownTicks");
-}
-
-static int __total_ticks(T*self){
-  if(self == NULL) return -1;
-  return _$get_int(self,"Total_ticks");
-}
+GENERATE_STRING_ACCESSOR_FUNCTION(date)
+GENERATE_STRING_ACCESSOR_FUNCTION(time)
+GENERATE_ACCESSOR_FUNCTION(open, double)
+GENERATE_ACCESSOR_FUNCTION(high, double)
+GENERATE_ACCESSOR_FUNCTION(low, double)
+GENERATE_ACCESSOR_FUNCTION(close, double)
+GENERATE_ACCESSOR_FUNCTION(up_volume, double)
+GENERATE_ACCESSOR_FUNCTION(down_volume, double)
+GENERATE_ACCESSOR_FUNCTION(total_volume, double)
+GENERATE_ACCESSOR_FUNCTION(up_ticks, double)
+GENERATE_ACCESSOR_FUNCTION(down_ticks, double)
+GENERATE_ACCESSOR_FUNCTION(total_ticks, double)
 
 static time_t __timestamp(T*self){
   if(self == NULL) return -1;
   Hashmap*map = self->__private; 
-  time_t *time = map->get(map,"Timestamp").value;
+  time_t *time = map->get(map,KEY(_timestamp)).value;
   return *time;
 }
 
 static double __volume(T*self){
   if(self == NULL) return -1;
   Hashmap* map = self->__private; 
-  double* volume = map->get(MAP(self),"Volume").value;
+  double* volume = map->get(MAP(self),KEY(_volume)).value;
   return *volume;
-}
-
-static double _$get_double(T*self,char*key){
-  char* value = __get(self,key);
-  if(!value) return -1;
-  return atof(value);
-}
-
-static int _$get_int(T*self,char*key){
-  char* value = __get(self,key);
-  if(!value) return -1;
-  return atoi(value);
 }
 
 static void _$set_timestamp(T*self){
@@ -170,26 +163,26 @@ static void _$set_timestamp(T*self){
   if (strptime(datetime_str, "%m/%d/%Y %H:%M:%S", &tm) != NULL) {
     epoch_time = mktime(&tm);
     if (epoch_time == -1) {
-      fprintf(stderr, "Error converting to time_t\n");
+      RUNTIME_ERROR("Error converting to time_t\n",1);
       return;
     }
   } else {
-    fprintf(stderr, "Error parsing the date-time string\n");
-      return;
+    RUNTIME_ERROR("Error parsing the date-time string\n",1);
+    return;
   }
 #else
   if (sscanf(datetime_str, "%d/%d/%d %d:%d:%d", &tm.tm_mon, &tm.tm_mday,
              &tm.tm_year, &tm.tm_hour, &tm.tm_min, &tm.tm_sec) == 6) {
-    tm.tm_year -= 1900; // Adjust year to be in years since 1900
-    tm.tm_mon -= 1;     // Adjust month to be in [0, 11]
-    tm.tm_isdst = -1;
-    epoch_time = mktime(&tm);
+      tm.tm_year -= 1900; // Adjust year to be in years since 1900
+      tm.tm_mon -= 1;     // Adjust month to be in [0, 11]
+      tm.tm_isdst = -1;
+      epoch_time = mktime(&tm);
 
-    if (epoch_time == -1) {
-      fprintf(stderr, "Error converting to time_t\n");
-      return -1;
-    }
-  } else {
+      if (epoch_time == -1) {
+        fprintf(stderr, "Error converting to time_t\n");
+        return -1;
+      }
+    } else {
     fprintf(stderr, "Error parsing the date-time string\n");
     return -1;
   }
@@ -198,19 +191,22 @@ static void _$set_timestamp(T*self){
   time_t* out = malloc(sizeof(time_t));
   *out = epoch_time;
   Hashmap*map = self->__private; 
-  Hashmap_Entry item ={.key="Timestamp",.type=Item_default,.value=out};
+  Hashmap_Entry item ={.key=KEY(_timestamp),.type=Item_default,.value=out};
   map->push(map,item);
 }
 
 static void _$set_volume(T*self){
   Hashmap* map = self->__private; 
-  char* up_volume =  map->get(map,"DownVolume").value;
-  char* down_volume =  map->get(map,"UpVolume").value;
+  char* up_volume =  map->get(map,KEY(_down_volume)).value;
+  char* down_volume =  map->get(map,KEY(_up_volume)).value;
   double *volume = malloc(sizeof(double));
   *volume = atof(up_volume) + atof(down_volume);
-  Hashmap_Entry item ={.key="Volume",.type=Item_default,.value=volume};
+  Hashmap_Entry item ={.key=KEY(_volume),.type=Item_double,.value=volume};
   map->push(map,item);
 }
 
 #undef T
 #undef MAP
+#undef KEY
+#undef GENERATE_ACCESSOR_FUNCTION
+#undef GENERATE_STRING_ACCESSOR_FUNCTION

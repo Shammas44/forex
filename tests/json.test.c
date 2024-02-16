@@ -106,7 +106,7 @@ Test(json_to_map, get_string, .fini = teardown) {
   json_to_map(json02,&h,NULL,0);
   cr_expect_str_eq(h->get(h, "nom").value, "Doe", "Wrong value");
   cr_expect_str_eq(h->get(h, "prénom").value, "John", "Wrong value");
-  cr_expect_str_eq(h->get(h, "age").value, "20", "Wrong value");
+  cr_expect_eq(*(double*)h->get(h, "age").value, 20, "Wrong value");
   cr_expect_eq(h->length(h), 3, "Wrong size");
 }
 
@@ -133,8 +133,8 @@ Test(json_to_map, get_inner_inner_object, .fini = teardown) {
 
 Test(json_to_map, get_primitive, .fini = teardown) {
   json_to_map(json05,&h,NULL,0);
-  cr_expect_str_eq(h->get(h, "isAdmin").value, "false", "wrong value");
-  cr_expect_str_eq(h->get(h, "isWorking").value, "true", "wrong value");
+  cr_expect_eq(*(bool*)h->get(h, "isAdmin").value, false, "wrong value");
+  cr_expect_eq(*(bool*)h->get(h, "isWorking").value, true, "wrong value");
   cr_expect_str_eq(h->get(h, "company").value, "null", "wrong value");
   cr_expect_eq(h->length(h), 3, "Wrong size");
 }
