@@ -8,7 +8,7 @@
 typedef struct T T;
 
 typedef enum {
-  Metadata_mode_backtest,
+  Metadata_mode_backtest = 1,
   Metadata_mode_real,
 } Metadata_mode;
 

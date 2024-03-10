@@ -5,7 +5,7 @@
 #include "Strategy_trend_following.h"
 
 typedef enum Strategies {
-  STRATEGY_TEST,
+  STRATEGY_TEST = 1,
   STRATEGY_TREND_FOLLOWING,
 } Strategies;
 

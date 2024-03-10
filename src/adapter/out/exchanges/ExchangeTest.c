@@ -64,8 +64,8 @@ T *exchangeTest_constructor(WsHandler *handler,ConfigWrapper*config, Parser *par
   private->req_builder = req_builder;
   private->config = config;
   private->subject = subject_constructor(NULL);
-  char*mode = config->mode(config);
-  if(strcmp(mode,"BACKTEST") == 0) return NULL;
+  Metadata_mode mode = config->mode(config);
+  if(mode == Metadata_mode_backtest) return NULL;
 
   // bool paper = config->paper(config);
   // if(paper == true) private->mode = Paper;

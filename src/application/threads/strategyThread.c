@@ -6,7 +6,6 @@
 #include "RiskProcessor.h"
 #include "StrategyProcessor.h"
 #include "globalState.h"
-#include "wrapper.h"
 #include <unistd.h>
 
 static GlobalState *state;
@@ -37,7 +36,7 @@ void *strategyThread(void *arg) {
       CandleWrapper *candle = message->value(message, READ, (Item){}).value;
       message->destructor(message);
       Order *order = strategy->run(strategy, candle);
-      OrderStatus status = order->status(order, READ, NULL);
+      OrderStatus status = order->status(order, READ, 0);
 
       while (status == ORDER_PENDING) {
         printf("order pending: %d\n", id);

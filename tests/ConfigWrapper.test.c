@@ -35,8 +35,8 @@ Test(ConfigWrapper, valid_object, .init = setup, .fini = teardown) {
 Test(ConfigWrapper, get, .init = setup, .fini = teardown) {
   Hashmap *map = parser->parse(parser, json1);
   config = configWrapper_constructor(map);
-  char *value = config->get(config, "test").value;
-  cr_assert_eq(strcmp(value, "30"), 0, "Wrong value");
+  double *value = config->get(config, "test").value;
+  cr_assert_eq(*value, 30, "Wrong value");
 }
 
 Test(ConfigWrapper, mode, .init = setup, .fini = teardown) {

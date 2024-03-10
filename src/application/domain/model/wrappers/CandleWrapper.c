@@ -179,12 +179,12 @@ static void _$set_timestamp(T*self){
       epoch_time = mktime(&tm);
 
       if (epoch_time == -1) {
-        fprintf(stderr, "Error converting to time_t\n");
-        return -1;
+      RUNTIME_ERROR("Error converting to time_t\n",1);
+      return;
       }
     } else {
-    fprintf(stderr, "Error parsing the date-time string\n");
-    return -1;
+      RUNTIME_ERROR("Error parsing the date-time string\n",1);
+      return;
   }
 
 #endif

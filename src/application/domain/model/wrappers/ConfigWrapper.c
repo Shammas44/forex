@@ -1,7 +1,6 @@
 #include "ConfigWrapper.h"
 #include "Strategies.h"
 #include "common.h"
-#include "json.h"
 #include <stdbool.h>
 #include <string.h>
 
@@ -89,7 +88,7 @@ static Item __get(T*self,char*key){
 }
 
 static Metadata_mode __mode(T*self){
-  if(self == NULL) return NULL;
+  if(self == NULL) return 0;
   Hashmap*map = self->__private;
   char* value = map->get(map,KEY(_Mode)).value;
   return _$to_mode(value);
@@ -102,7 +101,7 @@ static char* __symbol(T*self){
 }
 
 static int __strategy(T*self){
-  if(self == NULL) return NULL;
+  if(self == NULL) return 0;
   Hashmap*map = self->__private;
   char* value = map->get(map,KEY(_Strategy)).value;
   return _$to_strategy(value);
@@ -117,41 +116,36 @@ static char* __backtest_data(T*self){
 static bool __paper(T*self){
   if(self == NULL) return NULL;
   Hashmap*map = self->__private;
-  char* value =map->get(map,KEY(_Paper)).value;
-  if(!value) return NULL;
-  return strcmp(value,"true")==0 ? true:false;
+  bool* value =map->get(map,KEY(_Paper)).value;
+  return *value;
 }
 
 static double __spread(T*self){
   if(self == NULL) return -1;
   Hashmap*map = self->__private;
-  char* value =map->get(map,KEY(_Spread)).value;
-  if(!value) return -1;
-  return atof(value);
+  double* value =map->get(map,KEY(_Spread)).value;
+  return *value;
 }
 
 static double __capital(T*self){
   if(self == NULL) return -1;
   Hashmap*map = self->__private;
-  char* value =map->get(map,KEY(_Capital)).value;
-  if(!value) return -1;
-  return atof(value);
+  double* value =map->get(map,KEY(_Capital)).value;
+  return *value;
 }
 
 static int __leverage(T*self){
   if(self == NULL) return -1;
   Hashmap*map = self->__private;
-  char* value =map->get(map,KEY(_Leverage)).value;
-  if(!value) return -1;
-  return atoi(value);
+  double* value =map->get(map,KEY(_Leverage)).value;
+  return *value;
 }
 
 static double __broker_commision_dpm(T*self){
   if(self == NULL) return -1;
   Hashmap*map = self->__private;
-  char* value =map->get(map,KEY(_Broker_commision_dpm)).value;
-  if(!value) return -1;
-  return atoi(value);
+  double* value = map->get(map,KEY(_Broker_commision_dpm)).value;
+  return *value;
 }
 
 static int _$enum_iterator(char* comparator, N array[], size_t array_length){
