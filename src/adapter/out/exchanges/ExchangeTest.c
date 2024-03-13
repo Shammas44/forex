@@ -38,14 +38,15 @@ typedef struct {
 
 static char* host = "https://127.0.0.1:443/api/";
 
-static HttpsRequest* __build_query(T *exchange, char*route,HttpsRequest_method method);
-static HttpsResponse* __send(T*exchange, char*route, HttpsRequest_method method, void*body);
-static void __account_informations(T*exchange);
-static int __connect(T*exchange);
-static void __subscribe(T*exchange,char*path);
-static void __attach_observer(T*exchange,Observer*observer);
-static void __dettach_observer(T*exchange,Observer*observer);
-static void __notify(T* exchange);
+static HttpsRequest* __build_query(T *self, char*route,HttpsRequest_method method);
+static HttpsResponse* __send(T*self, char*route, HttpsRequest_method method, void*body);
+static void __account_informations(T*self);
+static int __connect(T*self);
+static void __subscribe(T*self,char*path);
+static void __attach_observer(T*self,Observer*observer);
+static void __dettach_observer(T*self,Observer*observer);
+static void __notify(T* self);
+static void __send_order(T* self,Order*order);
 static Candle_state __candle_create(CandleWrapper *candle, CandleWrapper *tick, int duration);
 
 T *exchangeTest_constructor(WsHandler *handler,ConfigWrapper*config, Parser *parser){
@@ -76,8 +77,8 @@ T *exchangeTest_constructor(WsHandler *handler,ConfigWrapper*config, Parser *par
   return self;
 }
 
-static int __connect(T*exchange){
-  Private *private = exchange->__private;
+static int __connect(T*self){
+  Private *private = self->__private;
   ConfigWrapper *config = private->config;
   char*email = config->get(config,"email").value;
   char*password = config->get(config,"password").value;
@@ -89,7 +90,7 @@ static int __connect(T*exchange){
 
   char *body = malloc(strlen(body_tmp) + strlen(email) + strlen(password) + 1);
   sprintf(body, body_tmp, email, password);
-  HttpsResponse * response = __send(exchange,"auth",POST, body);
+  HttpsResponse * response = __send(self,"auth",POST, body);
   if(strcmp(response->status(response),"200") ==0 ){
     Hashmap*map = NULL;
     json_to_map(response->body(response),&map,NULL,0);
@@ -99,8 +100,8 @@ static int __connect(T*exchange){
   return 1;
 }
 
-static void __attach_observer(T*exchange,Observer*observer){
-  Private *private = exchange->__private;
+static void __attach_observer(T*self,Observer*observer){
+  Private *private = self->__private;
   Subject *subject = private->subject;
   subject->attach(subject,observer);
 }
@@ -192,20 +193,20 @@ static void __on_frame_receive(void*exchange,void*state){
 //   return CANDLE_COMPLETED; // We've finalized a candle and returned it
 // }
 
-static void __dettach_observer(T*exchange,Observer*observer){
-  Private *private = exchange->__private;
+static void __dettach_observer(T*self,Observer*observer){
+  Private *private = self->__private;
   Subject *subject = private->subject;
   subject->detach(subject,observer);
 }
 
-static void __notify(T* exchange) {
-  Private *private = exchange->__private;
+static void __notify(T* self) {
+  Private *private = self->__private;
   Subject *subject = private->subject;
   subject->notify(subject);
 }
 
-static HttpsRequest* __build_query(T *exchange, char*route,HttpsRequest_method method){
-  Private *private = exchange->__private;
+static HttpsRequest* __build_query(T *self, char*route,HttpsRequest_method method){
+  Private *private = self->__private;
   HttpsRequestBuilder *req_builder = private->req_builder;
   char *url = malloc(strlen(host) + strlen(route) + 1);
   sprintf(url, "%s%s", host, route);
@@ -220,11 +221,11 @@ static HttpsRequest* __build_query(T *exchange, char*route,HttpsRequest_method m
   return req;
 }
 
-static HttpsResponse* __send(T*exchange, char*route, HttpsRequest_method method, void*body){
-  Private *private = exchange->__private; 
+static HttpsResponse* __send(T*self, char*route, HttpsRequest_method method, void*body){
+  Private *private = self->__private; 
   WsHandler *ws = private->ws; 
   Https *https = ws->get_https_handler(ws); 
-  HttpsRequest *request = __build_query(exchange,route,method);
+  HttpsRequest *request = __build_query(self,route,method);
   request->set_body(request,body);
   return https->fetch(https,request);
 }
@@ -232,12 +233,12 @@ static HttpsResponse* __send(T*exchange, char*route, HttpsRequest_method method,
 // Account
 // =========================================================================="
 
-static void __account_informations(T*exchange){
-  HttpsResponse * response = __send(exchange,"account",GET, NULL);
+static void __account_informations(T*self){
+  HttpsResponse * response = __send(self,"account",GET, NULL);
 }
 
-static void __subscribe(T*exchange,char*path){
-  Private *private = exchange->__private;
+static void __subscribe(T*self,char*path){
+  Private *private = self->__private;
   Subject*subject = private->subject;
   WsHandler *ws = private->ws;
   HttpsRequestBuilder *req_builder = private->req_builder;
@@ -254,7 +255,7 @@ static void __subscribe(T*exchange,char*path){
   SSL* ssl = ws->handshake(ws,req);
   private->ssl = ssl;
   if(ssl ==NULL ) return;
-  ws->listen(ws,ssl,exchange,__on_frame_receive);
+  ws->listen(ws,ssl,self,__on_frame_receive);
 }
 
 #undef T
