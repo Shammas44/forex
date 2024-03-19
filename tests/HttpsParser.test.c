@@ -5,7 +5,7 @@
 #include <criterion/criterion.h>
 #define T HttpsParser
 
-T* parser = NULL;
+static T* parser = NULL;
 static char *res200 = "HTTPS/1.1 200 OK\r\n"
                            "Content-Type: text/plain\r\n"
                            "Content-Length: 13\r\n"
