@@ -34,19 +34,21 @@ void *strategyThread(void *arg) {
     }
     if (type == Msg_candle) {
       CandleWrapper *candle = message->value(message, READ, (Item){}).value;
+      double price = candle->close(candle);
       message->destructor(message);
       Order *order = strategy->run(strategy, candle);
       OrderStatus status = order->status(order, READ, 0);
 
       while (status == ORDER_PENDING) {
-        printf("order pending: %d\n", id);
+        // printf("order pending: %d\n", id);
         order = risk->process(risk, order);
-        printf("order processed: %d\n", id);
-        // send order to exchange
+        // printf("order processed: %d\n", id);
+        Exchange *exchange = state->exchange;
+        exchange->send_order(exchange,order);
         break;
       }
       if (status == ORDER_CANCELLED) {
-        printf("order cancelled: %d\n", id);
+        // printf("order cancelled: %d\n", id);
         order->destructor(order);
       }
     }

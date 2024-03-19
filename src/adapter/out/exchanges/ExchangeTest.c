@@ -34,6 +34,7 @@ typedef struct {
   ConfigWrapper*config;
   Subject*subject;
   SSL*ssl;
+  Metadata*metadata;
 } Private;
 
 static char* host = "https://127.0.0.1:443/api/";
@@ -49,7 +50,7 @@ static void __notify(T* self);
 static void __send_order(T* self,Order*order);
 static Candle_state __candle_create(CandleWrapper *candle, CandleWrapper *tick, int duration);
 
-T *exchangeTest_constructor(WsHandler *handler,ConfigWrapper*config, Parser *parser){
+T *exchangeTest_constructor(WsHandler *handler,ConfigWrapper*config, Parser *parser, Metadata*metadata){
   T *self = malloc(sizeof(T));
   if (self == NULL) return NULL;
   Private *private = malloc(sizeof(Private));
@@ -60,10 +61,12 @@ T *exchangeTest_constructor(WsHandler *handler,ConfigWrapper*config, Parser *par
   self->connect = __connect;
   self->attach_observer = __attach_observer;
   self->dettach_observer = __dettach_observer;
+  self->send_order = __send_order;
   private->ws = handler;
   private->response_parser = parser;
   private->req_builder = req_builder;
   private->config = config;
+  private->metadata = metadata;
   private->subject = subject_constructor(NULL);
   Metadata_mode mode = config->mode(config);
   if(mode == Metadata_mode_backtest) return NULL;
@@ -104,6 +107,47 @@ static void __attach_observer(T*self,Observer*observer){
   Private *private = self->__private;
   Subject *subject = private->subject;
   subject->attach(subject,observer);
+}
+
+double _$calculate_broker_commision(Metadata *m, Order *order){
+  double size = order->size(order,READ,0) * order->price(order,READ,0);
+  double value = size / 1000000 * m->get_broker_commision_dpm(m);
+  return value;
+}
+
+double _$calculate_slippage(double size){
+  double slippage = 0;
+  if(size > 50000){
+    slippage = 0.0001;
+  }else if(size > 500000){
+    slippage = 0.0002;
+  }
+  return slippage;
+}
+
+double _$get_value_of_one_pipe(double exchange_rate, double size){
+  return 0.0001 / exchange_rate * size;
+}
+
+double _$emulate_broker(T*self,Order *order) {
+  Private *private = self->__private;
+  Metadata *metadata = private->metadata;
+  double spread = metadata->get_spread(metadata);
+  double slippage = _$calculate_slippage(order->size(order,READ,0));
+  double commision = _$calculate_broker_commision(metadata, order);
+  return order->price(order,READ,0) + spread + slippage;
+}
+
+static void __send_order(T*self,Order*order){
+  Private *private = self->__private;
+  Metadata *metadata = private->metadata;
+  double price = _$emulate_broker(self,order);
+  double size = order->size(order,READ,0);
+  int number_of_trades = metadata->get_number_of_trades(metadata);
+  metadata->set_number_of_trades(metadata, number_of_trades+1);
+  metadata->set_last_price(metadata,price);
+  int factor = order->side(order,READ,0) == SELL ? -1 : 1;
+  metadata->set_market_position(metadata,size*factor);
 }
 
 static void __on_frame_receive(void*exchange,void*state){

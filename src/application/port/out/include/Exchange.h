@@ -4,30 +4,23 @@
 #include "Parser.h"
 #include "wsHandler.h"
 #include "ConfigWrapper.h"
+#include "Order.h"
 #define T Exchange
 
 typedef struct T T;
 
-typedef int (Exchange_connect)(T* exchange);
-typedef void (Exchange_subscribe)(T* exchange,char*path);
-typedef int (Exchange_authenticate)(T* exchange, void *credentials);
-typedef char* (Exchange_get_auth)(T* exchange);
-typedef int (Exchange_unsubscribe)(T* exchange);
-typedef void (Exchange_destructor)(T *exchange);
-typedef void (Exchange_attach_observer)(T *exchange, Observer* observer);
-typedef void (Exchange_dettach_observer)(T *exchange, Observer* observer);
-
-typedef struct T {
-Exchange_destructor *destructor;
-Exchange_connect *connect;
-Exchange_subscribe *subscribe;
-Exchange_authenticate *authenticate;
-Exchange_get_auth *get_auth;
-Exchange_unsubscribe *unsubscribe;
-Exchange_attach_observer *attach_observer;
-Exchange_dettach_observer *dettach_observer;
-void * __private;
-}T;
+struct T {
+ int (*connect)(T* self);
+ void (*subscribe)(T* self,char*path);
+ int (*authenticate)(T* self, void *credentials);
+ char* (*get_auth)(T* self);
+ int (*unsubscribe)(T* self);
+ void (*destructor)(T *self);
+ void (*attach_observer)(T *self, Observer* observer);
+ void (*dettach_observer)(T *self, Observer* observer);
+ void (*send_order)(T*self,Order *order);
+ void * __private;
+};
 
 T* exchange_constructor(WsHandler*ws,ConfigWrapper *config, Parser*parser);
 
