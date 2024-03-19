@@ -14,6 +14,7 @@ typedef struct {
   double spread;
   int number_of_trades;
   double broker_commision_dpm;
+  Array *positions;
 } Private;
 
 static void __destructor(T *self);
@@ -36,6 +37,8 @@ static void __set_broker_commision_dpm(T *self, double dpm);
 static double __get_broker_commision_dpm(T *self);
 static void __set_strategy(T *self, int strategy);
 static int __get_strategy(T *self);
+static void __open_position(T*self,Order*order);
+static void __close_position(T*self,char*order_id);
 
 T* metadata_constructor(ConfigWrapper *config){
   T* self = malloc(sizeof(T));
@@ -66,6 +69,7 @@ T* metadata_constructor(ConfigWrapper *config){
   private->spread = config->spread(config);
   private->broker_commision_dpm = config->broker_commision_dpm(config);
   private->strategy = config->strategy(config);
+  private->positions = array_constructor(20);
   pthread_mutex_init(&private->mutex, NULL);
   self->__private = private;
   return self;
@@ -76,7 +80,6 @@ void __destructor(T*self){
   free(private);
   free(self);
 }
-
 
 static void __set_equity(T *self, double current_price) {
   Private *private = self->__private;
@@ -230,6 +233,21 @@ static int __get_strategy(T *self){
   int value = private->strategy;
   pthread_mutex_unlock(&private->mutex);
   return value;
+}
+
+static void __open_position(T*self,Order*order){
+  Private *private = self->__private;
+  pthread_mutex_lock(&private->mutex);
+  Array* positions = private->positions;
+  positions->push(positions,(Item){.type=Item_map,.value=order});
+  pthread_mutex_unlock(&private->mutex);
+}
+static void __close_position(T*self,char*order_id){
+  Private *private = self->__private;
+  pthread_mutex_lock(&private->mutex);
+  Array* positions = private->positions;
+  // positions->delete(positions,order_id);
+  pthread_mutex_unlock(&private->mutex);
 }
 
 #undef T

@@ -1,6 +1,7 @@
 #ifndef METADATA_H
 #define METADATA_H
 #include "ConfigWrapper.h"
+#include "Order.h"
 #include <pthread.h>
 #include <stdio.h>
 #define T Metadata
@@ -28,6 +29,8 @@ typedef struct T {
   double (*get_broker_commision_dpm)(T *self);
   void (*set_strategy)(T *self, int strategy);
   int (*get_strategy)(T *self);
+  void (*open_position)(T*self,Order*order);
+  void (*close_position)(T*self,char*order_id);
   void *__private;
 } T;
 
