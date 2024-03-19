@@ -239,13 +239,36 @@ Hashmap* __json_to(char *json, jsmntok_t *tokens, int token_num) {
       i++;
       char *value = __json_extract_string(json,&tokens[i]);
       // printf("%s: %s\n", key, value);
+
       Item item;
+      void *primitive;
+      Hashmap_Entry primitive_entry = (Hashmap_Entry){.key=key};
+      if(tokens[i].type == JSMN_PRIMITIVE){
+        if(strcasecmp(value, "true") == 0 || strcasecmp(value, "false") == 0){
+          primitive = malloc(sizeof(bool));
+          *(bool*)primitive = strcasecmp(value, "true") == 0 ? true : false;
+          primitive_entry.type = Item_bool;
+          primitive_entry.value = primitive;
+        }else if(strcasecmp(value, "null") == 0){
+          primitive = malloc(sizeof(char*) *5);
+          sprintf(primitive,"%s",value);
+          primitive_entry.type = Item_null;
+          primitive_entry.value = primitive;
+        }else {
+          primitive = malloc(sizeof(double));
+          *(double*) primitive = atof(value);
+          primitive_entry.type = Item_double;
+          primitive_entry.value = primitive;
+        }
+        free(value);
+      }
+
       switch (tokens[i].type) {
         case JSMN_STRING:
           map->push(map,(Hashmap_Entry){.key=key,.type=Item_string,.value=value});
           break;
         case JSMN_PRIMITIVE:
-          map->push(map,(Hashmap_Entry){.key=key,.type=Item_default,.value=value});
+          map->push(map,primitive_entry);
           break;
         case JSMN_OBJECT:
           inner_token_num = json_to_map(value, &inner_map,NULL,0);
