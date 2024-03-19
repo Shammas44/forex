@@ -43,7 +43,7 @@ Test(ConfigWrapper, mode, .init = setup, .fini = teardown) {
   Hashmap *map = parser->parse(parser, json1);
   config = configWrapper_constructor(map);
   int value = config->mode(config);
-  cr_assert_eq(value,0, "Wrong value");
+  cr_assert_eq(value,1, "Wrong value");
 }
 
 Test(ConfigWrapper, symbol, .init = setup, .fini = teardown) {
@@ -57,7 +57,7 @@ Test(ConfigWrapper, strategy, .init = setup, .fini = teardown) {
   Hashmap *map = parser->parse(parser, json1);
   config = configWrapper_constructor(map);
   int value = config->strategy(config);
-  cr_assert_eq(value,1, "Wrong value");
+  cr_assert_eq(value,2, "Wrong value");
 }
 
 Test(ConfigWrapper, backtest_data, .init = setup, .fini = teardown) {

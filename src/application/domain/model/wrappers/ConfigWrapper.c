@@ -159,24 +159,26 @@ static int _$enum_iterator(char* comparator, N array[], size_t array_length){
 
 static int _$to_strategy(char*strategy){
   N strategies[] = {
+    {.name = "NONE", .code = 0},
     {.name = "STRATEGY_TEST", .code = STRATEGY_TEST},
     {.name = "STRATEGY_TREND_FOLLOWING", .code = STRATEGY_TREND_FOLLOWING},
   };
   size_t length = sizeof(strategies) / sizeof(strategies[0]);
   Strategies result = _$enum_iterator(strategy,strategies,length);
-  if(result != -1) return result;
+  if(result > 0) return result;
   RUNTIME_ERROR("Error: strategy not found\n",1);
   exit(EXIT_FAILURE);
 }
 
 static Metadata_mode _$to_mode(char* mode){
   N modes[] = {
+    {.name = "NONE", .code = 0},
     {.name = "BACKTEST", .code = Metadata_mode_backtest},
     {.name = "REAL", .code = Metadata_mode_real},
   };
   size_t length = sizeof(modes) / sizeof(modes[0]);
   Metadata_mode result = _$enum_iterator(mode,modes,length);
-  if(result != -1) return result;
+  if(result > 0) return result;
   RUNTIME_ERROR("Mode not found",1);
   exit(EXIT_FAILURE);
 }

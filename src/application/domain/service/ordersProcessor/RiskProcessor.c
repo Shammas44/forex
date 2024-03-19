@@ -49,9 +49,9 @@ static bool _$check_available_funds(T*self,Order*order){
   if (order_size < available_funds && order_size > 0) {
     status = true;
   }
-  if(!status){
-    RUNTIME_ERROR("Not enough available funds",1);
-  }   
+  // if(!status){
+  //   RUNTIME_ERROR("Not enough available funds",1);
+  // }   
   return status;
 }
 
@@ -69,7 +69,7 @@ static bool _$check_size_limit(T*self,Order*order){
       status = false;
     }
   }
-  if(!status) RUNTIME_ERROR("order size limit outbound",1);
+  // if(!status) RUNTIME_ERROR("order size limit outbound",1);
   return status;
 }
 
