@@ -9,7 +9,14 @@ BIN_DIR=bin/
 INC_DIRS:=$(shell find . -type d -name "include")
 INC_LIB= -I /usr/local/include
 INC:=$(foreach dir,$(INC_DIRS),-I $(dir)) $(INC_LIB)
-LIB=-l ssl -l crypto -l websockets
+
+INC_LIB_DIR:=$(shell find lib -type d -name "include")
+INC_STATIC_LIB:=$(foreach dir,$(INC_LIB_DIR),-I $(dir))
+
+EVENTSLOOPLIB_SRC=-L lib/eventsLoop/bin -l eventsloop
+MY_LIB=$(EVENTSLOOPLIB_SRC)
+
+LIB=-l ssl -l crypto -l websockets $(MY_LIB) $(INC_STATIC_LIB)
 LIB_TEST=-l criterion
 INC_TEST=$(INC) -I tests 
 CC=gcc
@@ -21,7 +28,11 @@ OBJS=$(SOURCES:%.c=%.o)
 OBJS_TEST=$(OBJS) $(SOURCES_TEST:%.c=%.o)
 
 .PHONY: all
-all: main
+all: lib main
+
+.PHONY: lib
+lib: 
+	find ./lib/* -maxdepth 0 -type d -exec sh -c '(cd {} && make)' \;
 
 .PHONY: bear 
 bear:
@@ -54,12 +65,13 @@ watch_main:
 .PHONY: clean
 clean: 
 	@echo "cleaning..."
-	find . -name "*.o" -delete
+	find . -name "*.o" -delete; \
+	find ./lib/* -maxdepth 0 -type d -exec sh -c '(cd {} && make clean)' \;
 
 # Remove every exectuable file in the root directory
 .PHONY: cleanx
 cleanx:
-	find ./$(BIN_DIR) -type f -perm +111 -maxdepth 1 -delete   
+	find ./$(BIN_DIR) -type f -perm +111 -maxdepth 1 -delete;
 
 .PHONY: cleanall 
 cleanall: clean cleanx
